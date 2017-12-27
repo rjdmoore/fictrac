@@ -113,10 +113,10 @@ void createZoomROI(Mat& zoom_roi, const Mat& frame, const Point2d& pt, int orig_
 /// Constructor.
 ///
 ConfigGui::ConfigGui(string config_fn)
-: _config_fn(config_fn)
+: _open(false), _config_fn(config_fn)
 {
     /// Load and parse config file.
-    _valid = (_cfg.read(_config_fn) > 0);
+    _open = (_cfg.read(_config_fn) > 0);
 }
 
 ///
@@ -140,7 +140,7 @@ bool ConfigGui::setFrame(Mat& frame)
     } else {
         // uh oh, shouldn't get here
         BOOST_LOG_TRIVIAL(error) << "Unexpected number of image channels (" << frame.channels() << ")!";
-        return (_valid = false);
+        return (_open = false);
     }
     
     /// Stretch contrast for display
@@ -158,7 +158,7 @@ bool ConfigGui::setFrame(Mat& frame)
     //TODO: Add support for fisheye camera model.
     _cam_model = CameraModel::createRectilinear(_w, _h, vfov * CM_D2R);
     
-    return _valid;
+    return _open;
 }
 
 ///
@@ -166,7 +166,7 @@ bool ConfigGui::setFrame(Mat& frame)
 ///
 bool ConfigGui::run()
 {
-    if (!_valid) { return _valid; }
+    if (!_open) { return _open; }
     
     /// Interactive window.
     cv::namedWindow("configGUI", cv::WINDOW_AUTOSIZE);
@@ -318,5 +318,5 @@ bool ConfigGui::run()
     BOOST_LOG_TRIVIAL(info) << "Exiting configGui!";
     
     cv::destroyAllWindows();
-    return _valid;
+    return _open;
 }

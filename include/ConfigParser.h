@@ -18,10 +18,10 @@ public:
     ~ConfigParser();
 
     /// File IO
-    std::size_t read(std::string fn);
-    std::size_t write(std::string fn, std::map<std::string, std::string>& pmap);    // write supplied map to file
-    std::size_t write(std::string fn) { return write(fn, _string_data); }
-    std::size_t write() { return write(_fn); }
+    int read(std::string fn);
+    int write(std::string fn, std::map<std::string, std::string>& pmap);    // write supplied map to file
+    int write(std::string fn) { return write(fn, _string_data); }
+    int write() { return write(_fn); }
 
     /// Accessor functions
     bool getStr(std::string key, std::string& val);

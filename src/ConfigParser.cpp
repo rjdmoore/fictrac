@@ -33,7 +33,7 @@ ConfigParser::~ConfigParser()
 ///
 /// Read in and parse specified config file.
 ///
-size_t ConfigParser::read(string fn)
+int ConfigParser::read(string fn)
 {
     /// Open input file
     std::ifstream f(fn);
@@ -71,7 +71,7 @@ size_t ConfigParser::read(string fn)
 ///
 /// Write specified map to file.
 ///
-size_t ConfigParser::write(string fn, std::map<string,string>& map_to_write)
+int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
 {
     /// Open output file
     std::ofstream f(fn);

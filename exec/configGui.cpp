@@ -11,8 +11,8 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <iostream>
 #include <string>
+#include <exception>
 
 using cv::Mat;
 using std::string;
@@ -23,34 +23,69 @@ int main(int argc, char *argv[])
     logging::init();
     
     /// Parse args.
+    string input_fn = "0";     // default to primary webcam
     string log_level = "info";
     string config_fn = "config.txt";
     for (int i = 1; i < argc; ++i) {
         if ((string(argv[i]) == "--help") || (string(argv[i]) == "-h")) {
             printf("\nconfigGui:\tA GUI for configuring FicTrac.\n\t\tThis program should be run once for each new input source (or if the camera is moved).\n");
-            printf("\nUsage: %s CONFIG_FN [-v LOG_VERBOSITY]\n\n", argv[0]);
+            printf("\nUsage: %s INPUT -c CONFIG_FN [-v LOG_VERBOSITY]\n\n", argv[0]);
             return 0;
         } else if ((string(argv[i]) == "--verbosity") || (string(argv[i]) == "-v")) {
-            if (i+1 < argc) {
-                log_level = argv[++i];
+            if (++i < argc) {
+                log_level = argv[i];
             } else {
                 BOOST_LOG_TRIVIAL(error) << "-v/--verbosity requires one argument (debug < info (default) < warning < error)!";
                 return -1;
             }
+        } else if ((string(argv[i]) == "--config") || (string(argv[i]) == "-c")) {
+            if (++i < argc) {
+                config_fn = argv[i];
+            } else {
+                BOOST_LOG_TRIVIAL(error) << "-c/--config requires one argument (config file name)!";
+                return -1;
+            }
         } else {
-            config_fn = argv[i];
+            input_fn = argv[i];
         }
     }
-    BOOST_LOG_TRIVIAL(info) << "Looking for config file: " << config_fn;
     
     /// Set logging level.
     logging::setVerbosity(log_level);
     
     /// Load and parse config file.
+    BOOST_LOG_TRIVIAL(info) << "Looking for config file: " << config_fn;
     ConfigGui cfg(config_fn);
+    if (!cfg.is_open()) { return -1; }
     
     /// Load an image to use for annotation.
-    Mat input_frame = cv::imread("data/webcam.png", CV_LOAD_IMAGE_GRAYSCALE);
+    Mat input_frame;
+    try {
+        // try loading as image file first
+        BOOST_LOG_TRIVIAL(debug) << "Trying to load input " << input_fn << " as image...";
+        input_frame = cv::imread(input_fn, CV_LOAD_IMAGE_GRAYSCALE);
+        if (input_frame.empty()) { throw 0; }
+    } catch(...) {
+        try {
+            // then try loading as camera id
+            BOOST_LOG_TRIVIAL(debug) << "Trying to load input " << input_fn << " as camera id...";
+            int id = stoi(input_fn);
+            cv::VideoCapture cap(id);
+            cap >> input_frame;
+            if (input_frame.empty()) { throw 0; }
+        } catch(...) {
+            try {
+                // then try loading as video file
+                BOOST_LOG_TRIVIAL(debug) << "Trying to load input " << input_fn << " as video file...";
+                cv::VideoCapture cap(input_fn);
+                cap >> input_frame;
+                if (input_frame.empty()) { throw 0; }
+            } catch(...) {
+                BOOST_LOG_TRIVIAL(error) << "Could not load input file (" << input_fn << ")!";
+                return -1;
+            }
+        }
+    }
     
     /// Run configuration GUI.
     cfg.setFrame(input_frame);

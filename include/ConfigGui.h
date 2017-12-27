@@ -26,6 +26,8 @@ public:
     
     bool run();
     
+    bool is_open() { return _open; }
+    
     enum INPUT_MODE {
         INIT,
         CIRC_PTS,
@@ -52,7 +54,7 @@ public:
     };
     
 private:
-    bool _valid;
+    bool _open;
     std::string _config_fn;
     ConfigParser _cfg;
     cv::Mat _frame;
