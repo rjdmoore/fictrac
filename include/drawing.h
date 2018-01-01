@@ -19,3 +19,9 @@ void histStretch(cv::Mat& grey);
 
 /// Draw cursor cross.
 void drawCursor(cv::Mat& rgb, const cv::Point2d& pt, cv::Scalar colour);
+
+/// Draw transformed axes.
+void drawAxes(cv::Mat& rgb, const CameraModelPtr cam_model, cv::Mat& R, cv::Mat& t, const cv::Scalar colour);
+
+/// Draw rect corners.
+void drawRectCorners(cv::Mat& rgb, const CameraModelPtr cam_model, cv::Mat& cnrs, const cv::Scalar colour);

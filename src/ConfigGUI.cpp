@@ -58,19 +58,22 @@ void onMouseEvent(int event, int x, int y, int f, void* ptr)
             {
                 case ConfigGui::CIRC_PTS:
                     pdata->circPts.push_back(Point2d(x,y));
+                    pdata->newEvent = true;
                     break;
                     
                 case ConfigGui::IGNR_PTS:
                     // ensure there is at least one active ignore region
                     if (pdata->ignrPts.empty()) { pdata->ignrPts.push_back(vector<Point2d>()); }
                     // add click to the active ignore region
-                    pdata->ignrPts.back().push_back(Point2d(x,y)); 
+                    pdata->ignrPts.back().push_back(Point2d(x,y));
+                    pdata->newEvent = true;
                     break;
                     
                 case ConfigGui::R_XY:
                 case ConfigGui::R_YZ:
                 case ConfigGui::R_XZ:
                     pdata->sqrePts.push_back(Point2d(x,y));
+                    pdata->newEvent = true;
                     break;
                     
                 default:
@@ -83,6 +86,7 @@ void onMouseEvent(int event, int x, int y, int f, void* ptr)
             {
                 case ConfigGui::CIRC_PTS:
                     if (pdata->circPts.size() > 0) { pdata->circPts.pop_back(); }
+                    pdata->newEvent = true;
                     break;
                     
                 case ConfigGui::IGNR_PTS:
@@ -92,12 +96,14 @@ void onMouseEvent(int event, int x, int y, int f, void* ptr)
                         // otherwise remove points from the active ignore region
                         else { pdata->ignrPts.back().pop_back(); }
                     }
+                    pdata->newEvent = true;
                     break;
                     
                 case ConfigGui::R_XY:
                 case ConfigGui::R_YZ:
                 case ConfigGui::R_XZ:
                     if (pdata->sqrePts.size() > 0) { pdata->sqrePts.pop_back(); }
+                    pdata->newEvent = true;
                     break;
                     
                 default:
@@ -192,11 +198,10 @@ bool ConfigGui::run()
     cv::setMouseCallback("configGUI", onMouseEvent, &_input_data);
     
     /// Display/input loop.
+    Mat R, t;
     CmPoint c;
     double r = -1;
     char key = 0;
-    double vec[3];
-    Point2d pt0, pt;
     vector<int> cfg_pts;
     vector<vector<int> > cfg_polys;
     BOOST_LOG_TRIVIAL(debug) << "New state: INIT";
@@ -283,10 +288,13 @@ bool ConfigGui::run()
             /// Input circumference points.
             case CIRC_PTS:
                 /// Fit circular FoV to sphere.
-                if (_input_data.circPts.size() >= 3) {
-                    circleFit_camModel(_input_data.circPts, _cam_model, c, r);
-                } else {
-                    r = -1;
+                if (_input_data.newEvent) {
+                    if (_input_data.circPts.size() >= 3) {
+                        circleFit_camModel(_input_data.circPts, _cam_model, c, r);
+                    } else {
+                        r = -1;
+                    }
+                    _input_data.newEvent = false;
                 }
                 
                 /// Draw previous clicks.
@@ -509,21 +517,21 @@ bool ConfigGui::run()
                     switch (in)
                     {
                         case 1:
-                            printf("\n\n\n  XY Square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Y), (+X,+Y), (-X,+Y), (-X,-Y). If your camera is looking down on the animal from above, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is below the animal, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
+                            printf("\n\n\n  XY-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Y), (+X,+Y), (-X,+Y), (-X,-Y). If your camera is looking down on the animal from above, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is below the animal, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
                             // advance state
                             BOOST_LOG_TRIVIAL(debug) << "New state: R_XY";
                             _input_data.mode = R_XY;
                             break;
                             
                         case 2:
-                            printf("\n\n\n  YZ Square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's Y-Z axes. The corners must be clicked in the following order: (-Y,-Z), (+Y,-Z), (+Y,+Z), (-Y,+Z). If your camera is behind the animal, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is in front of the animal, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
+                            printf("\n\n\n  YZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's Y-Z axes. The corners must be clicked in the following order: (-Y,-Z), (+Y,-Z), (+Y,+Z), (-Y,+Z). If your camera is behind the animal, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is in front of the animal, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
                             // advance state
                             BOOST_LOG_TRIVIAL(debug) << "New state: R_YZ";
                             _input_data.mode = R_YZ;
                             break;
                             
                         case 3:
-                            printf("\n\n\n  XZ Square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
+                            printf("\n\n\n  XZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
                             // advance state
                             BOOST_LOG_TRIVIAL(debug) << "New state: R_XZ";
                             _input_data.mode = R_XZ;
@@ -555,7 +563,32 @@ bool ConfigGui::run()
             
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrePts) {
-                    cv::circle(disp_frame, click, click_rad, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS], 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, CV_RGB(0,255,0), 1, CV_AA);
+                }
+                
+                /// Draw axes.
+                if (_input_data.sqrePts.size() == 4) {
+                    if (_input_data.newEvent) {
+                        computeRtFromSquare_XY(_cam_model, _input_data.sqrePts, R, t);
+                        _input_data.newEvent = false;
+                    }
+                    
+                    // make x4 mat for projecting corners
+                    Mat T = Mat::zeros(3,4,CV_64F);
+                    for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
+                    
+                    // project reference corners
+                    Mat p = R * XY_CNRS + T;
+                    
+                    // draw re-projected reference corners
+                    drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0,255,0));
+                    
+                    // draw re-projected animal axes.
+                    if (r > 0) {
+                        double scale = 1.0/tan(r);
+                        Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
+                        drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
+                    }
                 }
                 
                 /// Draw cursor location.
@@ -604,44 +637,31 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrePts) {
-                    cv::circle(disp_frame, click, click_rad, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS], 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, CV_RGB(0,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
                 if (_input_data.sqrePts.size() == 4) {
-                    Mat R;
-                    if (computeRFromSquare_YZ(_cam_model, _input_data.sqrePts, R)) {
-                        
-                        Mat o = (cv::Mat_<float>(3,1) << c.x, c.y, c.z);
-                        Mat x = o + R * (cv::Mat_<float>(3,1) << 1,0,0) * 0.25;
-                        Mat y = o + R * (cv::Mat_<float>(3,1) << 0,1,0) * 0.25;
-                        Mat z = o + R * (cv::Mat_<float>(3,1) << 0,0,1) * 0.25;
-                        
-                        vec[0] = o.at<float>(0,0);
-                        vec[1] = o.at<float>(1,0);
-                        vec[2] = o.at<float>(2,0);
-                        _cam_model->vectorToPixel(vec, pt0.x, pt0.y);
-                        
-                        vec[0] = x.at<float>(0,0);
-                        vec[1] = x.at<float>(1,0);
-                        vec[2] = x.at<float>(2,0);
-                        _cam_model->vectorToPixel(vec, pt.x, pt.y);
-                        
-                        cv::line(disp_frame, 4*pt0, 4*pt, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS], 1, CV_AA, 2);
-                        
-                        vec[0] = y.at<float>(0,0);
-                        vec[1] = y.at<float>(1,0);
-                        vec[2] = y.at<float>(2,0);
-                        _cam_model->vectorToPixel(vec, pt.x, pt.y);
-                        
-                        cv::line(disp_frame, 4*pt0, 4*pt, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS], 1, CV_AA, 2);
-                        
-                        vec[0] = z.at<float>(0,0);
-                        vec[1] = z.at<float>(1,0);
-                        vec[2] = z.at<float>(2,0);
-                        _cam_model->vectorToPixel(vec, pt.x, pt.y);
-                        
-                        cv::line(disp_frame, 4*pt0, 4*pt, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS], 1, CV_AA, 2);
+                    if (_input_data.newEvent) {
+                        computeRtFromSquare_YZ(_cam_model, _input_data.sqrePts, R, t);
+                        _input_data.newEvent = false;
+                    }
+                    
+                    // make x4 mat for projecting corners
+                    Mat T = Mat::zeros(3,4,CV_64F);
+                    for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
+                    
+                    // project reference corners
+                    Mat p = R * YZ_CNRS + T;
+                    
+                    // draw re-projected reference corners
+                    drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0,255,0));
+                    
+                    // draw re-projected animal axes.
+                    if (r > 0) {
+                        double scale = 1.0/tan(r);
+                        Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
+                        drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
                     }
                 }
                 
@@ -691,7 +711,32 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrePts) {
-                    cv::circle(disp_frame, click, click_rad, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS], 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, CV_RGB(0,255,0), 1, CV_AA);
+                }
+                
+                /// Draw axes.
+                if (_input_data.sqrePts.size() == 4) {
+                    if (_input_data.newEvent) {
+                        computeRtFromSquare_XZ(_cam_model, _input_data.sqrePts, R, t);
+                        _input_data.newEvent = false;
+                    }
+                    
+                    // make x4 mat for projecting corners
+                    Mat T = Mat::zeros(3,4,CV_64F);
+                    for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
+                    
+                    // project reference corners
+                    Mat p = R * XZ_CNRS + T;
+                    
+                    // draw re-projected reference corners
+                    drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0,255,0));
+                    
+                    // draw re-projected animal axes.
+                    if (r > 0) {
+                        double scale = 1.0/tan(r);
+                        Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
+                        drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
+                    }
                 }
                 
                 /// Draw cursor location.

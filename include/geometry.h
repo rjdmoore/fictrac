@@ -1,7 +1,7 @@
 /// FicTrac http://rjdmoore.net/fictrac/
 /// \file       Geometry.h
 /// \brief      Geometry and vector algebra methods.
-/// \author     Richard Moore, Saul Thurrowgood
+/// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
 #pragma once
@@ -76,6 +76,23 @@ static inline T clamp(T x, T min, T max)
     return (x<=min) ? min : (x>=max) ? max : x;
 }
 
+static inline cv::Mat vec2mat(const CmPoint vec)
+{
+    return (cv::Mat_<double>(3,1) << vec[0], vec[1], vec[2]);
+}
+
+static inline CmPoint mat2vec(const cv::Mat& mat)
+{
+    assert((mat.depth() == CV_64F) && (mat.rows == 3) && (mat.cols == 1));
+    return CmPoint(mat.at<double>(0,0), mat.at<double>(1,0), mat.at<double>(2,0));
+}
+
+cv::Mat angleUnitAxisToMat(const double angle, const CmPoint axis);
+
+cv::Mat angleAxisToMat(const CmPoint angleAxis);
+
+CmPoint matToAngleAxis(const cv::Mat& m);
+
 ///
 /// configGui helper functions
 ///
@@ -89,11 +106,19 @@ size_t project2dPointsToUnitSphere(const std::vector<cv::Point2d>& pts2d, const 
 /// Fit circle to pixels, taking camera model into account.
 bool circleFit_camModel(const std::vector<cv::Point2d>& pix2d, const CameraModelPtr cam_model, CmPoint& c, double& r);
 
-/// Compute camera-animal R transform from YZ square.
-bool computeRFromSquare_XY(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R);
+/// Reference square corners - tl,tr,br,bl column-wise values.
+// TL (+X,-Y), TR (+X,+Y), BR (-X,+Y), BL (-X,-Y)
+static const cv::Mat XY_CNRS = (cv::Mat_<double>(3,4) << 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.0, 0.0, 0.0, 0.0);
+// TL (-Y,-Z), TR (+Y,-Z), BR (+Y,+Z), BL (-Y,+Z)
+static const cv::Mat YZ_CNRS = (cv::Mat_<double>(3,4) << 0.0, 0.0, 0.0, 0.0, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5);
+// TL (+X,-Z), TR (-X,-Z), BR (-X,+Z), BL (+X,+Z)
+static const cv::Mat XZ_CNRS = (cv::Mat_<double>(3,4) << 0.5, -0.5, -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, -0.5, -0.5, 0.5, 0.5);
+
+/// Compute camera-animal R transform from XY square.
+bool computeRtFromSquare_XY(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R, cv::Mat& t);
 
 /// Compute camera-animal R transform from YZ square.
-bool computeRFromSquare_YZ(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R);
+bool computeRtFromSquare_YZ(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R, cv::Mat& t);
 
-/// Compute camera-animal R transform from YZ square.
-bool computeRFromSquare_XZ(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R);
+/// Compute camera-animal R transform from XZ square.
+bool computeRtFromSquare_XZ(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R, cv::Mat& t);

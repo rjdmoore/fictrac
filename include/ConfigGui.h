@@ -44,6 +44,7 @@ public:
     };
     
     struct INPUT_DATA {
+        bool newEvent;
         cv::Point2d cursorPt;
         std::vector<cv::Point2d> circPts;
         std::vector<std::vector<cv::Point2d> > ignrPts;
@@ -51,6 +52,7 @@ public:
         INPUT_MODE mode;
         
         INPUT_DATA() {
+            newEvent = false;
             mode =  CIRC_INIT;
             cursorPt.x = -1;
             cursorPt.y = -1;

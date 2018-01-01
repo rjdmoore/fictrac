@@ -93,3 +93,69 @@ void drawCursor(Mat& rgb, const Point2d& pt, cv::Scalar colour)
     cv::line(rgb, pt-Point2d(-outer_rad,outer_rad), pt-Point2d(-inner_rad,inner_rad), colour, 1, CV_AA);
     cv::line(rgb, pt+Point2d(-inner_rad,inner_rad), pt+Point2d(-outer_rad,outer_rad), colour, 1, CV_AA);
 }
+
+///
+/// Draw transformed axes.
+///
+void drawAxes(Mat& rgb, const CameraModelPtr cam_model, Mat& R, Mat& t, const cv::Scalar colour)
+{    
+    /// Transformed axes.
+    Mat sx = R * (cv::Mat_<double>(3,1) << 1,0,0) + t;
+    Mat sy = R * (cv::Mat_<double>(3,1) << 0,1,0) + t;
+    Mat sz = R * (cv::Mat_<double>(3,1) << 0,0,1) + t;
+    
+    /// Draw transformed axes.
+    double vec[3];
+    Point2d pt, pt0;
+    vec[0] = t.at<double>(0,0);
+    vec[1] = t.at<double>(1,0);
+    vec[2] = t.at<double>(2,0);
+    cam_model->vectorToPixel(vec, pt0.x, pt0.y);
+    
+    // x
+    vec[0] = sx.at<double>(0,0);
+    vec[1] = sx.at<double>(1,0);
+    vec[2] = sx.at<double>(2,0);
+    cam_model->vectorToPixel(vec, pt.x, pt.y);
+    
+    cv::line(rgb, 4*pt0, 4*pt, colour, 1, CV_AA, 2);
+    cv::putText(rgb, "x", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1.0, CV_AA);
+    
+    // y
+    vec[0] = sy.at<double>(0,0);
+    vec[1] = sy.at<double>(1,0);
+    vec[2] = sy.at<double>(2,0);
+    cam_model->vectorToPixel(vec, pt.x, pt.y);
+    
+    cv::line(rgb, 4*pt0, 4*pt, colour, 1, CV_AA, 2);
+    cv::putText(rgb, "y", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1.0, CV_AA);
+    
+    // z
+    vec[0] = sz.at<double>(0,0);
+    vec[1] = sz.at<double>(1,0);
+    vec[2] = sz.at<double>(2,0);
+    cam_model->vectorToPixel(vec, pt.x, pt.y);
+    
+    cv::line(rgb, 4*pt0, 4*pt, colour, 1, CV_AA, 2);
+    cv::putText(rgb, "z", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1.0, CV_AA);
+}
+
+///
+/// Draw rectangle corners.
+///
+void drawRectCorners(Mat& rgb, const CameraModelPtr cam_model, Mat& cnrs, const cv::Scalar colour)
+{
+    assert((cnrs.rows == 3) && (cnrs.cols == 4));
+    
+    Point2d pt;
+    double vec[3];
+    for (int i = 0; i < 4; i++) {
+        vec[0] = cnrs.at<double>(0,i);
+        vec[1] = cnrs.at<double>(1,i);
+        vec[2] = cnrs.at<double>(2,i);
+        vec3normalise(vec); 
+        if (cam_model->vectorToPixel(vec, pt.x, pt.y)) {
+            drawCursor(rgb, pt, colour);
+        }
+    }
+}

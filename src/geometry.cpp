@@ -7,11 +7,13 @@
 #include "geometry.h"
 
 #include "CameraModel.h"
+#include "SquareRT.h"
 
 #include <opencv2/opencv.hpp>
 
 #include <boost/log/trivial.hpp>
 
+#include <cmath>    // sqrt, cos, sin
 #include <vector>
 
 using cv::Mat;
@@ -20,6 +22,61 @@ using cv::Point2d;
 using cv::Rect;
 using std::vector;
 using std::string;
+
+Mat angleUnitAxisToMat(const double angle, const CmPoint axis)
+{
+	double x=axis[0], y=axis[1], z=axis[2];
+	double c = cos(angle);
+	double d = 1.0 - c;
+	double dx = d*x;
+	double dy = d*y;
+	double dz = d*z;
+	double dxy = dx*y;
+	double dxz = dx*z;
+	double dyz = dy*z;
+	double s = sin(angle);
+	double sx = s*x;
+	double sy = s*y;
+	double sz = s*z;
+    return (cv::Mat_<double>(3,3) << c + dx*x, dxy - sz, dxz + sy, dxy + sz, c + dy*y, dyz - sx, dxz - sy, dyz + sx, c + dz*z);
+}
+
+/// aka rodrigues()
+Mat angleAxisToMat(const CmPoint angleAxis)
+{
+	double angle = angleAxis.len();
+	if (angle <= 1e-7)
+        return Mat::eye(3,3,CV_64F);
+    return angleUnitAxisToMat(angle, angleAxis.getNormalised());
+}
+
+/// aka rodrigues()
+//FIXME: remove branching.
+CmPoint matToAngleAxis(const Mat& m)
+{
+    CmPoint angleAxis(0,0,0);
+    
+    assert((m.cols == 3) && (m.rows == 3));
+    
+    if (m.depth() == CV_32F) {
+        // make sure m is not ill-conditioned
+        double angle = acos(clamp((m.at<float>(0,0)+m.at<float>(1,1)+m.at<float>(2,2)-1)/2.0, -1.0, 1.0));
+        double sin_angle = sin(angle);
+        if( sin_angle != 0 ) { angle /= 2.0*sin_angle; }
+        angleAxis[0] = angle*(m.at<float>(2,1)-m.at<float>(1,2));
+        angleAxis[1] = angle*(m.at<float>(0,2)-m.at<float>(2,0));
+        angleAxis[2] = angle*(m.at<float>(1,0)-m.at<float>(0,1));
+    } else if (m.depth() == CV_64F) {
+        // make sure m is not ill-conditioned
+        double angle = acos(clamp((m.at<double>(0,0)+m.at<double>(1,1)+m.at<double>(2,2)-1)/2.0, -1.0, 1.0));
+        double sin_angle = sin(angle);
+        if( sin_angle != 0 ) { angle /= 2.0*sin_angle; }
+        angleAxis[0] = angle*(m.at<double>(2,1)-m.at<double>(1,2));
+        angleAxis[1] = angle*(m.at<double>(0,2)-m.at<double>(2,0));
+        angleAxis[2] = angle*(m.at<double>(1,0)-m.at<double>(0,1));
+    }
+    return angleAxis;
+}
 
 ///
 /// Fit a plane to 3D points using the SVD method.
@@ -102,93 +159,65 @@ bool circleFit_camModel(const vector<Point2d>& pix2d, const CameraModelPtr cam_m
 }
 
 ///
-/// Compute camera-animal R transform from supplied square corners.
-/// Alg from http://nghiaho.com/?page_id=671
+/// Compute camera-animal R+t transform from supplied square corners.
 ///
-bool computeRFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, const vector<Point2d>& cnrs, Mat& R)
+bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, const vector<Point2d>& cnrs, Mat& R, Mat& t)
 {
     assert((ref_cnrs.rows == 3) && (ref_cnrs.cols == 4));
     assert(cnrs.size() == 4);
     
-    /// Get view vectors for each corner and compute centroid.
+    /// Project square corners.
     double vec[3];
-    Mat tst_cnrs(4,3,CV_32FC1);
-    Mat tst_cntr = Mat::zeros(1,3, CV_32FC1);
-    Mat ref_cntr = Mat::zeros(3,1, CV_32FC1);
+    vector<CmPoint> cnr_vecs;
     for (int i = 0; i < 4; i++) {
         if (!cam_model->pixelToVector(cnrs[i].x, cnrs[i].y, vec)) {
             BOOST_LOG_TRIVIAL(error) << "Error finding square homography! Input points were invalid (" << cnrs[i].x << ", " << cnrs[i].y << ").";
             return false;
         }
         vec3normalise(vec);
-        tst_cnrs.at<float>(i,0) = vec[0];
-        tst_cnrs.at<float>(i,1) = vec[1];
-        tst_cnrs.at<float>(i,2) = vec[2];
-        
-        tst_cntr += tst_cnrs(Rect(0,i,3,1));
-        ref_cntr += ref_cnrs(Rect(i,0,1,3));
+        cnr_vecs.push_back(CmPoint(vec[0], vec[1], vec[2]));
     }
-    tst_cntr /= 4;
-    ref_cntr /= 4;
+
+    /// Minimise transform from reference corners.
+    SquareRT square(cnr_vecs, ref_cnrs);
+    double guess[6] = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01};
+    square.optimize(guess);
+    square.getOptX(guess);
+    double err = square.getOptF();
+
+    // printf("Minimised T: %.3f %.3f %.3f   R: %.3f %.3f %.3f   (%.4f)\n",
+        // guess[0], guess[1], guess[2], guess[3], guess[4], guess[5], err);
     
-    /// Compile covariance matrix
-    Mat cov = Mat::zeros(3,3,CV_32FC1);
-    for (int i = 0; i < 4; i++) {
-        cov += ref_cnrs(Rect(i,0,1,3)) * (tst_cnrs(Rect(0,i,3,1)) - tst_cntr);
-    }
-    
-    /// Compute SVD.
-    Mat w, u, vt;
-    cv::SVD::compute(cov, w, u, vt, cv::SVD::MODIFY_A);
-    
-    /// Compute R matrix (animal -> cam).
-    R = vt*u;
-    
-    /// Check for flip.
-    double det = cv::determinant(R);
-    if (det < 0) {
-        BOOST_LOG_TRIVIAL(debug) << "Flipping R";
-        R(Rect(2,0,1,3)) = -R(Rect(2,0,1,3));
-    }
+    /// Convert to mat.
+    t = (cv::Mat_<double>(3,1) << guess[0], guess[1], guess[2]);
+    R = angleAxisToMat(CmPoint(guess[3], guess[4], guess[5]));
     
     return true;
 }
 
 ///
-/// Wrapper for computing camera-animal R transform from XY square.
+/// Wrapper for computing camera-animal R+t transform from XY square.
 /// Square normal = animal Z axis. Corner ordering is TL (+X,-Y), TR (+X,+Y), BR (-X,+Y), BL (-X,-Y).
 ///
-bool computeRFromSquare_XY(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R)
+bool computeRtFromSquare_XY(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R, cv::Mat& t)
 {
-    /// Reference square corners - tl,tr,br,bl column-wise values.
-    // TL (+X,-Y), TR (+X,+Y), BR (-X,+Y), BL (-X,-Y)
-    static const Mat ref_cnrs = (cv::Mat_<float>(3,4) << 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.0, 0.0, 0.0, 0.0);
-    
-    return computeRFromSquare(cam_model, ref_cnrs, cnrs, R);
+    return computeRtFromSquare(cam_model, XY_CNRS, cnrs, R, t);
 }
 
 ///
-/// Wrapper for computing camera-animal R transform from YZ square.
+/// Wrapper for computing camera-animal R+t transform from YZ square.
 /// Square normal = animal X axis. Corner ordering is TL (-Y,-Z), TR (+Y,-Z), BR (+Y,+Z), BL (-Y,+Z).
 ///
-bool computeRFromSquare_YZ(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R)
+bool computeRtFromSquare_YZ(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R, cv::Mat& t)
 {
-    /// Reference square corners - tl,tr,br,bl column-wise values.
-    // TL (-Y,-Z), TR (+Y,-Z), BR (+Y,+Z), BL (-Y,+Z)
-    static const Mat ref_cnrs = (cv::Mat_<float>(3,4) << 0.0, 0.0, 0.0, 0.0, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5);
-    
-    return computeRFromSquare(cam_model, ref_cnrs, cnrs, R);
+    return computeRtFromSquare(cam_model, YZ_CNRS, cnrs, R, t);
 }
 
 ///
-/// Wrapper for computing camera-animal R transform from XZ square.
+/// Wrapper for computing camera-animal R+t transform from XZ square.
 /// Square normal = animal Y axis. Corner ordering is TL (+X,-Z), TR (-X,-Z), BR (-X,+Z), BL (+X,+Z).
 ///
-bool computeRFromSquare_XZ(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R)
+bool computeRtFromSquare_XZ(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R, cv::Mat& t)
 {
-    /// Reference square corners - tl,tr,br,bl column-wise values.
-    // TL (+X,-Z), TR (-X,-Z), BR (-X,+Z), BL (+X,+Z)
-    static const Mat ref_cnrs = (cv::Mat_<float>(3,4) << 0.5, -0.5, -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, -0.5, -0.5, 0.5, 0.5);
-    
-    return computeRFromSquare(cam_model, ref_cnrs, cnrs, R);
+    return computeRtFromSquare(cam_model, XZ_CNRS, cnrs, R, t);
 }
