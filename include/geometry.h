@@ -49,9 +49,14 @@ static inline void vec3scale(const CmReal a[3], CmReal b[3], CmReal s)
 	b[2] = a[2] * s;
 }
 
+static CmReal vec3normal(CmReal a[3])
+{
+	return sqrt(vec3dot(a,a));
+}
+
 static CmReal vec3normalise(CmReal a[3])
 {
-	CmReal mag = sqrt(vec3dot(a,a));
+	CmReal mag = vec3normal(a);
 	if (mag != 0)
 		vec3scale(a, 1.0/mag);
 	return mag;
@@ -71,6 +76,10 @@ static inline T clamp(T x, T min, T max)
     return (x<=min) ? min : (x>=max) ? max : x;
 }
 
+///
+/// configGui helper functions
+///
+
 /// Fit a plane to 3D points using the SVD method.
 bool planeFit_SVD(const std::vector<CmPoint>& points, CmPoint& normal);
 
@@ -79,3 +88,12 @@ size_t project2dPointsToUnitSphere(const std::vector<cv::Point2d>& pts2d, const 
 
 /// Fit circle to pixels, taking camera model into account.
 bool circleFit_camModel(const std::vector<cv::Point2d>& pix2d, const CameraModelPtr cam_model, CmPoint& c, double& r);
+
+/// Compute camera-animal R transform from YZ square.
+bool computeRFromSquare_XY(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R);
+
+/// Compute camera-animal R transform from YZ square.
+bool computeRFromSquare_YZ(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R);
+
+/// Compute camera-animal R transform from YZ square.
+bool computeRFromSquare_XZ(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R);

@@ -29,9 +29,17 @@ public:
     bool is_open() { return _open; }
     
     enum INPUT_MODE {
-        INIT,
+        CIRC_INIT,
         CIRC_PTS,
+        IGNR_INIT,
         IGNR_PTS,
+        R_INIT,
+        R_SLCT,
+        R_XY,
+        R_YZ,
+        R_XZ,
+        R_MAN,
+        R_EXT,
         EXIT
     };
     
@@ -39,10 +47,11 @@ public:
         cv::Point2d cursorPt;
         std::vector<cv::Point2d> circPts;
         std::vector<std::vector<cv::Point2d> > ignrPts;
+        std::vector<cv::Point2d> sqrePts;
         INPUT_MODE mode;
         
         INPUT_DATA() {
-            mode =  INIT;
+            mode =  CIRC_INIT;
             cursorPt.x = -1;
             cursorPt.y = -1;
             addPoly();
