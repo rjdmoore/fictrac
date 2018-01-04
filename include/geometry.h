@@ -87,12 +87,6 @@ static inline CmPoint mat2vec(const cv::Mat& mat)
     return CmPoint(mat.at<double>(0,0), mat.at<double>(1,0), mat.at<double>(2,0));
 }
 
-cv::Mat angleUnitAxisToMat(const double angle, const CmPoint axis);
-
-cv::Mat angleAxisToMat(const CmPoint angleAxis);
-
-CmPoint matToAngleAxis(const cv::Mat& m);
-
 ///
 /// configGui helper functions
 ///

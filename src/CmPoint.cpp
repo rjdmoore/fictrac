@@ -13,6 +13,12 @@
 /// Non-inline implementation - all <cmath> dependencies are in here
 ///-----------------------------------------------------------------------------
 
+template<typename T>
+static inline T clamp(T x, T min, T max)
+{
+    return (x<=min) ? min : (x>=max) ? max : x;
+}
+
 template <typename T>
 static inline void angleUnitAxisToMatrix(
 	T cosAngle, T sinAngle, const CmPointT<T>& axis, T m[9])
@@ -165,6 +171,25 @@ static inline void cmAngleAxisToQuat(T angle, CmPointT<T> axis, T q[4])
 #endif
 
 template <typename T>
+CmPointT<T>::CmPointT(T az, T el)
+: x(cos(az)*cos(el)), y(sin(az)*cos(el)), z(sin(el))
+{
+    // unit vector in x-z plane due to elevation
+    // [cos(el) 0 sin(el)]
+    // rotation by az around the z axis
+    // [ cos(az) -sin(az) 0
+	//   sin(az) cos(az)  0
+	//   0       0        1 ]
+    // =
+    // [ cos(az)cos(el)
+    //   sin(az)cos(el)
+    //   sin(el)        ]
+    
+    // ensure unit vector
+    normalise();
+}
+
+template <typename T>
 T CmPointT<T>::normalise()
 {
 	T mag = len();
@@ -227,6 +252,42 @@ void CmPointT<T>::omegaToMatrix(double R[9]) const
 	CmPointT<T> v = *this;
 	T angle = v.normalise();
 	angleUnitAxisToMatrix<double>(std::cos(angle), std::sin(angle), v, R);
+}
+
+template <typename T>
+cv::Mat_<T> CmPointT<T>::omegaToMatrix(const CmPointT<T>& omega)
+{
+    CmPointT<T> v = omega;
+	T angle = v.normalise();
+    static double R[9];
+	angleUnitAxisToMatrix<double>(std::cos(angle), std::sin(angle), v, R);
+    return (cv::Mat_<T>(3,3) << R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7], R[8]);
+}
+
+template <>
+CmPointT<double> CmPointT<double>::matrixToOmega(const cv::Mat_<double>& m)
+{
+    // make sure m is not ill-conditioned
+    double angle = acos(clamp((m.at<double>(0,0)+m.at<double>(1,1)+m.at<double>(2,2)-1)/2.0, -1.0, 1.0));
+    double sin_angle = sin(angle);
+    if( sin_angle != 0 ) { angle /= 2.0*sin_angle; }
+    return CmPointT<double>(
+        angle*(m.at<double>(2,1)-m.at<double>(1,2)),
+        angle*(m.at<double>(0,2)-m.at<double>(2,0)),
+        angle*(m.at<double>(1,0)-m.at<double>(0,1)));
+}
+
+template <typename T>
+void CmPointT<T>::omegaToAzElMag(T& az, T& el, T& mag) const
+{
+    CmPointT<T> v_(*this);
+    mag = v_.normalise();
+    T z_ = v_[2];
+    v_[2] = 0;
+    T xy_ = v_.normalise();
+    az = atan2(v_[1], v_[0]);
+    el = atan2(z_, xy_);
+    
 }
 
 template <typename T>

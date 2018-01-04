@@ -28,6 +28,7 @@ public:
 	CmPointT(const CvPoint3D32f& p) : x(p.x), y(p.y), z(p.z) {}
 	CmPointT(const CmPoint32f& p) : x(p.x), y(p.y), z(p.z) {}
 	CmPointT(const CmPoint64f& p) : x(p.x), y(p.y), z(p.z) {}
+    CmPointT(T az, T el);
 
 	/// Allow implicit conversion of scalar to CmPointT for scaling
 	CmPointT(T scale) : x(scale), y(scale), z(scale) {}
@@ -74,6 +75,11 @@ public:
 	///
 	void omegaToMatrix(float R[9]) const;
 	void omegaToMatrix(double R[9]) const;
+    
+    static cv::Mat_<T> omegaToMatrix(const CmPointT& omega);
+    static CmPointT<double> matrixToOmega(const cv::Mat_<double>& m);
+    
+    void omegaToAzElMag(T& az, T& el, T& mag) const;
 
 	///
 	/// Multiply this point by a 3x3 matrix and return the result.

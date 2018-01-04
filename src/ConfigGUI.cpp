@@ -199,6 +199,7 @@ bool ConfigGui::run()
     
     /// Display/input loop.
     Mat R, t;
+    Mat T = Mat::zeros(3,4,CV_64F);
     CmPoint c;
     double r = -1;
     char key = 0;
@@ -306,7 +307,7 @@ bool ConfigGui::run()
                 if (r > 0) { drawCircle_camModel(disp_frame, _cam_model, c, r, CV_RGB(255,0,0), false); }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS]);
+                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -431,7 +432,7 @@ bool ConfigGui::run()
                 if (r > 0) { drawCircle_camModel(disp_frame, _cam_model, c, r, CV_RGB(255,0,0), false); }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS]);
+                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -497,7 +498,7 @@ bool ConfigGui::run()
                 printf("\n  There are 5 possible methods for defining the animal's coordinate frame:\n");
                 printf("\n\t 1 (XY square) : [Default] Click the four corners of a square shape that is aligned with the animal's X-Y axes. This method is recommended when the camera is above/below the animal.\n");
                 printf("\n\t 2 (YZ square) : Click the four corners of a square shape that is aligned with the animal's Y-Z axes. This method is recommended when the camera is in front/behind the animal.\n");
-                printf("\n\t 3 (XZ square) : Click the four corners of a square shape that is aligned with the animal's X-Y axes. This method is recommended when the camera is to the animal's left/right.\n");
+                printf("\n\t 3 (XZ square) : Click the four corners of a square shape that is aligned with the animal's X-Z axes. This method is recommended when the camera is to the animal's left/right.\n");
                 printf("\n\t 4 (manual)    : Rotate a visualisation of the animal's coordinate frame to align with the orientation of the animal. This method is not recommended as it is inaccurate.\n");
                 printf("\n\t 5 (external)  : The transform between the camera and animal reference frames can also be defined by hand by editing the appropriate variables in the config file. This method is only recommended when the transform is known by some other means.\n");
                 
@@ -531,7 +532,7 @@ bool ConfigGui::run()
                             break;
                             
                         case 3:
-                            printf("\n\n\n  XZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
+                            printf("\n\n\n  XZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Z axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
                             // advance state
                             BOOST_LOG_TRIVIAL(debug) << "New state: R_XZ";
                             _input_data.mode = R_XZ;
@@ -563,7 +564,7 @@ bool ConfigGui::run()
             
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrePts) {
-                    cv::circle(disp_frame, click, click_rad, CV_RGB(0,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
@@ -574,7 +575,6 @@ bool ConfigGui::run()
                     }
                     
                     // make x4 mat for projecting corners
-                    Mat T = Mat::zeros(3,4,CV_64F);
                     for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
                     
                     // project reference corners
@@ -592,7 +592,7 @@ bool ConfigGui::run()
                 }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS]);
+                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -629,6 +629,12 @@ bool ConfigGui::run()
                     } else {
                         BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrePts.size() << " pts)!";
                     }
+                } else if (key == 0x66) {   // f
+                    /// Reflect R and re-minimise.
+                    if (!R.empty()) {
+                        R = -Mat::eye(3,3,CV_64F) * R;
+                        _input_data.newEvent = true;
+                    }
                 }
                 break;
             
@@ -637,7 +643,7 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrePts) {
-                    cv::circle(disp_frame, click, click_rad, CV_RGB(0,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
@@ -648,7 +654,6 @@ bool ConfigGui::run()
                     }
                     
                     // make x4 mat for projecting corners
-                    Mat T = Mat::zeros(3,4,CV_64F);
                     for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
                     
                     // project reference corners
@@ -666,7 +671,7 @@ bool ConfigGui::run()
                 }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS]);
+                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -703,6 +708,12 @@ bool ConfigGui::run()
                     } else {
                         BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrePts.size() << " pts)!";
                     }
+                } else if (key == 0x66) {   // f
+                    /// Reflect R and re-minimise.
+                    if (!R.empty()) {
+                        R = -Mat::eye(3,3,CV_64F) * R;
+                        _input_data.newEvent = true;
+                    }
                 }
                 break;
             
@@ -711,7 +722,7 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrePts) {
-                    cv::circle(disp_frame, click, click_rad, CV_RGB(0,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
@@ -722,7 +733,6 @@ bool ConfigGui::run()
                     }
                     
                     // make x4 mat for projecting corners
-                    Mat T = Mat::zeros(3,4,CV_64F);
                     for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
                     
                     // project reference corners
@@ -740,7 +750,7 @@ bool ConfigGui::run()
                 }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, COLOURS[static_cast<int>(_input_data.mode)%NCOLOURS]);
+                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -777,6 +787,12 @@ bool ConfigGui::run()
                     } else {
                         BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrePts.size() << " pts)!";
                     }
+                } else if (key == 0x66) {   // f
+                    /// Reflect R and re-minimise.
+                    if (!R.empty()) {
+                        R = -Mat::eye(3,3,CV_64F) * R;
+                        _input_data.newEvent = true;
+                    }
                 }
                 break;
             
@@ -796,14 +812,14 @@ bool ConfigGui::run()
                 _input_data.mode = EXIT;
                 break;
             
-            /// Exit config.
-            case EXIT:
-                key = exit_key;
-                break;
-            
             default:
                 BOOST_LOG_TRIVIAL(debug) << "Unexpected state encountered!";
                 _input_data.mode = EXIT;
+                // break;
+            
+            /// Exit config.
+            case EXIT:
+                key = exit_key;
                 break;
         }
         if (key == exit_key) { break; }
