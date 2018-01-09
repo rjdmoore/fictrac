@@ -139,9 +139,9 @@ bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, co
     square.optimize(guess);
     square.getOptX(guess);
     
-    double err = square.getOptF();
-    printf("Minimised R: %.6f %.6f %.6f   T: %.3f %.3f %.3f   (%.6f)\n",
-        guess[0], guess[1], guess[2], guess[3], guess[4], guess[5], err);
+    // double err = square.getOptF();
+    // printf("Minimised R: %.6f %.6f %.6f   T: %.3f %.3f %.3f   (%.6f)\n",
+        // guess[0], guess[1], guess[2], guess[3], guess[4], guess[5], err);
     
     /// Convert to mat.
     R = CmPoint64f::omegaToMatrix(CmPoint64f(guess[0], guess[1], guess[2]));

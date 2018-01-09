@@ -200,10 +200,11 @@ bool ConfigGui::run()
     /// Display/input loop.
     Mat R, t;
     Mat T = Mat::zeros(3,4,CV_64F);
-    CmPoint c;
+    CmPoint c, angleAxis;
     double r = -1;
     char key = 0;
     vector<int> cfg_pts;
+    vector<double> cfg_vec;
     vector<vector<int> > cfg_polys;
     BOOST_LOG_TRIVIAL(debug) << "New state: INIT";
     _input_data.mode = CIRC_INIT;
@@ -245,7 +246,7 @@ bool ConfigGui::run()
                             cv::imshow("configGUI", disp_frame);
                             cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
                             
-                            printf("\n\n\n  Sphere circumference points were found in the config file. You can discard these points and re-run config or keep the existing points.\n");
+                            printf("\n\n\n  Sphere circumference points were found in the config file.\n  You can discard these points and re-run config or keep the existing points.\n");
                             
                             // input loop
                             while (true) {
@@ -377,7 +378,7 @@ bool ConfigGui::run()
                     cv::imshow("configGUI", disp_frame);
                     cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
                     
-                    printf("\n\n\n  Ignore region points were found in the config file. You can discard these points and re-run config or keep the existing points.\n");
+                    printf("\n\n\n  Ignore region points were found in the config file.\n  You can discard these points and re-run config or keep the existing points.\n");
                     
                     // input loop
                     while (true) {
@@ -493,7 +494,6 @@ bool ConfigGui::run()
                 printf("\n\n\n  Define the animal's coordinate frame.\n\n  You must now define the reference frame of the animal, from the perspective of the camera.\n  This allows FicTrac to convert rotations of the ball into walking and turning motions for the animal.\n");
                 printf("  The camera's reference frame is defined as: X = image right (cols); Y = image down (rows); Z = into image (out from camera)\n");
                 printf("  The animal's reference frame is defined as: X = forward; Y = right; Z = down\n");
-                printf("  Note: the rotational transformation from the camera to the animal reference frame must be accurate, otherwise the data output by FicTrac for the animal will be incorrect!\n");
                 
                 printf("\n  There are 5 possible methods for defining the animal's coordinate frame:\n");
                 printf("\n\t 1 (XY square) : [Default] Click the four corners of a square shape that is aligned with the animal's X-Y axes. This method is recommended when the camera is above/below the animal.\n");
@@ -518,21 +518,21 @@ bool ConfigGui::run()
                     switch (in)
                     {
                         case 1:
-                            printf("\n\n\n  XY-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Y), (+X,+Y), (-X,+Y), (-X,-Y). If your camera is looking down on the animal from above, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is below the animal, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
+                            printf("\n\n\n  XY-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Y), (+X,+Y), (-X,+Y), (-X,-Y). If your camera is looking down on the animal from above, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is below the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit...\n\n");
                             // advance state
                             BOOST_LOG_TRIVIAL(debug) << "New state: R_XY";
                             _input_data.mode = R_XY;
                             break;
                             
                         case 2:
-                            printf("\n\n\n  YZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's Y-Z axes. The corners must be clicked in the following order: (-Y,-Z), (+Y,-Z), (+Y,+Z), (-Y,+Z). If your camera is behind the animal, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is in front of the animal, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
+                            printf("\n\n\n  YZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's Y-Z axes. The corners must be clicked in the following order: (-Y,-Z), (+Y,-Z), (+Y,+Z), (-Y,+Z). If your camera is behind the animal, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is in front of the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit...\n\n");
                             // advance state
                             BOOST_LOG_TRIVIAL(debug) << "New state: R_YZ";
                             _input_data.mode = R_YZ;
                             break;
                             
                         case 3:
-                            printf("\n\n\n  XZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Z axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Press ENTER when you are satisfied with the selected corners, or press ESC to exit...\n\n");
+                            printf("\n\n\n  XZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Z axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit...\n\n");
                             // advance state
                             BOOST_LOG_TRIVIAL(debug) << "New state: R_XZ";
                             _input_data.mode = R_XZ;
@@ -604,7 +604,7 @@ bool ConfigGui::run()
                 
                 /// State machine logic.
                 if (key == enter_key) {
-                    if (_input_data.sqrePts.size() == 4) {
+                    if ((_input_data.sqrePts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
                         cfg_pts.clear();
                         for (auto p : _input_data.sqrePts) {
@@ -615,12 +615,23 @@ bool ConfigGui::run()
                         // write to config file
                         BOOST_LOG_TRIVIAL(info) << "Adding sqr_cnrs_xy to config file and writing to disk (" << _config_fn << ")...";
                         _cfg.add("sqr_cnrs_xy", cfg_pts);
+                        
+                        // dump R to config file
+                        cfg_vec.clear();
+                        angleAxis = CmPoint64f::matrixToOmega(R);
+                        for (int i = 0; i < 3; i++) { cfg_vec.push_back(angleAxis[i]); }
+                        
+                        // write to config file
+                        BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
+                        _cfg.add("R_c2a", cfg_vec);
+                        
                         assert(_cfg.write() > 0);
                         
                         // test read
-                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading roi_circ...";
+                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading sqr_cnrs_xy, R_c2a...";
                         _cfg.read(_config_fn);
                         assert(_cfg.getVecInt("sqr_cnrs_xy", cfg_pts));
+                        assert(_cfg.getVecDbl("R_c2a", cfg_vec));
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
@@ -632,7 +643,7 @@ bool ConfigGui::run()
                 } else if (key == 0x66) {   // f
                     /// Reflect R and re-minimise.
                     if (!R.empty()) {
-                        R = -Mat::eye(3,3,CV_64F) * R;
+                        R.col(2) *= -1;
                         _input_data.newEvent = true;
                     }
                 }
@@ -694,12 +705,23 @@ bool ConfigGui::run()
                         // write to config file
                         BOOST_LOG_TRIVIAL(info) << "Adding sqr_cnrs_yz to config file and writing to disk (" << _config_fn << ")...";
                         _cfg.add("sqr_cnrs_yz", cfg_pts);
+                        
+                        // dump R to config file
+                        cfg_vec.clear();
+                        angleAxis = CmPoint64f::matrixToOmega(R);
+                        for (int i = 0; i < 3; i++) { cfg_vec.push_back(angleAxis[i]); }
+                        
+                        // write to config file
+                        BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
+                        _cfg.add("R_c2a", cfg_vec);
+                        
                         assert(_cfg.write() > 0);
                         
                         // test read
-                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading roi_circ...";
+                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading sqr_cnrs_yz, R_c2a...";
                         _cfg.read(_config_fn);
                         assert(_cfg.getVecInt("sqr_cnrs_yz", cfg_pts));
+                        assert(_cfg.getVecDbl("R_c2a", cfg_vec));
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
@@ -711,7 +733,7 @@ bool ConfigGui::run()
                 } else if (key == 0x66) {   // f
                     /// Reflect R and re-minimise.
                     if (!R.empty()) {
-                        R = -Mat::eye(3,3,CV_64F) * R;
+                        R.col(2) *= -1;
                         _input_data.newEvent = true;
                     }
                 }
@@ -773,12 +795,23 @@ bool ConfigGui::run()
                         // write to config file
                         BOOST_LOG_TRIVIAL(info) << "Adding sqr_cnrs_xz to config file and writing to disk (" << _config_fn << ")...";
                         _cfg.add("sqr_cnrs_xz", cfg_pts);
+                        
+                        // dump R to config file
+                        cfg_vec.clear();
+                        angleAxis = CmPoint64f::matrixToOmega(R);
+                        for (int i = 0; i < 3; i++) { cfg_vec.push_back(angleAxis[i]); }
+                        
+                        // write to config file
+                        BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
+                        _cfg.add("R_c2a", cfg_vec);
+                        
                         assert(_cfg.write() > 0);
                         
                         // test read
-                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading roi_circ...";
+                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading sqr_cnrs_xz, R_c2a...";
                         _cfg.read(_config_fn);
                         assert(_cfg.getVecInt("sqr_cnrs_xz", cfg_pts));
+                        assert(_cfg.getVecDbl("R_c2a", cfg_vec));
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
@@ -790,7 +823,7 @@ bool ConfigGui::run()
                 } else if (key == 0x66) {   // f
                     /// Reflect R and re-minimise.
                     if (!R.empty()) {
-                        R = -Mat::eye(3,3,CV_64F) * R;
+                        R.col(2) *= -1;
                         _input_data.newEvent = true;
                     }
                 }
@@ -798,6 +831,16 @@ bool ConfigGui::run()
             
             /// Define animal coordinate frame.
             case R_MAN:
+            
+                /// Draw axes.
+                
+                
+                // draw re-projected animal axes.
+                if (r > 0) {
+                    double scale = 1.0/tan(r);
+                    Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
+                    drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
+                }
                 
                 // advance state
                 BOOST_LOG_TRIVIAL(debug) << "New state: EXIT";

@@ -267,6 +267,9 @@ cv::Mat_<T> CmPointT<T>::omegaToMatrix(const CmPointT<T>& omega)
 template <>
 CmPointT<double> CmPointT<double>::matrixToOmega(const cv::Mat_<double>& m)
 {
+    assert((m.rows == 3) && (m.cols == 3));
+    assert(m.depth() == CV_64F);
+                        
     // make sure m is not ill-conditioned
     double angle = acos(clamp((m.at<double>(0,0)+m.at<double>(1,1)+m.at<double>(2,2)-1)/2.0, -1.0, 1.0));
     double sin_angle = sin(angle);
