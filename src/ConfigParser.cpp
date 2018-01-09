@@ -179,6 +179,37 @@ bool ConfigParser::getVecInt(std::string key, vector<int>& val) {
 }
 
 ///
+/// Retrieve vector of double values corresponding to specified key from map.
+///
+bool ConfigParser::getVecDbl(std::string key, vector<double>& val) {
+    /// Get value string.
+    string str;
+    const string whitespace = ", \t\n";
+    if (getStr(key, str)) {
+        val.clear();
+        
+        // start array from opening bracket
+        size_t begin, end = str.find_first_of("{");
+        while (end != string::npos) {
+            // extract value
+            begin = str.find_first_not_of(whitespace, end+1);
+            end = str.find_first_of(whitespace, begin);
+            string s = str.substr(begin,end-begin);
+            
+            // break when we hit closing bracket
+            if (s.substr(0,1) == "}") { break; }
+            try { val.push_back(stod(s)); }
+            catch (std::exception& e) {
+                BOOST_LOG_TRIVIAL(error) << "Error parsing config file value (" << key << " : " << s << ") as DBL! Error was: " << e.what();
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+///
 /// Retrieve vector of vector of int values corresponding to specified key from map.
 ///
 bool ConfigParser::getVVecInt(std::string key, vector<vector<int> >& val) {

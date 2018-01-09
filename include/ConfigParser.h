@@ -28,6 +28,7 @@ public:
     bool getInt(std::string key, int& val);
     bool getDbl(std::string key, double& val);
     bool getVecInt(std::string key, std::vector<int>& val);
+    bool getVecDbl(std::string key, std::vector<double>& val);
     bool getVVecInt(std::string key, std::vector<std::vector<int> >& val);
 
     /// Write access
