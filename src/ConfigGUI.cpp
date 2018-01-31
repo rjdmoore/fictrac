@@ -203,13 +203,18 @@ bool ConfigGui::run()
     CmPoint c, angleAxis;
     double r = -1;
     char key = 0;
+    string val;
     vector<int> cfg_pts;
     vector<double> cfg_vec;
     vector<vector<int> > cfg_polys;
     BOOST_LOG_TRIVIAL(debug) << "New state: INIT";
     _input_data.mode = CIRC_INIT;
     const char exit_key = 0x1b;
+#ifdef WIN32
+    const char enter_key = 0x0d;
+#else
     const char enter_key = 0x0a;
+#endif
     const int click_rad = std::max(int(_w/150+0.5), 5);
     Mat disp_frame, zoom_frame(ZOOM_DIM, ZOOM_DIM, CV_8UC1);
     const int scaled_zoom_dim = ZOOM_DIM * ZOOM_SCL;
@@ -281,6 +286,7 @@ bool ConfigGui::run()
                 
                 if (_input_data.mode == CIRC_INIT) {
                     _input_data.circPts.clear();
+                    _input_data.newEvent = true;
                     printf("\n\n\n  Define the circumference of the track ball.\n\n  Use the left mouse button to add new points.\n  You must select at least 3 (but preferably 6+) points around the circumference of the track ball.\n  NOTE! Be careful to place points only on the circumference of the track ball,\nand not along the outline of the visible track ball where the actual circumference has been partially obscured.\n  You can use the right mouse button to remove the last added point.\n  The fitted circumference is drawn in red.\n\n  Press ENTER when you are satisfied with the fitted circumference, or press ESC to exit...\n\n");
                     BOOST_LOG_TRIVIAL(debug) << "New state: CIRC_PTS";
                     _input_data.mode = CIRC_PTS;
@@ -289,6 +295,7 @@ bool ConfigGui::run()
             
             /// Input circumference points.
             case CIRC_PTS:
+
                 /// Fit circular FoV to sphere.
                 if (_input_data.newEvent) {
                     if (_input_data.circPts.size() >= 3) {
@@ -411,6 +418,7 @@ bool ConfigGui::run()
                 
                 if (_input_data.mode == IGNR_INIT) {
                     _input_data.ignrPts.clear();
+                    _input_data.newEvent = true;
                     printf("\n\n\n  Define ignore regions.\n\n  Use the left mouse button to add points to a new polygon.\n  Polygons can be drawn around objects (such as the animal) that block the view of the track ball.\n  You can use the right mouse button to remove the last added point.\n\n  Press ENTER to start a new polygon, or press ENTER twice when you are satisfied with the selected ignore regions, or press ESC to exit...\n\n");
                     BOOST_LOG_TRIVIAL(debug) << "New state: IGNR_PTS";
                     _input_data.mode = IGNR_PTS;
@@ -499,7 +507,7 @@ bool ConfigGui::run()
                 printf("\n\t 1 (XY square) : [Default] Click the four corners of a square shape that is aligned with the animal's X-Y axes. This method is recommended when the camera is above/below the animal.\n");
                 printf("\n\t 2 (YZ square) : Click the four corners of a square shape that is aligned with the animal's Y-Z axes. This method is recommended when the camera is in front/behind the animal.\n");
                 printf("\n\t 3 (XZ square) : Click the four corners of a square shape that is aligned with the animal's X-Z axes. This method is recommended when the camera is to the animal's left/right.\n");
-                printf("\n\t 4 (manual)    : Rotate a visualisation of the animal's coordinate frame to align with the orientation of the animal. This method is not recommended as it is inaccurate.\n");
+                // printf("\n\t 4 (manual)    : Rotate a visualisation of the animal's coordinate frame to align with the orientation of the animal. This method is not recommended as it is inaccurate.\n");
                 printf("\n\t 5 (external)  : The transform between the camera and animal reference frames can also be defined by hand by editing the appropriate variables in the config file. This method is only recommended when the transform is known by some other means.\n");
                 
                 // input loop
@@ -538,11 +546,11 @@ bool ConfigGui::run()
                             _input_data.mode = R_XZ;
                             break;
                             
-                        case 4:
-                            // advance state
-                            BOOST_LOG_TRIVIAL(debug) << "New state: R_MAN";
-                            _input_data.mode = R_MAN;
-                            break;
+                        // case 4:
+                            // // advance state
+                            // BOOST_LOG_TRIVIAL(debug) << "New state: R_MAN";
+                            // _input_data.mode = R_MAN;
+                            // break;
                             
                         case 5:
                             // advance state
@@ -624,6 +632,7 @@ bool ConfigGui::run()
                         // write to config file
                         BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
                         _cfg.add("R_c2a", cfg_vec);
+                        _cfg.add("R_src", string("sqr_cnrs_xy"));
                         
                         assert(_cfg.write() > 0);
                         
@@ -714,6 +723,7 @@ bool ConfigGui::run()
                         // write to config file
                         BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
                         _cfg.add("R_c2a", cfg_vec);
+                        _cfg.add("R_src", string("sqr_cnrs_yz"));
                         
                         assert(_cfg.write() > 0);
                         
@@ -804,6 +814,7 @@ bool ConfigGui::run()
                         // write to config file
                         BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
                         _cfg.add("R_c2a", cfg_vec);
+                        _cfg.add("R_src", string("sqr_cnrs_xz"));
                         
                         assert(_cfg.write() > 0);
                         
@@ -829,26 +840,39 @@ bool ConfigGui::run()
                 }
                 break;
             
-            /// Define animal coordinate frame.
-            case R_MAN:
+            // /// Define animal coordinate frame.
+            // case R_MAN:
             
-                /// Draw axes.
+                // /// Draw axes.
                 
                 
-                // draw re-projected animal axes.
-                if (r > 0) {
-                    double scale = 1.0/tan(r);
-                    Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
-                    drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
-                }
+                // // draw re-projected animal axes.
+                // if (r > 0) {
+                    // double scale = 1.0/tan(r);
+                    // Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
+                    // drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
+                // }
                 
-                // advance state
-                BOOST_LOG_TRIVIAL(debug) << "New state: EXIT";
-                _input_data.mode = EXIT;
-                break;
+                // // advance state
+                // BOOST_LOG_TRIVIAL(debug) << "New state: EXIT";
+                // _input_data.mode = EXIT;
+                // break;
             
             /// Define animal coordinate frame.
             case R_EXT:
+
+                // ensure R_c2a exists in config file
+                if (!_cfg.getStr("R_c2a", val)) {
+                    cfg_vec.clear();
+                    cfg_vec.resize(3, 0);
+
+                    // write to config file
+                    BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
+                    _cfg.add("R_c2a", cfg_vec);
+                }
+                _cfg.add("R_src", string("ext"));
+
+                assert(_cfg.write() > 0);
             
                 // advance state
                 BOOST_LOG_TRIVIAL(debug) << "New state: EXIT";
@@ -865,9 +889,6 @@ bool ConfigGui::run()
                 key = exit_key;
                 break;
         }
-        if (key == exit_key) { break; }
-        
-        
     }
     
     BOOST_LOG_TRIVIAL(info) << "Exiting configGui!";

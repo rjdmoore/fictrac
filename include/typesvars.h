@@ -11,7 +11,7 @@
 typedef double CmReal;
 typedef CmPointT<CmReal> CmPoint;
 
-static const CmReal CM_PI   = 3.14159265358979323846;
-static const CmReal CM_PI_2 = 1.57079632679489661923;
-static const CmReal CM_R2D  = 180.0 / CM_PI;
-static const CmReal CM_D2R  = CM_PI / 180.0;
+const CmReal CM_PI   = 3.14159265358979323846;
+const CmReal CM_PI_2 = 1.57079632679489661923;
+const CmReal CM_R2D  = 180.0 / CM_PI;
+const CmReal CM_D2R  = CM_PI / 180.0;

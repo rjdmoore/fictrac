@@ -72,13 +72,12 @@ nlopt_result NLoptFunc::optimize(const double *xInit)
 
 	/// Clamp initial _x value to within bounds by a certain fraction of range.
 	const double boundaryFraction = 0.01;
-	double lb[_x.size()];
-	double ub[_x.size()];
-	nlopt_get_lower_bounds(_opt, lb);
-	nlopt_get_upper_bounds(_opt, ub);
+    std::vector<double> _lb(_x.size()), _ub(_x.size());
+	nlopt_get_lower_bounds(_opt, _lb.data());
+	nlopt_get_upper_bounds(_opt, _ub.data());
 	for (unsigned i=0; i<_x.size(); ++i) {
-		double a = lb[i];
-		double b = ub[i];
+		double a = _lb[i];
+		double b = _ub[i];
 		if (a > b)
 			std::swap(a,b);
 		double offset = (b - a) * boundaryFraction;

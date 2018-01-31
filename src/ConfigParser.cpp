@@ -99,6 +99,9 @@ int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
     /// Clean up
     long nbytes = f.tellp();
     f.close();
+
+    BOOST_LOG_TRIVIAL(debug) << "Wrote " << nbytes << " to disk!";
+
     return nbytes;
 }
 

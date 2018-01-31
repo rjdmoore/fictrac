@@ -17,7 +17,7 @@ using cv::Point2d;
 void drawCircle_camModel(Mat& img, const CameraModelPtr cam_model, const CmPoint c, const double r, const cv::Scalar colour, bool solid)
 {
     const int nsegs = 64;
-    const double angleStep = 2 * M_PI / nsegs;
+    const double angleStep = 2 * CM_PI / nsegs;
     
     /// Get initial circumference vector.
     CmPoint p0 = c.getRotatedAboutOrthVec(r);

@@ -34,6 +34,9 @@ public:
     /// Write access
     template<typename T>
     void add(std::string key, T& val) { _string_data[key] = std::to_string(val); }
+
+    // special case: string
+    void add(std::string key, std::string val) { _string_data[key] = val; }
     
     // special case: vector
     template<typename T>
