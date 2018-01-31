@@ -33,3 +33,6 @@
 
 # Data dir
 data
+*.lastbuildstate
+*.db
+*.props
