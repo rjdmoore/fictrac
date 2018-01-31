@@ -18,7 +18,7 @@ SOURCES := $(shell find $(SRCDIR) -type f -name *.cpp)
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/src/%,$(SOURCES:.cpp=.o))
 
 # Build flags
-CFLAGS := -O3 -Wall -c -fmessage-length=0 -std=c++11 -Wno-unused-function -march=native -DBOOST_LOG_DYN_LINK
+CFLAGS := -Ofast -Wall -c -fmessage-length=0 -std=c++11 -Wno-unused-function -march=native -DBOOST_LOG_DYN_LINK
 INCL := -I $(INCLDIR)
 LDFLAGS := -L $(LIBDIR)
 LDLIBS := -lfictrac -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_video -lboost_log -lboost_log_setup -lboost_filesystem -lboost_system -lboost_thread -lpthread -lnlopt

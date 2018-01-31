@@ -21,17 +21,16 @@ int main(int argc, char *argv[])
 {
     /// Init logging.
     logging::init();
+
+    BOOST_LOG_TRIVIAL(info) << "configGui:\tA GUI for configuring FicTrac.\n\nThis program should be run once for each new input source (or if the camera is moved).\n";
+    BOOST_LOG_TRIVIAL(info) << "Usage: " << argv[0] << " INPUT -c CONFIG_FN [-v LOG_VERBOSITY]\n";
     
     /// Parse args.
     string input_fn = "0";     // default to primary webcam
     string log_level = "info";
     string config_fn = "config.txt";
     for (int i = 1; i < argc; ++i) {
-        if ((string(argv[i]) == "--help") || (string(argv[i]) == "-h")) {
-            printf("\nconfigGui:\tA GUI for configuring FicTrac.\n\t\tThis program should be run once for each new input source (or if the camera is moved).\n");
-            printf("\nUsage: %s INPUT -c CONFIG_FN [-v LOG_VERBOSITY]\n\n", argv[0]);
-            return 0;
-        } else if ((string(argv[i]) == "--verbosity") || (string(argv[i]) == "-v")) {
+        if ((string(argv[i]) == "--verbosity") || (string(argv[i]) == "-v")) {
             if (++i < argc) {
                 log_level = argv[i];
             } else {
