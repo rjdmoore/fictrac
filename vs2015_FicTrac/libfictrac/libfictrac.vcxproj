@@ -92,7 +92,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\richardm\Google Drive\Development\fictrac\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -144,6 +144,7 @@
     <ClInclude Include="..\..\include\SharedPointers.h" />
     <ClInclude Include="..\..\include\SquareRT.h" />
     <ClInclude Include="..\..\include\typesvars.h" />
+    <ClInclude Include="Trackball.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\CameraModel.cpp" />
@@ -156,6 +157,7 @@
     <ClCompile Include="..\..\src\NLoptFunc.cpp" />
     <ClCompile Include="..\..\src\RectilinearCameraModel.cpp" />
     <ClCompile Include="..\..\src\SquareRT.cpp" />
+    <ClCompile Include="Trackball.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
