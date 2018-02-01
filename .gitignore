@@ -31,8 +31,14 @@
 *.out
 *.app
 
-# Data dir
-data
+# VS
 *.lastbuildstate
 *.db
 *.props
+*.tlog
+
+# Build dirs
+vs2015_FicTrac/x64/
+
+# Data dir
+data

@@ -10,6 +10,9 @@
 #include <string>
 #include <vector>
 
+///
+/// Config file parser.
+///
 class ConfigParser
 {
 public:

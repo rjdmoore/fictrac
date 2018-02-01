@@ -17,15 +17,24 @@
 using std::string;
 using std::vector;
 
+///
+/// Default constructor.
+///
 ConfigParser::ConfigParser()
 {
 }
 
+///
+/// Construct and parse given config file.
+///
 ConfigParser::ConfigParser(string fn)
 {
     read(fn);
 }
 
+///
+/// Default destructor.
+///
 ConfigParser::~ConfigParser()
 {
 }
