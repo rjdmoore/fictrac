@@ -8,10 +8,9 @@
 
 #include "CameraModel.h"
 #include "SquareRT.h"
+#include "logging.h"
 
 #include <opencv2/opencv.hpp>
-
-#include <boost/log/trivial.hpp>
 
 #include <cmath>    // sqrt, cos, sin
 #include <vector>

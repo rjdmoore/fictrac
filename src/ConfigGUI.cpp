@@ -15,7 +15,6 @@
 #include "drawing.h"
 #include "logging.h"
 
-#include <vector>   // vector
 #include <cassert>  // assert
 #include <iostream> // getline, stoi
 #include <cstdio>   // getchar
