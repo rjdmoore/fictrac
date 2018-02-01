@@ -48,7 +48,7 @@
     <ClInclude Include="..\..\include\typesvars.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Trackball.h">
+    <ClInclude Include="..\..\include\Trackball.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -83,7 +83,7 @@
     <ClCompile Include="..\..\src\SquareRT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Trackball.cpp">
+    <ClCompile Include="..\..\src\Trackball.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

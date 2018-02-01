@@ -143,8 +143,8 @@
     <ClInclude Include="..\..\include\NLoptFunc.h" />
     <ClInclude Include="..\..\include\SharedPointers.h" />
     <ClInclude Include="..\..\include\SquareRT.h" />
+    <ClInclude Include="..\..\include\Trackball.h" />
     <ClInclude Include="..\..\include\typesvars.h" />
-    <ClInclude Include="Trackball.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\CameraModel.cpp" />
@@ -157,7 +157,7 @@
     <ClCompile Include="..\..\src\NLoptFunc.cpp" />
     <ClCompile Include="..\..\src\RectilinearCameraModel.cpp" />
     <ClCompile Include="..\..\src\SquareRT.cpp" />
-    <ClCompile Include="Trackball.cpp" />
+    <ClCompile Include="..\..\src\Trackball.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
