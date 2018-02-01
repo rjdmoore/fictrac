@@ -33,3 +33,7 @@
 
 # Data dir
 data
+vs2015_FicTrac/x64/
+*.lastbuildstate
+*.tlog
+*.db
