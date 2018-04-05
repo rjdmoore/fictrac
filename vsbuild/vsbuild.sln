@@ -1,11 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2005
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libfictrac", "libfictrac\libfictrac.vcxproj", "{849064B9-DB4A-455D-951E-147B82BE9EC2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "configGui", "configGui\configGui.vcxproj", "{489C69DA-5C41-4292-9ECD-D73B249B16E8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{849064B9-DB4A-455D-951E-147B82BE9EC2} = {849064B9-DB4A-455D-951E-147B82BE9EC2}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,14 +18,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{09F6B1C5-D5D9-4366-9CD6-71AF0C3DECB4}.Debug|x64.ActiveCfg = Debug|x64
-		{09F6B1C5-D5D9-4366-9CD6-71AF0C3DECB4}.Debug|x64.Build.0 = Debug|x64
-		{09F6B1C5-D5D9-4366-9CD6-71AF0C3DECB4}.Debug|x86.ActiveCfg = Debug|Win32
-		{09F6B1C5-D5D9-4366-9CD6-71AF0C3DECB4}.Debug|x86.Build.0 = Debug|Win32
-		{09F6B1C5-D5D9-4366-9CD6-71AF0C3DECB4}.Release|x64.ActiveCfg = Release|x64
-		{09F6B1C5-D5D9-4366-9CD6-71AF0C3DECB4}.Release|x64.Build.0 = Release|x64
-		{09F6B1C5-D5D9-4366-9CD6-71AF0C3DECB4}.Release|x86.ActiveCfg = Release|Win32
-		{09F6B1C5-D5D9-4366-9CD6-71AF0C3DECB4}.Release|x86.Build.0 = Release|Win32
 		{849064B9-DB4A-455D-951E-147B82BE9EC2}.Debug|x64.ActiveCfg = Debug|x64
 		{849064B9-DB4A-455D-951E-147B82BE9EC2}.Debug|x64.Build.0 = Debug|x64
 		{849064B9-DB4A-455D-951E-147B82BE9EC2}.Debug|x86.ActiveCfg = Debug|Win32
@@ -42,5 +37,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9F3FF9B4-DF65-42C4-BD28-20A8CCBA7199}
 	EndGlobalSection
 EndGlobal
