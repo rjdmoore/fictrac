@@ -104,7 +104,6 @@ bool circleFit_camModel(const vector<Point2d>& pix2d, const CameraModelPtr cam_m
 ///
 /// Compute camera-animal R+t transform from supplied square corners.
 ///
-//FIXME: remove branching for Mat t depth
 bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, const vector<Point2d>& cnrs, Mat& R, Mat& t)
 {
     assert((ref_cnrs.rows == 3) && (ref_cnrs.cols == 4));

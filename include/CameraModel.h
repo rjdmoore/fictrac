@@ -160,7 +160,7 @@ public:
 	static void continuousToIndex(
 		CmReal& cx, CmReal& cy, int& ix, int& iy)
 	{
-		ix = cx - (CmReal)0.5;  iy = cy - (CmReal)0.5;
+		ix = static_cast<int>(cx - (CmReal)0.5);  iy = static_cast<int>(cy - (CmReal)0.5);
 	}
 	static void continuousToIndex(
 		CmReal& cx, CmReal& cy, CmReal& ix, CmReal& iy)

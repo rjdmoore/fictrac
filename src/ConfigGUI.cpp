@@ -6,6 +6,9 @@
 
 //TODO: check config.is_open()
 //TODO: Add support for fisheye camera model.
+//TODO: replace assert calls
+
+#undef NDEBUG	// needed to keep asserts
 
 #include "ConfigGui.h"
 
@@ -71,7 +74,7 @@ void onMouseEvent(int event, int x, int y, int f, void* ptr)
                 case ConfigGui::R_XY:
                 case ConfigGui::R_YZ:
                 case ConfigGui::R_XZ:
-                    pdata->sqrePts.push_back(Point2d(x,y));
+                    pdata->sqrPts.push_back(Point2d(x,y));
                     pdata->newEvent = true;
                     break;
                     
@@ -101,7 +104,7 @@ void onMouseEvent(int event, int x, int y, int f, void* ptr)
                 case ConfigGui::R_XY:
                 case ConfigGui::R_YZ:
                 case ConfigGui::R_XZ:
-                    if (pdata->sqrePts.size() > 0) { pdata->sqrePts.pop_back(); }
+                    if (pdata->sqrPts.size() > 0) { pdata->sqrPts.pop_back(); }
                     pdata->newEvent = true;
                     break;
                     
@@ -186,6 +189,112 @@ bool ConfigGui::setFrame(Mat& frame)
 }
 
 ///
+/// Write camera-animal transform to config file.
+///
+bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
+{
+	string sqr_type = "";
+	switch (_input_data.mode) {
+		case R_XY:
+			sqr_type = "sqr_cnrs_xy";
+			break;
+		case R_YZ:
+			sqr_type = "sqr_cnrs_yz";
+			break;
+		case R_XZ:
+			sqr_type = "sqr_cnrs_xz";
+			break;
+	}
+
+	// dump corner points to config file
+	vector<int> cfg_pts;
+	for (auto p : _input_data.sqrPts) {
+		cfg_pts.push_back(p.x);
+		cfg_pts.push_back(p.y);
+	}
+
+	// write to config file
+	BOOST_LOG_TRIVIAL(info) << "Adding " << sqr_type << " to config file and writing to disk (" << _config_fn << ")...";
+	_cfg.add(sqr_type, cfg_pts);
+	_cfg.add("c2a_src", sqr_type);
+
+	// dump R to config file
+	vector<double> cfg_R, cfg_t;
+	CmPoint angleAxis = CmPoint64f::matrixToOmega(R);
+	for (int i = 0; i < 3; i++) {
+		cfg_R.push_back(angleAxis[i]);
+		cfg_t.push_back(t.at<double>(i, 0));
+	}
+
+	// write to config file
+	BOOST_LOG_TRIVIAL(info) << "Adding R_c2a, t_c2a, and c2a_src to config file and writing to disk (" << _config_fn << ")...";
+	_cfg.add("R_c2a", cfg_R);
+	_cfg.add("t_c2a", cfg_t);
+
+	if (_cfg.write() <= 0) {
+		BOOST_LOG_TRIVIAL(error) << "Bad write!";
+		return false;
+	}
+
+	// test read
+	BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading " << sqr_type << ", R_c2a, t_c2a...";
+	_cfg.read(_config_fn);
+
+	if (!_cfg.getVecInt(sqr_type, cfg_pts) || !_cfg.getVecDbl("R_c2a", cfg_R) || !_cfg.getVecDbl("t_c2a", cfg_t)) {
+		BOOST_LOG_TRIVIAL(error) << "Bad read!";
+		return false;
+	}
+
+	return true;
+}
+
+///
+/// Update animal coordinate frame estimate.
+///
+bool ConfigGui::updateC2ATransform(const Mat& ref_cnrs, Mat& R, Mat& t)
+{
+	bool ret = false;
+	if (_input_data.newEvent) {
+		ret = computeRtFromSquare(_cam_model, ref_cnrs, _input_data.sqrPts, R, t);
+		_input_data.newEvent = false;
+	}
+	return ret;
+}
+
+///
+/// Draw animal coordinate frame axes.
+///
+void ConfigGui::drawC2ATransform(Mat& disp_frame, const Mat& ref_cnrs, const Mat& R, const Mat& t, const double& r, const CmPoint& c)
+{
+	// make x4 mat for projecting corners
+	Mat T(3, 4, CV_64F);
+	for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
+
+	// project reference corners
+	Mat p = R * ref_cnrs + T;
+
+	// draw re-projected reference corners
+	drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0, 255, 0));
+
+	// draw re-projected animal axes.
+	if (r > 0) {
+		double scale = 1.0 / tan(r);
+		Mat so = (cv::Mat_<double>(3, 1) << c.x, c.y, c.z) * scale;
+		drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0, 0, 255));
+	}
+}
+
+///
+/// Utility function for changing state machine state.
+///
+void ConfigGui::changeState(INPUT_MODE new_state)
+{
+	_input_data.newEvent = true;
+	BOOST_LOG_TRIVIAL(debug) << "New state: " << INPUT_MODE_STR[static_cast<int>(new_state)];
+	_input_data.mode = new_state;
+}
+
+///
 /// Run user input program or configuration.
 ///
 bool ConfigGui::run()
@@ -197,17 +306,16 @@ bool ConfigGui::run()
     cv::setMouseCallback("configGUI", onMouseEvent, &_input_data);
     
     /// Display/input loop.
-    Mat R, t;
-    Mat T = Mat::zeros(3,4,CV_64F);
-    CmPoint c, angleAxis;
+	Mat R, t;
+    CmPoint c;
     double r = -1;
     char key = 0;
     string val;
+	string cfg_Rsrc;
     vector<int> cfg_pts;
     vector<double> cfg_vec;
     vector<vector<int> > cfg_polys;
-    BOOST_LOG_TRIVIAL(debug) << "New state: INIT";
-    _input_data.mode = CIRC_INIT;
+	changeState(CIRC_INIT);
     const char exit_key = 0x1b;
 #ifdef WIN32
     const char enter_key = 0x0d;
@@ -264,8 +372,7 @@ bool ConfigGui::run()
                                         std::getchar(); // discard \n
                                     case '\n':
                                         // advance state
-                                        BOOST_LOG_TRIVIAL(debug) << "New state: IGNR_INIT";
-                                        _input_data.mode = IGNR_INIT;
+										changeState(IGNR_INIT);
                                         break;
                                     case 'n':
                                     case 'N':
@@ -285,10 +392,8 @@ bool ConfigGui::run()
                 
                 if (_input_data.mode == CIRC_INIT) {
                     _input_data.circPts.clear();
-                    _input_data.newEvent = true;
                     printf("\n\n\n  Define the circumference of the track ball.\n\n  Use the left mouse button to add new points.\n  You must select at least 3 (but preferably 6+) points around the circumference of the track ball.\n  NOTE! Be careful to place points only on the circumference of the track ball,\nand not along the outline of the visible track ball where the actual circumference has been partially obscured.\n  You can use the right mouse button to remove the last added point.\n  The fitted circumference is drawn in red.\n\n  Press ENTER when you are satisfied with the fitted circumference, or press ESC to exit...\n\n");
-                    BOOST_LOG_TRIVIAL(debug) << "New state: CIRC_PTS";
-                    _input_data.mode = CIRC_PTS;
+					changeState(CIRC_PTS);
                 }
                 break;
             
@@ -346,8 +451,7 @@ bool ConfigGui::run()
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
-                        BOOST_LOG_TRIVIAL(debug) << "New state: IGNR_INIT";
-                        _input_data.mode = IGNR_INIT;
+						changeState(IGNR_INIT);
                     } else {
                         BOOST_LOG_TRIVIAL(warning) << "You must select at least 3 circumference points (you have selected " << _input_data.circPts.size() << " pts)!";
                     }
@@ -398,8 +502,7 @@ bool ConfigGui::run()
                                 std::getchar(); // discard \n
                             case '\n':
                                 // advance state
-                                BOOST_LOG_TRIVIAL(debug) << "New state: R_INIT";
-                                _input_data.mode = R_INIT;
+								changeState(R_INIT);
                                 break;
                             case 'n':
                             case 'N':
@@ -417,10 +520,8 @@ bool ConfigGui::run()
                 
                 if (_input_data.mode == IGNR_INIT) {
                     _input_data.ignrPts.clear();
-                    _input_data.newEvent = true;
                     printf("\n\n\n  Define ignore regions.\n\n  Use the left mouse button to add points to a new polygon.\n  Polygons can be drawn around objects (such as the animal) that block the view of the track ball.\n  You can use the right mouse button to remove the last added point.\n\n  Press ENTER to start a new polygon, or press ENTER twice when you are satisfied with the selected ignore regions, or press ESC to exit...\n\n");
-                    BOOST_LOG_TRIVIAL(debug) << "New state: IGNR_PTS";
-                    _input_data.mode = IGNR_PTS;
+					changeState(IGNR_PTS);
                 }
                 break;
             
@@ -478,8 +579,7 @@ bool ConfigGui::run()
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
-                        BOOST_LOG_TRIVIAL(debug) << "New state: R_SLCT";
-                        _input_data.mode = R_SLCT;
+						changeState(R_INIT);
                     }
                     // otherwise, start a new poly
                     else {
@@ -491,10 +591,98 @@ bool ConfigGui::run()
             
             /// Choose method for defining animal frame.
             case R_INIT:
-                // advance state
-                BOOST_LOG_TRIVIAL(debug) << "New state: R_SLCT";
-                _input_data.mode = R_SLCT;
-                break;
+				// test read
+				if (_cfg.getStr("c2a_src", cfg_Rsrc)) {
+
+					BOOST_LOG_TRIVIAL(debug) << "Found c2a_src: " << cfg_Rsrc;
+
+					/// Load square corners from config file.
+					cfg_pts.clear();
+					if (!_cfg.getVecInt(cfg_Rsrc, cfg_pts)) {
+						BOOST_LOG_TRIVIAL(debug) << "Error reading " << cfg_Rsrc << " from config file! Re-running configuration...";
+						changeState(R_SLCT);
+						break;
+					}
+
+					_input_data.sqrPts.clear();
+					for (unsigned int i = 1; i < cfg_pts.size(); i += 2) {
+						_input_data.sqrPts.push_back(cv::Point2d(cfg_pts[i - 1], cfg_pts[i]));
+					}
+
+					/// Draw previous clicks.
+					for (auto click : _input_data.sqrPts) {
+						cv::circle(disp_frame, click, click_rad, CV_RGB(255, 255, 0), 1, CV_AA);
+					}
+
+					/// Load transform from config file.
+					cfg_vec.clear();
+					if (_cfg.getVecDbl("R_c2a", cfg_vec)) {
+						R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2]));
+					} else {
+						BOOST_LOG_TRIVIAL(debug) << "Error reading R_c2a from config file! Re-running configuration...";
+						changeState(R_SLCT);
+						break;
+					}
+					
+					cfg_vec.clear();
+					if (_cfg.getVecDbl("t_c2a", cfg_vec)) {
+						t = (cv::Mat_<double>(3, 1) << cfg_vec[0], cfg_vec[1], cfg_vec[2]);
+					} else {
+						BOOST_LOG_TRIVIAL(debug) << "Error reading t_c2a from config file! Re-running configuration...";
+						changeState(R_SLCT);
+						break;
+					}
+
+					/// Draw axes.
+					if (_input_data.sqrPts.size() == 4) {
+						if (cfg_Rsrc == "sqr_cnrs_xy") {
+							drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
+						} else if (cfg_Rsrc == "sqr_cnrs_yz") {
+							drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
+						}
+						else if (cfg_Rsrc == "sqr_cnrs_xz") {
+							drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
+						}
+					}
+
+					/// Display.
+					cv::imshow("configGUI", disp_frame);
+					cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
+
+					printf("\n\n\n  A camera-animal transform was found in the config file.\n  You can keep the existing transform, or discard and re-run config.\n");
+
+					// input loop
+					while (true) {
+						cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
+						printf("\n  Would you like to keep the existing transform ([y]/n)? ");
+						in = std::getchar();
+						switch (in)
+						{
+							case 'y':
+							case 'Y':
+								std::getchar(); // discard \n
+							case '\n':
+								// advance state
+								changeState(EXIT);
+								break;
+							case 'n':
+							case 'N':
+								std::getchar(); // discard \n
+								break;
+							default:
+								BOOST_LOG_TRIVIAL(error) << "Invalid input!";
+								std::getchar(); // discard \n
+								continue;
+								break;
+						}
+						break;
+					}
+				}
+
+				if (_input_data.mode == R_INIT) {
+					changeState(R_SLCT);
+				}
+				break;
             
             /// Choose method for defining animal frame.
             case R_SLCT:
@@ -527,22 +715,19 @@ bool ConfigGui::run()
                         case 1:
                             printf("\n\n\n  XY-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Y), (+X,+Y), (-X,+Y), (-X,-Y). If your camera is looking down on the animal from above, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is below the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit...\n\n");
                             // advance state
-                            BOOST_LOG_TRIVIAL(debug) << "New state: R_XY";
-                            _input_data.mode = R_XY;
+							changeState(R_XY);
                             break;
                             
                         case 2:
                             printf("\n\n\n  YZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's Y-Z axes. The corners must be clicked in the following order: (-Y,-Z), (+Y,-Z), (+Y,+Z), (-Y,+Z). If your camera is behind the animal, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is in front of the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit...\n\n");
                             // advance state
-                            BOOST_LOG_TRIVIAL(debug) << "New state: R_YZ";
-                            _input_data.mode = R_YZ;
+							changeState(R_YZ);
                             break;
                             
                         case 3:
                             printf("\n\n\n  XZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Z axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit...\n\n");
                             // advance state
-                            BOOST_LOG_TRIVIAL(debug) << "New state: R_XZ";
-                            _input_data.mode = R_XZ;
+							changeState(R_XZ);
                             break;
                             
                         // case 4:
@@ -553,8 +738,7 @@ bool ConfigGui::run()
                             
                         case 5:
                             // advance state
-                            BOOST_LOG_TRIVIAL(debug) << "New state: R_EXT";
-                            _input_data.mode = R_EXT;
+							changeState(R_EXT);
                             break;
                             
                         default:
@@ -570,32 +754,14 @@ bool ConfigGui::run()
             case R_XY:
             
                 /// Draw previous clicks.
-                for (auto click : _input_data.sqrePts) {
+                for (auto click : _input_data.sqrPts) {
                     cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
-                if (_input_data.sqrePts.size() == 4) {
-                    if (_input_data.newEvent) {
-                        computeRtFromSquare_XY(_cam_model, _input_data.sqrePts, R, t);
-                        _input_data.newEvent = false;
-                    }
-                    
-                    // make x4 mat for projecting corners
-                    for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
-                    
-                    // project reference corners
-                    Mat p = R * XY_CNRS + T;
-                    
-                    // draw re-projected reference corners
-                    drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0,255,0));
-                    
-                    // draw re-projected animal axes.
-                    if (r > 0) {
-                        double scale = 1.0/tan(r);
-                        Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
-                        drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
-                    }
+                if (_input_data.sqrPts.size() == 4) {
+					updateC2ATransform(XY_CNRS, R, t);
+					drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
                 }
                 
                 /// Draw cursor location.
@@ -611,42 +777,17 @@ bool ConfigGui::run()
                 
                 /// State machine logic.
                 if (key == enter_key) {
-                    if ((_input_data.sqrePts.size() == 4) && !R.empty()) {
+                    if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
-                        cfg_pts.clear();
-                        for (auto p : _input_data.sqrePts) {
-                            cfg_pts.push_back(p.x);
-                            cfg_pts.push_back(p.y);
-                        }
-                        
-                        // write to config file
-                        BOOST_LOG_TRIVIAL(info) << "Adding sqr_cnrs_xy to config file and writing to disk (" << _config_fn << ")...";
-                        _cfg.add("sqr_cnrs_xy", cfg_pts);
-                        
-                        // dump R to config file
-                        cfg_vec.clear();
-                        angleAxis = CmPoint64f::matrixToOmega(R);
-                        for (int i = 0; i < 3; i++) { cfg_vec.push_back(angleAxis[i]); }
-                        
-                        // write to config file
-                        BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
-                        _cfg.add("R_c2a", cfg_vec);
-                        _cfg.add("R_src", string("sqr_cnrs_xy"));
-                        
-                        assert(_cfg.write() > 0);
-                        
-                        // test read
-                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading sqr_cnrs_xy, R_c2a...";
-                        _cfg.read(_config_fn);
-                        assert(_cfg.getVecInt("sqr_cnrs_xy", cfg_pts));
-                        assert(_cfg.getVecDbl("R_c2a", cfg_vec));
+						if (!saveC2ATransform(R, t)) {
+							BOOST_LOG_TRIVIAL(error) << "Error writing coordinate transform to config file!";
+						}
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
-                        BOOST_LOG_TRIVIAL(debug) << "New state: EXIT";
-                        _input_data.mode = EXIT;
+						changeState(EXIT);
                     } else {
-                        BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrePts.size() << " pts)!";
+                        BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrPts.size() << " pts)!";
                     }
                 } else if (key == 0x66) {   // f
                     /// Reflect R and re-minimise.
@@ -661,32 +802,14 @@ bool ConfigGui::run()
             case R_YZ:
                 
                 /// Draw previous clicks.
-                for (auto click : _input_data.sqrePts) {
+                for (auto click : _input_data.sqrPts) {
                     cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
-                if (_input_data.sqrePts.size() == 4) {
-                    if (_input_data.newEvent) {
-                        computeRtFromSquare_YZ(_cam_model, _input_data.sqrePts, R, t);
-                        _input_data.newEvent = false;
-                    }
-                    
-                    // make x4 mat for projecting corners
-                    for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
-                    
-                    // project reference corners
-                    Mat p = R * YZ_CNRS + T;
-                    
-                    // draw re-projected reference corners
-                    drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0,255,0));
-                    
-                    // draw re-projected animal axes.
-                    if (r > 0) {
-                        double scale = 1.0/tan(r);
-                        Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
-                        drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
-                    }
+                if (_input_data.sqrPts.size() == 4) {
+					updateC2ATransform(YZ_CNRS, R, t);
+					drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
                 }
                 
                 /// Draw cursor location.
@@ -702,42 +825,17 @@ bool ConfigGui::run()
                 
                 /// State machine logic.
                 if (key == enter_key) {
-                    if (_input_data.sqrePts.size() == 4) {
+					if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
-                        cfg_pts.clear();
-                        for (auto p : _input_data.sqrePts) {
-                            cfg_pts.push_back(p.x);
-                            cfg_pts.push_back(p.y);
-                        }
-                        
-                        // write to config file
-                        BOOST_LOG_TRIVIAL(info) << "Adding sqr_cnrs_yz to config file and writing to disk (" << _config_fn << ")...";
-                        _cfg.add("sqr_cnrs_yz", cfg_pts);
-                        
-                        // dump R to config file
-                        cfg_vec.clear();
-                        angleAxis = CmPoint64f::matrixToOmega(R);
-                        for (int i = 0; i < 3; i++) { cfg_vec.push_back(angleAxis[i]); }
-                        
-                        // write to config file
-                        BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
-                        _cfg.add("R_c2a", cfg_vec);
-                        _cfg.add("R_src", string("sqr_cnrs_yz"));
-                        
-                        assert(_cfg.write() > 0);
-                        
-                        // test read
-                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading sqr_cnrs_yz, R_c2a...";
-                        _cfg.read(_config_fn);
-                        assert(_cfg.getVecInt("sqr_cnrs_yz", cfg_pts));
-                        assert(_cfg.getVecDbl("R_c2a", cfg_vec));
+						if (!saveC2ATransform(R, t)) {
+							BOOST_LOG_TRIVIAL(error) << "Error writing coordinate transform to config file!";
+						}
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
-                        BOOST_LOG_TRIVIAL(debug) << "New state: EXIT";
-                        _input_data.mode = EXIT;
+						changeState(EXIT);
                     } else {
-                        BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrePts.size() << " pts)!";
+                        BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrPts.size() << " pts)!";
                     }
                 } else if (key == 0x66) {   // f
                     /// Reflect R and re-minimise.
@@ -752,32 +850,14 @@ bool ConfigGui::run()
             case R_XZ:
                 
                 /// Draw previous clicks.
-                for (auto click : _input_data.sqrePts) {
+                for (auto click : _input_data.sqrPts) {
                     cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
-                if (_input_data.sqrePts.size() == 4) {
-                    if (_input_data.newEvent) {
-                        computeRtFromSquare_XZ(_cam_model, _input_data.sqrePts, R, t);
-                        _input_data.newEvent = false;
-                    }
-                    
-                    // make x4 mat for projecting corners
-                    for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
-                    
-                    // project reference corners
-                    Mat p = R * XZ_CNRS + T;
-                    
-                    // draw re-projected reference corners
-                    drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0,255,0));
-                    
-                    // draw re-projected animal axes.
-                    if (r > 0) {
-                        double scale = 1.0/tan(r);
-                        Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
-                        drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
-                    }
+                if (_input_data.sqrPts.size() == 4) {
+					updateC2ATransform(XZ_CNRS, R, t);
+					drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
                 }
                 
                 /// Draw cursor location.
@@ -793,42 +873,17 @@ bool ConfigGui::run()
                 
                 /// State machine logic.
                 if (key == enter_key) {
-                    if (_input_data.sqrePts.size() == 4) {
+					if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
-                        cfg_pts.clear();
-                        for (auto p : _input_data.sqrePts) {
-                            cfg_pts.push_back(p.x);
-                            cfg_pts.push_back(p.y);
-                        }
-                        
-                        // write to config file
-                        BOOST_LOG_TRIVIAL(info) << "Adding sqr_cnrs_xz to config file and writing to disk (" << _config_fn << ")...";
-                        _cfg.add("sqr_cnrs_xz", cfg_pts);
-                        
-                        // dump R to config file
-                        cfg_vec.clear();
-                        angleAxis = CmPoint64f::matrixToOmega(R);
-                        for (int i = 0; i < 3; i++) { cfg_vec.push_back(angleAxis[i]); }
-                        
-                        // write to config file
-                        BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
-                        _cfg.add("R_c2a", cfg_vec);
-                        _cfg.add("R_src", string("sqr_cnrs_xz"));
-                        
-                        assert(_cfg.write() > 0);
-                        
-                        // test read
-                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading sqr_cnrs_xz, R_c2a...";
-                        _cfg.read(_config_fn);
-                        assert(_cfg.getVecInt("sqr_cnrs_xz", cfg_pts));
-                        assert(_cfg.getVecDbl("R_c2a", cfg_vec));
+						if (!saveC2ATransform(R, t)) {
+							BOOST_LOG_TRIVIAL(error) << "Error writing coordinate transform to config file!";
+						}
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
-                        BOOST_LOG_TRIVIAL(debug) << "New state: EXIT";
-                        _input_data.mode = EXIT;
+						changeState(EXIT);
                     } else {
-                        BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrePts.size() << " pts)!";
+                        BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrPts.size() << " pts)!";
                     }
                 } else if (key == 0x66) {   // f
                     /// Reflect R and re-minimise.
@@ -869,13 +924,12 @@ bool ConfigGui::run()
                     BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
                     _cfg.add("R_c2a", cfg_vec);
                 }
-                _cfg.add("R_src", string("ext"));
+                _cfg.add("c2a_src", string("ext"));
 
                 assert(_cfg.write() > 0);
             
                 // advance state
-                BOOST_LOG_TRIVIAL(debug) << "New state: EXIT";
-                _input_data.mode = EXIT;
+				changeState(EXIT);
                 break;
             
             default:
@@ -889,9 +943,12 @@ bool ConfigGui::run()
                 break;
         }
     }
+
+	cv::destroyAllWindows();
+
+	printf("\n\nThe configuration is complete. The configuration file (%s) has been updated.\n\nPress any key to exit...\n", _config_fn.c_str());
+	std::getchar();
     
     BOOST_LOG_TRIVIAL(info) << "Exiting configGui!";
-    
-    cv::destroyAllWindows();
     return _open;
 }
