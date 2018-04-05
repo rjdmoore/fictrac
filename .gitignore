@@ -42,3 +42,7 @@ vs2015_FicTrac/x64/
 
 # Data dir
 data
+vsbuild/x64/
+vsbuild/libfictrac/x64/
+vsbuild/.vs/
+bin/
