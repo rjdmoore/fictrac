@@ -41,7 +41,7 @@ SquareRT::SquareRT(const vector<CmPoint>& cnrs, const Mat& ref_cnrs)
     setUpperBounds(ub);
     setXtol(1e-9);
     setFtol(1e-9);
-    setMaxEval(1e4);
+    setMaxEval(static_cast<unsigned int>(1e4));
     
 }
 

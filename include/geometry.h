@@ -108,11 +108,14 @@ static const cv::Mat YZ_CNRS = (cv::Mat_<double>(3,4) << 0.0, 0.0, 0.0, 0.0, -0.
 // TL (+X,-Z), TR (-X,-Z), BR (-X,+Z), BL (+X,+Z)
 static const cv::Mat XZ_CNRS = (cv::Mat_<double>(3,4) << 0.5, -0.5, -0.5, 0.5, 0.0, 0.0, 0.0, 0.0, -0.5, -0.5, 0.5, 0.5);
 
-/// Compute camera-animal R transform from XY square.
+/// Compute camera-animal R+t transform from supplied square corners.
+bool computeRtFromSquare(const CameraModelPtr cam_model, const cv::Mat& ref_cnrs, const std::vector<cv::Point2d>& cnrs, cv::Mat& R, cv::Mat& t);
+
+/// Compute camera-animal R+t transform from XY square.
 bool computeRtFromSquare_XY(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R, cv::Mat& t);
 
-/// Compute camera-animal R transform from YZ square.
+/// Compute camera-animal R+t transform from YZ square.
 bool computeRtFromSquare_YZ(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R, cv::Mat& t);
 
-/// Compute camera-animal R transform from XZ square.
+/// Compute camera-animal R+t transform from XZ square.
 bool computeRtFromSquare_XZ(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R, cv::Mat& t);

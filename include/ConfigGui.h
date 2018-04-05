@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "typesvars.h"
 #include "ConfigParser.h"
 
 #include "SharedPointers.h"
@@ -42,13 +43,27 @@ public:
         R_EXT,
         EXIT
     };
+	std::string INPUT_MODE_STR[12] = {
+		"CIRC_INIT",
+		"CIRC_PTS",
+		"IGNR_INIT",
+		"IGNR_PTS",
+		"R_INIT",
+		"R_SLCT",
+		"R_XY",
+		"R_YZ",
+		"R_XZ",
+		"R_MAN",
+		"R_EXT",
+		"EXIT"
+	};
     
     struct INPUT_DATA {
         bool newEvent;
         cv::Point2d cursorPt;
         std::vector<cv::Point2d> circPts;
         std::vector<std::vector<cv::Point2d> > ignrPts;
-        std::vector<cv::Point2d> sqrePts;
+        std::vector<cv::Point2d> sqrPts;
         INPUT_MODE mode;
         
         INPUT_DATA() {
@@ -72,4 +87,10 @@ private:
     size_t _w, _h;
     CameraModelPtr _cam_model;
     INPUT_DATA _input_data;
+
+	bool updateC2ATransform(const cv::Mat& ref_cnrs, cv::Mat& R, cv::Mat& t);
+	void drawC2ATransform(cv::Mat& disp_frame, const cv::Mat& ref_cnrs, const cv::Mat& R, const cv::Mat& t, const double& r, const CmPoint& c);
+	bool saveC2ATransform(const cv::Mat& R, const cv::Mat& t);
+
+	void changeState(INPUT_MODE new_state);
 };
