@@ -6,8 +6,8 @@
 
 //TODO: log file input argument
 
-#include "ConfigGui.h"
-#include "logging.h"
+#include <ConfigGui.h>
+#include <logging.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -22,8 +22,8 @@ int main(int argc, char *argv[])
     /// Init logging.
     logging::init();
 
-    BOOST_LOG_TRIVIAL(info) << "configGui:\tA GUI for configuring FicTrac.\n\nThis program should be run once for each new input source (or if the camera is moved).\n";
-    BOOST_LOG_TRIVIAL(info) << "Usage: " << argv[0] << " INPUT -c CONFIG_FN [-v LOG_VERBOSITY]\n";
+    BOOST_LOG_TRIVIAL(fatal) << "configGui:\tA GUI for configuring FicTrac.\n\nThis program should be run once for each new input source (or if the camera is moved).\n";
+    BOOST_LOG_TRIVIAL(fatal) << "Usage: " << argv[0] << " INPUT -c CONFIG_FN [-v LOG_VERBOSITY]\n";
     
     /// Parse args.
     string input_fn = "0";     // default to primary webcam

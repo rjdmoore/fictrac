@@ -11,7 +11,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <boost\shared_array.hpp>
+#include <boost/shared_array.hpp>
 
 ///
 /// Estimate track ball orientation and update surface map.
@@ -26,7 +26,6 @@ public:
                 cv::Mat&        mask,
                 cv::Mat&        sphere_template,
                 bool            do_display,
-                bool            do_update,
                 double          lower_bound,
                 double          upper_bound,
                 double          tol,

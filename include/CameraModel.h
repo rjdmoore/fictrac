@@ -1,19 +1,21 @@
 /// FicTrac http://rjdmoore.net/fictrac/
 /// \file       CameraModel.h
-/// \brief      Parent class for converting between pixel coords and view vectors.
+/// \brief      Parent class for transforming between image and world frames.
 /// \author     Saul Thurrowgood
 /// \copyright  CC BY-NC-SA 3.0
 
-#ifndef _CAMERA_MODEL_H
-#define _CAMERA_MODEL_H 1
+#pragma once
+
 
 #include "typesvars.h"
-
 #include "SharedPointers.h"
-SHARED_PTR(CameraModel);
+
 #include <boost/enable_shared_from_this.hpp>
 
 #include <opencv2/opencv.hpp>
+
+SHARED_PTR(CameraModel);
+
 
 ///
 /// Basic camera model methods to convert between pixel coordinates
@@ -210,11 +212,9 @@ public:
 protected:
 	int _width, _height;
 
-	CameraModel(int width, int height);
+	CameraModel(int width, int height) : _width(width), _height(height) {}
 
 	bool _validXY(CmReal x, CmReal y) const {
 		return !((x < 0) || (x > _width) || (y < 0) || (y > _height));
 	}
 };
-
-#endif // _CAMERA_MODEL_H

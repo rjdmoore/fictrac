@@ -12,6 +12,9 @@
 using cv::Mat;
 using cv::Scalar;
 
+///
+///
+///
 bool intersectSphere(double camVec[3], double sphereVec[3], double r)
 {
     double q = camVec[2] * camVec[2] + r*r;
@@ -40,7 +43,6 @@ Trackball::Trackball(
     cv::Mat&        mask = cv::Mat(),
     cv::Mat&        sphere_template = cv::Mat(),
     bool            do_display = false,
-    bool            do_update = true,
     double          lower_bound = -0.5,
     double          upper_bound = 0.5,
     double          tol = 1e-4,
@@ -83,7 +85,7 @@ Trackball::Trackball(
     /// Buffers.
     _sphere.create(_h, _w, CV_8U);
     _sphere_max.create(_h, _w, CV_32S);
-    _sphere_hist.create(_h, _w * 3, CV_32S);
+    _sphere_hist.create(_h, _w * 3, CV_32S);	// hist stores histogram for 3 classes - black, grey, white
     clearSphere();
 
     /// Surface map template.
@@ -96,14 +98,16 @@ Trackball::Trackball(
             uint8_t* psphere = _sphere.ptr(i);
             for (int j = 0; j < _w; j++) {
                 pmax[j] = 10;   // arbitrary start weight
-                phist[j * 3 + static_cast<int>(psphere[j]/127.f)] = pmax[j];
+                phist[j * 3 + static_cast<int>(psphere[j]/127.f)] = pmax[j];	// thresholded sphere is quantised to levels 0 = black, 1 = grey, 2 = white
             }
         }
     }
 
     /// Display.
-    _orient.create(_h, _w, CV_8U);
-    _orient.setTo(Scalar::all(255));
+	if (_do_display) {
+		_orient.create(_h, _w, CV_8U);
+		_orient.setTo(Scalar::all(255));
+	}
 
     /// Pre-calc view rays.
     _p1s_lut = boost::shared_array<double>(new double[_view_w * _view_h * 3]);
@@ -170,7 +174,7 @@ cv::Mat& Trackball::updateSphere(CmPoint64f& angleAxis)
             int32_t* smax = &_sphere_max.at<int32_t>(y, x);
             if (*smax > 0) { good++; }
 
-            int h = ++(_sphere_hist.at<int32_t>(y, x * 3 + static_cast<int>(pview[j]/127.f)));
+            int h = ++(_sphere_hist.at<int32_t>(y, x * 3 + static_cast<int>(pview[j]/127.f)));	// thresholded sphere is quantised to levels 0 = black, 1 = grey, 2 = white
             if (h > *smax) {
                 *smax = h;
                 _sphere.at<uint8_t>(y, x) = pview[j];
