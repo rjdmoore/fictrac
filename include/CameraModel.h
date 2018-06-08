@@ -6,13 +6,10 @@
 
 #pragma once
 
-
 #include "typesvars.h"
 #include "SharedPointers.h"
 
 #include <opencv2/opencv.hpp>
-
-#include <memory>	// shared_ptr, enable_shared_from_this
 
 SHARED_PTR(CameraModel);
 
@@ -212,11 +209,9 @@ public:
 protected:
 	int _width, _height;
 
-	CameraModel(int width, int height);
+	CameraModel(int width, int height) : _width(width), _height(height) {}
 
 	bool _validXY(CmReal x, CmReal y) const {
 		return !((x < 0) || (x > _width) || (y < 0) || (y > _height));
 	}
 };
-
-#endif // _CAMERA_MODEL_H
