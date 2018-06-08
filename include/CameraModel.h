@@ -1,6 +1,6 @@
 /// FicTrac http://rjdmoore.net/fictrac/
 /// \file       CameraModel.h
-/// \brief      Parent class for transforming between image and world frames.
+/// \brief      Parent class for converting between pixel coords and view vectors.
 /// \author     Saul Thurrowgood
 /// \copyright  CC BY-NC-SA 3.0
 
@@ -10,9 +10,9 @@
 #include "typesvars.h"
 #include "SharedPointers.h"
 
-#include <boost/enable_shared_from_this.hpp>
-
 #include <opencv2/opencv.hpp>
+
+#include <memory>	// shared_ptr, enable_shared_from_this
 
 SHARED_PTR(CameraModel);
 
@@ -27,10 +27,10 @@ SHARED_PTR(CameraModel);
 /// Axes:  X-right  Y-down  Z-forward
 ///
 class CameraModel
-	: public boost::enable_shared_from_this<CameraModel>
+	: public std::enable_shared_from_this<CameraModel>
 {
 public:
-	typedef boost::shared_ptr<CameraModel> Ptr;
+	typedef std::shared_ptr<CameraModel> Ptr;
 
 	///
 	/// Must be virtual to allow proper subclass destruction.
@@ -212,9 +212,11 @@ public:
 protected:
 	int _width, _height;
 
-	CameraModel(int width, int height) : _width(width), _height(height) {}
+	CameraModel(int width, int height);
 
 	bool _validXY(CmReal x, CmReal y) const {
 		return !((x < 0) || (x > _width) || (y < 0) || (y > _height));
 	}
 };
+
+#endif // _CAMERA_MODEL_H

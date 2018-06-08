@@ -6,9 +6,6 @@
 
 //TODO: check config.is_open()
 //TODO: Add support for fisheye camera model.
-//TODO: replace assert calls
-
-#undef NDEBUG	// needed to keep asserts
 
 #include "ConfigGui.h"
 
@@ -16,9 +13,8 @@
 #include "CameraModel.h"
 #include "geometry.h"
 #include "drawing.h"
-#include "logging.h"
+#include "Logger.h"
 
-#include <cassert>  // assert
 #include <iostream> // getline, stoi
 #include <cstdio>   // getchar
 #include <exception>
@@ -157,7 +153,10 @@ ConfigGui::~ConfigGui()
 ///
 bool ConfigGui::setFrame(Mat& frame)
 {
-    assert(frame.channels() == 1 || frame.channels() == 3);
+	if (frame.channels() != 1 && frame.channels() != 3) {
+		LOG_ERR("Invalid number of image channels (%d)!", frame.channels());
+		return false;
+	}
     
     /// Copy input frame.
     if (frame.channels() == 3) {
@@ -166,24 +165,28 @@ bool ConfigGui::setFrame(Mat& frame)
         _frame = frame.clone();
     } else {
         // uh oh, shouldn't get here
-        BOOST_LOG_TRIVIAL(error) << "Unexpected number of image channels (" << frame.channels() << ")!";
+        LOG_ERR("Unexpected number of image channels (%d)!", frame.channels());
         return (_open = false);
     }
     
     /// Stretch contrast for display
     histStretch(_frame);
-    assert(!_frame.empty());
     _w = _frame.cols;
     _h = _frame.rows;
     
     /// Load camera model.
     double vfov = 0;
     _cfg.getDbl("vfov", vfov);
-    assert(vfov>0);
-    BOOST_LOG_TRIVIAL(info) << "Using vfov: " << vfov << " degrees";
+
+	if (vfov <= 0) {
+		LOG_ERR("vfov parameter must be > 0 (%f)!", vfov);
+		return false;
+	}
+
+    LOG("Using vfov: %f deg", vfov);
     
     //TODO: Add support for fisheye camera model.
-    _cam_model = CameraModel::createRectilinear(_w, _h, vfov * CM_D2R);
+    _cam_model = CameraModel::createRectilinear(static_cast<int>(_w), static_cast<int>(_h), vfov * CM_D2R);
     
     return _open;
 }
@@ -209,12 +212,12 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	// dump corner points to config file
 	vector<int> cfg_pts;
 	for (auto p : _input_data.sqrPts) {
-		cfg_pts.push_back(p.x);
-		cfg_pts.push_back(p.y);
+		cfg_pts.push_back(static_cast<int>(p.x + 0.5));		// these are just ints in a double object anyway
+		cfg_pts.push_back(static_cast<int>(p.y + 0.5));
 	}
 
 	// write to config file
-	BOOST_LOG_TRIVIAL(info) << "Adding " << sqr_type << " to config file and writing to disk (" << _config_fn << ")...";
+	LOG("Adding %s to config file and writing to disk (%s) ...", sqr_type, _config_fn);
 	_cfg.add(sqr_type, cfg_pts);
 	_cfg.add("c2a_src", sqr_type);
 
@@ -227,21 +230,21 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// write to config file
-	BOOST_LOG_TRIVIAL(info) << "Adding R_c2a, t_c2a, and c2a_src to config file and writing to disk (" << _config_fn << ")...";
+	LOG("Adding R_c2a, t_c2a, and c2a_src to config file and writing to disk (%s) ...", _config_fn);
 	_cfg.add("R_c2a", cfg_R);
 	_cfg.add("t_c2a", cfg_t);
 
 	if (_cfg.write() <= 0) {
-		BOOST_LOG_TRIVIAL(error) << "Bad write!";
+		LOG_ERR("Bad write!");
 		return false;
 	}
 
 	// test read
-	BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading " << sqr_type << ", R_c2a, t_c2a...";
+	LOG_DBG("Re-loading config file and reading %s, R_c2a, t_c2a ...", sqr_type);
 	_cfg.read(_config_fn);
 
 	if (!_cfg.getVecInt(sqr_type, cfg_pts) || !_cfg.getVecDbl("R_c2a", cfg_R) || !_cfg.getVecDbl("t_c2a", cfg_t)) {
-		BOOST_LOG_TRIVIAL(error) << "Bad read!";
+		LOG_ERR("Bad read!");
 		return false;
 	}
 
@@ -290,7 +293,7 @@ void ConfigGui::drawC2ATransform(Mat& disp_frame, const Mat& ref_cnrs, const Mat
 void ConfigGui::changeState(INPUT_MODE new_state)
 {
 	_input_data.newEvent = true;
-	BOOST_LOG_TRIVIAL(debug) << "New state: " << INPUT_MODE_STR[static_cast<int>(new_state)];
+	LOG_DBG("New state: %s", INPUT_MODE_STR[static_cast<int>(new_state)]);
 	_input_data.mode = new_state;
 }
 
@@ -324,7 +327,7 @@ bool ConfigGui::run()
 #endif
     const int click_rad = std::max(int(_w/150+0.5), 5);
     Mat disp_frame, zoom_frame(ZOOM_DIM, ZOOM_DIM, CV_8UC1);
-    const int scaled_zoom_dim = ZOOM_DIM * ZOOM_SCL;
+    const int scaled_zoom_dim = static_cast<int>(ZOOM_DIM * ZOOM_SCL + 0.5);
     while (key != exit_key) {
         /// Create frame for drawing.
         cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
@@ -379,7 +382,7 @@ bool ConfigGui::run()
                                         std::getchar(); // discard \n
                                         break;
                                     default:
-                                        BOOST_LOG_TRIVIAL(error) << "Invalid input!";
+                                        LOG_ERR("Invalid input!");
                                         std::getchar(); // discard \n
                                         continue;
                                         break;
@@ -435,17 +438,17 @@ bool ConfigGui::run()
                         // dump circumference points to config file
                         cfg_pts.clear();
                         for (auto p : _input_data.circPts) {
-                            cfg_pts.push_back(p.x);
-                            cfg_pts.push_back(p.y);
+                            cfg_pts.push_back(static_cast<int>(p.x + 0.5));
+                            cfg_pts.push_back(static_cast<int>(p.y + 0.5));
                         }
                         
                         // write to config file
-                        BOOST_LOG_TRIVIAL(info) << "Adding roi_circ to config file and writing to disk (" << _config_fn << ")...";
+                        LOG("Adding roi_circ to config file and writing to disk (%s) ...", _config_fn);
                         _cfg.add("roi_circ", cfg_pts);
                         assert(_cfg.write() > 0);
                         
                         // test read
-                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading roi_circ...";
+                        LOG_DBG("Re-loading config file and reading roi_circ ...");
                         _cfg.read(_config_fn);
                         assert(_cfg.getVecInt("roi_circ", cfg_pts));
                         
@@ -453,7 +456,7 @@ bool ConfigGui::run()
                         cv::destroyWindow("zoomROI");
 						changeState(IGNR_INIT);
                     } else {
-                        BOOST_LOG_TRIVIAL(warning) << "You must select at least 3 circumference points (you have selected " << _input_data.circPts.size() << " pts)!";
+                        LOG_WRN("You must select at least 3 circumference points (you have selected %d points)!", _input_data.circPts.size());
                     }
                 }
                 break;
@@ -509,7 +512,7 @@ bool ConfigGui::run()
                                 std::getchar(); // discard \n
                                 break;
                             default:
-                                BOOST_LOG_TRIVIAL(error) << "Invalid input!";
+                                LOG_ERR("Invalid input!");
                                 std::getchar(); // discard \n
                                 continue;
                                 break;
@@ -562,18 +565,18 @@ bool ConfigGui::run()
                         for (auto poly : _input_data.ignrPts) {
                             cfg_polys.push_back(vector<int>());
                             for (auto pt : poly) {
-                                cfg_polys.back().push_back(pt.x);
-                                cfg_polys.back().push_back(pt.y);
+                                cfg_polys.back().push_back(static_cast<int>(pt.x + 0.5));
+                                cfg_polys.back().push_back(static_cast<int>(pt.y + 0.5));
                             }
                         }
                         
                         // write to config file
-                        BOOST_LOG_TRIVIAL(info) << "Adding roi_ignr to config file and writing to disk (" << _config_fn << ")...";
+                        LOG("Adding roi_ignr to config file and writing to disk (%s) ...", _config_fn);
                         _cfg.add("roi_ignr", cfg_polys);
                         assert(_cfg.write() > 0);
                         
                         // test read
-                        BOOST_LOG_TRIVIAL(debug) << "Re-loading config file and reading roi_ignr...";
+                        LOG_DBG("Re-loading config file and reading roi_ignr ...");
                         _cfg.read(_config_fn);
                         assert(_cfg.getVVecInt("roi_ignr", cfg_polys));
                         
@@ -584,7 +587,7 @@ bool ConfigGui::run()
                     // otherwise, start a new poly
                     else {
                         _input_data.addPoly();
-                        BOOST_LOG_TRIVIAL(info) << "New ignore region added!";
+                        LOG("New ignore region added!");
                     }
                 }
                 break;
@@ -594,12 +597,12 @@ bool ConfigGui::run()
 				// test read
 				if (_cfg.getStr("c2a_src", cfg_Rsrc)) {
 
-					BOOST_LOG_TRIVIAL(debug) << "Found c2a_src: " << cfg_Rsrc;
+					LOG_DBG("Found c2a_src: %s", cfg_Rsrc);
 
 					/// Load square corners from config file.
 					cfg_pts.clear();
 					if (!_cfg.getVecInt(cfg_Rsrc, cfg_pts)) {
-						BOOST_LOG_TRIVIAL(debug) << "Error reading " << cfg_Rsrc << " from config file! Re-running configuration...";
+						LOG_DBG("Error reading %s from config file! Re-running configuration ...", cfg_Rsrc);
 						changeState(R_SLCT);
 						break;
 					}
@@ -619,7 +622,7 @@ bool ConfigGui::run()
 					if (_cfg.getVecDbl("R_c2a", cfg_vec)) {
 						R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2]));
 					} else {
-						BOOST_LOG_TRIVIAL(debug) << "Error reading R_c2a from config file! Re-running configuration...";
+						LOG_DBG("Error reading R_c2a from config file! Re-running configuration ...");
 						changeState(R_SLCT);
 						break;
 					}
@@ -628,7 +631,7 @@ bool ConfigGui::run()
 					if (_cfg.getVecDbl("t_c2a", cfg_vec)) {
 						t = (cv::Mat_<double>(3, 1) << cfg_vec[0], cfg_vec[1], cfg_vec[2]);
 					} else {
-						BOOST_LOG_TRIVIAL(debug) << "Error reading t_c2a from config file! Re-running configuration...";
+						LOG_DBG("Error reading t_c2a from config file! Re-running configuration ...");
 						changeState(R_SLCT);
 						break;
 					}
@@ -639,8 +642,7 @@ bool ConfigGui::run()
 							drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
 						} else if (cfg_Rsrc == "sqr_cnrs_yz") {
 							drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
-						}
-						else if (cfg_Rsrc == "sqr_cnrs_xz") {
+						} else if (cfg_Rsrc == "sqr_cnrs_xz") {
 							drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
 						}
 					}
@@ -670,7 +672,7 @@ bool ConfigGui::run()
 								std::getchar(); // discard \n
 								break;
 							default:
-								BOOST_LOG_TRIVIAL(error) << "Invalid input!";
+								LOG_ERR("Invalid input!");
 								std::getchar(); // discard \n
 								continue;
 								break;
@@ -706,7 +708,7 @@ bool ConfigGui::run()
                     } else {
                         try { in = std::stoi(str); }
                         catch(...) {
-                            BOOST_LOG_TRIVIAL(error) << "Invalid input!";
+                            LOG_ERR("Invalid input!");
                             continue;
                         }
                     }
@@ -742,7 +744,7 @@ bool ConfigGui::run()
                             break;
                             
                         default:
-                            BOOST_LOG_TRIVIAL(error) << "Invalid input!";
+                            LOG_ERR("Invalid input!");
                             continue;
                             break;
                     }
@@ -780,14 +782,14 @@ bool ConfigGui::run()
                     if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
 						if (!saveC2ATransform(R, t)) {
-							BOOST_LOG_TRIVIAL(error) << "Error writing coordinate transform to config file!";
+							LOG_ERR("Error writing coordinate transform to config file!");
 						}
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
 						changeState(EXIT);
                     } else {
-                        BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrPts.size() << " pts)!";
+                        LOG_WRN("You must select exactly 4 corners (you have selected %d points)!", _input_data.sqrPts.size());
                     }
                 } else if (key == 0x66) {   // f
                     /// Reflect R and re-minimise.
@@ -828,14 +830,14 @@ bool ConfigGui::run()
 					if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
 						if (!saveC2ATransform(R, t)) {
-							BOOST_LOG_TRIVIAL(error) << "Error writing coordinate transform to config file!";
+							LOG_ERR("Error writing coordinate transform to config file!");
 						}
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
 						changeState(EXIT);
                     } else {
-                        BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrPts.size() << " pts)!";
+                        LOG_WRN("You must select exactly 4 corners (you have selected %d points)!", _input_data.sqrPts.size());
                     }
                 } else if (key == 0x66) {   // f
                     /// Reflect R and re-minimise.
@@ -876,14 +878,14 @@ bool ConfigGui::run()
 					if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
 						if (!saveC2ATransform(R, t)) {
-							BOOST_LOG_TRIVIAL(error) << "Error writing coordinate transform to config file!";
+							LOG_ERR("Error writing coordinate transform to config file!");
 						}
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
 						changeState(EXIT);
                     } else {
-                        BOOST_LOG_TRIVIAL(warning) << "You must select exactly 4 corners (you have selected " << _input_data.sqrPts.size() << " pts)!";
+                        LOG_WRN("You must select exactly 4 corners (you have selected %d points)!", _input_data.sqrPts.size());
                     }
                 } else if (key == 0x66) {   // f
                     /// Reflect R and re-minimise.
@@ -921,7 +923,7 @@ bool ConfigGui::run()
                     cfg_vec.resize(3, 0);
 
                     // write to config file
-                    BOOST_LOG_TRIVIAL(info) << "Adding R_c2a to config file and writing to disk (" << _config_fn << ")...";
+                    LOG("Adding R_c2a to config file and writing to disk (%s) ...", _config_fn);
                     _cfg.add("R_c2a", cfg_vec);
                 }
                 _cfg.add("c2a_src", string("ext"));
@@ -933,7 +935,7 @@ bool ConfigGui::run()
                 break;
             
             default:
-                BOOST_LOG_TRIVIAL(debug) << "Unexpected state encountered!";
+                LOG_WRN("Unexpected state encountered!");
                 _input_data.mode = EXIT;
                 // break;
             
@@ -946,9 +948,46 @@ bool ConfigGui::run()
 
 	cv::destroyAllWindows();
 
+	printf("Writing configImg to disk...\n");
+
+	/// Save config image
+	cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
+
+	// draw fitted circumference
+	if (r > 0) {
+		drawCircle_camModel(disp_frame, _cam_model, c, r, CV_RGB(255, 0, 0), false);
+	}
+
+	// draw ignore regions
+	for (unsigned int i = 0; i < _input_data.ignrPts.size(); i++) {
+		for (unsigned int j = 0; j < _input_data.ignrPts[i].size(); j++) {
+			if (i == _input_data.ignrPts.size() - 1) {
+				cv::circle(disp_frame, _input_data.ignrPts[i][j], click_rad, COLOURS[i%NCOLOURS], 1, CV_AA);
+			}
+			cv::line(disp_frame, _input_data.ignrPts[i][j], _input_data.ignrPts[i][(j + 1) % _input_data.ignrPts[i].size()], COLOURS[i%NCOLOURS], 1, CV_AA);
+		}
+	}
+
+	// draw animal axes
+	if (_input_data.sqrPts.size() == 4) {
+		if (cfg_Rsrc == "sqr_cnrs_xy") {
+			drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
+		} else if (cfg_Rsrc == "sqr_cnrs_yz") {
+			drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
+		} else if (cfg_Rsrc == "sqr_cnrs_xz") {
+			drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
+		}
+	}
+
+	// write image to disk
+	string cfg_img_fn = _config_fn.substr(0, std::max(static_cast<int>(_config_fn.size() - 4), 0)) + "-configImg.png";
+	if (!cv::imwrite(cfg_img_fn, disp_frame)) {
+		LOG_ERR("Error writing config image to disk!");
+	}
+
 	printf("\n\nThe configuration is complete. The configuration file (%s) has been updated.\n\nPress any key to exit...\n", _config_fn.c_str());
 	std::getchar();
     
-    BOOST_LOG_TRIVIAL(info) << "Exiting configGui!";
+    LOG("Exiting configGui!");
     return _open;
 }

@@ -6,7 +6,7 @@
 
 #include "ConfigParser.h"
 
-#include "logging.h"
+#include "Logger.h"
 
 #include <cstdio>
 #include <iostream>
@@ -47,7 +47,7 @@ int ConfigParser::read(string fn)
     /// Open input file
     std::ifstream f(fn);
     if (!f.is_open()) {
-        BOOST_LOG_TRIVIAL(error) << "Could not open config file (" << fn << ") for reading!";
+        LOG_ERR("Could not open config file (%s) for reading!", fn);
         return -1;
     }
     
@@ -69,7 +69,7 @@ int ConfigParser::read(string fn)
         /// Add to map
         _string_data[key] = val;
 
-        BOOST_LOG_TRIVIAL(debug) << "Extracted key: " << key << "  val: " << val;
+        LOG_DBG("Extracted key: %s  val: %s", key, val);
     }
 
     /// Clean up
@@ -85,7 +85,7 @@ int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
     /// Open output file
     std::ofstream f(fn);
     if (!f.is_open()) {
-        BOOST_LOG_TRIVIAL(error) << "Could not open config file (" << fn << ") for writing!";
+        LOG_ERR("Could not open config file %s for writing!", fn);
         return -1;
     }
     
@@ -98,7 +98,7 @@ int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
         // warning: super long str vals will cause overwrite error!
         try { sprintf(tmps, "%-12s : %s\n", it.first.c_str(), it.second.c_str()); }
         catch (std::exception& e) {
-            BOOST_LOG_TRIVIAL(error) << "Error writing key/value pair (" << it.first << " : " << it.second << ")! Error was: " << e.what();
+			LOG_ERR("Error writing key/value pair (%s : %s)! Error was: %s", it.first, it.second, e.what());
             f.close();
             return -1;
         }
@@ -109,7 +109,7 @@ int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
     long nbytes = f.tellp();
     f.close();
 
-    BOOST_LOG_TRIVIAL(debug) << "Wrote " << nbytes << " to disk!";
+	LOG_DBG("Wrote %l bytes to disk!", nbytes);
 
     return nbytes;
 }
@@ -123,7 +123,7 @@ bool ConfigParser::getStr(string key, string& val) {
         val = _string_data[key];
         return true;
     }
-    BOOST_LOG_TRIVIAL(warning) << "Could not find specified key (" << key << ")!";
+    LOG_WRN("Could not find specified key (%s)!", key);
     return false;
 }
 
@@ -135,7 +135,7 @@ bool ConfigParser::getInt(string key, int& val) {
     if (getStr(key, str)) {
         try { val = stoi(str); }
         catch (std::exception& e) {
-            BOOST_LOG_TRIVIAL(error) << "Error parsing config file value (" << key << " : " << str << ") as INT! Error was: " << e.what();
+            LOG_ERR("Error parsing config file value (%s : %s) as INT! Error was: %s", key, str, e.what());
             return false;
         }
         return true;
@@ -151,7 +151,7 @@ bool ConfigParser::getDbl(string key, double& val) {
     if (getStr(key, str)) {
         try { val = stod(str); }
         catch (std::exception& e) {
-            BOOST_LOG_TRIVIAL(error) << "Error parsing config file value (" << key << " : " << str << ") as DBL! Error was: " << e.what();
+			LOG_ERR("Error parsing config file value (%s : %s) as DBL! Error was: %s", key, str, e.what());
             return false;
         }
         return true;
@@ -181,7 +181,7 @@ bool ConfigParser::getVecInt(std::string key, vector<int>& val) {
             if (s.substr(0,1) == "}") { break; }
             try { val.push_back(stoi(s)); }
             catch (std::exception& e) {
-                BOOST_LOG_TRIVIAL(error) << "Error parsing config file value (" << key << " : " << s << ") as INT! Error was: " << e.what();
+				LOG_ERR("Error parsing config file value (%s : %s) as INT! Error was: %s", key, s, e.what());
                 return false;
             }
         }
@@ -212,7 +212,7 @@ bool ConfigParser::getVecDbl(std::string key, vector<double>& val) {
             if (s.substr(0,1) == "}") { break; }
             try { val.push_back(stod(s)); }
             catch (std::exception& e) {
-                BOOST_LOG_TRIVIAL(error) << "Error parsing config file value (" << key << " : " << s << ") as DBL! Error was: " << e.what();
+				LOG_ERR("Error parsing config file value (%s : %s) as DBL! Error was: %s", e.what(), key, s);
                 return false;
             }
         }
@@ -249,7 +249,7 @@ bool ConfigParser::getVVecInt(std::string key, vector<vector<int> >& val) {
                 if (s.substr(0,1) == "}") { break; }
                 try { poly.push_back(stoi(s)); }
                 catch (std::exception& e) {
-                    BOOST_LOG_TRIVIAL(error) << "Error parsing config file value (" << key << " : " << s << ") as INT! Error was: " << e.what();
+					LOG_ERR("Error parsing config file value (%s : %s) as INT! Error was: %s", key, s, e.what());
                     return false;
                 }
             }

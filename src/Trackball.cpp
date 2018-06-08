@@ -7,7 +7,7 @@
 #include "Trackball.h"
 
 #include "geometry.h"
-#include "logging.h"
+#include "Logger.h"
 
 using cv::Mat;
 using cv::Scalar;
@@ -110,7 +110,7 @@ Trackball::Trackball(
 	}
 
     /// Pre-calc view rays.
-    _p1s_lut = boost::shared_array<double>(new double[_view_w * _view_h * 3]);
+    _p1s_lut = std::shared_ptr<double[]>(new double[_view_w * _view_h * 3]);
     memset(_p1s_lut.get(), 0, _view_w * _view_h * 3 * sizeof(double));
     for (int i = 0; i < _view_h; i++) {
         uint8_t* pmask = _mask.ptr(i);
@@ -185,7 +185,7 @@ cv::Mat& Trackball::updateSphere(CmPoint64f& angleAxis)
         }
     }
 
-    BOOST_LOG_TRIVIAL(debug) << "Match overlap: " << 100 * good / static_cast<double>(cnt);
+    LOG_DBG("Match overlap: %.1f", 100 * good / static_cast<double>(cnt));
 
     return _R;
 }
