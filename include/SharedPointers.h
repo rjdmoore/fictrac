@@ -4,8 +4,7 @@
 /// \author     Saul Thurrowgood
 /// \copyright  CC BY-NC-SA 3.0
 
-#ifndef _SHARED_POINTERS_H
-#define _SHARED_POINTERS_H 1
+#pragma once
 
 ///
 /// A shared pointer is typedef'd for each TypeName as TypeNamePtr.
@@ -16,7 +15,7 @@
 ///       the header file
 ///
 
-#include <boost/shared_ptr.hpp>
+#include <memory>	// shared_ptr
 
 ///
 /// Use this in cases where the forward or full declaration is already given,
@@ -24,7 +23,7 @@
 /// i.e. you will provide it yourself.
 ///
 #define SHARED_PTR_NO_DEC(TypeName) \
-	typedef boost::shared_ptr<TypeName> TypeName ## Ptr
+	typedef std::shared_ptr<TypeName> TypeName ## Ptr
 
 ///
 /// Assumes the type is a class so forward declares it as "class TypeName".
@@ -32,5 +31,3 @@
 #define SHARED_PTR(TypeName) \
 	class TypeName; \
 	SHARED_PTR_NO_DEC(TypeName)
-
-#endif // _SHARED_POINTERS_H

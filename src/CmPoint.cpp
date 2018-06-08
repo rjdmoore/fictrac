@@ -5,7 +5,9 @@
 /// \copyright  CC BY-NC-SA 3.0
 
 #include "CmPoint.h"
+
 #include "typesvars.h"
+#include "Logger.h"
 
 #include <cmath>
 
@@ -264,11 +266,14 @@ cv::Mat_<T> CmPointT<T>::omegaToMatrix(const CmPointT<T>& omega)
     return (cv::Mat_<T>(3,3) << R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7], R[8]);
 }
 
-template <>
 CmPointT<double> CmPointT<double>::matrixToOmega(const cv::Mat_<double>& m)
 {
-    assert((m.rows == 3) && (m.cols == 3));
-    assert(m.depth() == CV_64F);
+	if (!((m.rows == 3) && (m.cols == 3))) {
+		LOG_ERR("Invalid matrix resolution (%d x %d)!", m.rows, m.cols);
+	}
+	if (m.depth() != CV_64F) {
+		LOG_ERR("Invalid matrix depth (%d)!", m.depth());
+	}
                         
     // make sure m is not ill-conditioned
     double angle = acos(clamp((m.at<double>(0,0)+m.at<double>(1,1)+m.at<double>(2,2)-1)/2.0, -1.0, 1.0));
@@ -290,7 +295,6 @@ void CmPointT<T>::omegaToAzElMag(T& az, T& el, T& mag) const
     T xy_ = v_.normalise();
     az = atan2(v_[1], v_[0]);
     el = atan2(z_, xy_);
-    
 }
 
 template <typename T>

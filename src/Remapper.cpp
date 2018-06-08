@@ -8,7 +8,7 @@
 
 #include "typesvars.h"
 #include "CameraModel.h"
-#include "logging.h"
+#include "Logger.h"
 
 #include <opencv2/highgui.hpp>
 
@@ -90,11 +90,11 @@ void Remapper::apply(const IplImage *src, IplImage *dst)
 	/// Sanity check.
 	///
 	if (src->width!=_srcW || src->height!=_srcH) {
-		BOOST_LOG_TRIVIAL(error) << "Error applying remapping! Unexpected source image size!\n";
+		LOG_ERR("Error applying remapping! Unexpected source image size!");
 		return;
 	}
 	if (dst->width!=_dstW || dst->height!=_dstH) {
-		BOOST_LOG_TRIVIAL(error) << "Error applying remapping! Unexpected destination image size!\n";
+		LOG_ERR("Error applying remapping! Unexpected destination image size!");
 		return;
 	}
 
@@ -106,7 +106,7 @@ void Remapper::apply(const IplImage *src, IplImage *dst)
 	///       image and a three channel destination image.
 	///
 	if (src->depth != dst->depth) {
-		BOOST_LOG_TRIVIAL(error) << "Error applying remapping! Image depth mismatch\n";
+		LOG_ERR("Error applying remapping! Image depth mismatch");
 		return;
 	}
 
@@ -156,7 +156,7 @@ void Remapper::apply(const IplImage *src, IplImage *dst)
 		}
 		break;
 	default:
-		BOOST_LOG_TRIVIAL(error) << "Error applying remapping! Invalid data type\n";
+		LOG_ERR("Error applying remapping! Invalid data type");
 		return;
 	}
 }
@@ -201,7 +201,7 @@ void Remapper::_apply(
 	int bpp = _getBytesPerPixel(type);
 	if ((srcStep>0 && (_srcW*bpp) > srcStep)
 		|| (dstStep>0 && (_dstW*bpp) > dstStep)) {
-		BOOST_LOG_TRIVIAL(error) << "Error applying remapping! Failed channel sanity check!\n";
+		LOG_ERR("Error applying remapping! Failed channel sanity check!");
 		return;
 	}
 
@@ -219,7 +219,7 @@ void Remapper::_apply(
 	case CUBIC:   cvInterp = cv::INTER_CUBIC; break;
 // 	case LANCZOS: cvInterp = cv::INTER_LANCZOS4; break;
 	default:
-		BOOST_LOG_TRIVIAL(error) << "Error applying remapping! Invalid interp mode\n";
+		LOG_ERR("Error applying remapping! Invalid interp mode");
 		return;
 	}
 
@@ -235,7 +235,7 @@ void Remapper::_apply(
 	case REMAP_TYPE_F3: cvType=CV_32FC3; break;
 	case REMAP_TYPE_F4: cvType=CV_32FC4; break;
 	default:
-		BOOST_LOG_TRIVIAL(error) << "Error applying remapping! Invalid data type\n";
+		LOG_ERR("Error applying remapping! Invalid data type");
 		return;
 	}
 	cv::Mat mSrc = _getCvMat(cvType, src, _srcW, _srcH, srcStep);

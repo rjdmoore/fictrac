@@ -6,7 +6,7 @@
 
 #include "CVSource.h"
 
-#include "logging.h"
+#include "Logger.h"
 
 
 ///
@@ -14,9 +14,9 @@
 ///
 CVSource::CVSource(int index)
 {
-	BOOST_LOG_TRIVIAL(info) << "Looking for camera at index " << index << "...\n";
+	LOG("Looking for camera at index %d ...", index);
 
-	_cap = boost::shared_ptr<cv::VideoCapture>(new cv::VideoCapture(index));
+	_cap = std::shared_ptr<cv::VideoCapture>(new cv::VideoCapture(index));
 	_open = _cap->isOpened();
 
 	if( _open ) {
@@ -30,9 +30,9 @@ CVSource::CVSource(int index)
 ///
 CVSource::CVSource(std::string filename)
 {
-	BOOST_LOG_TRIVIAL(info) << "Looking for input video file " << filename.c_str() << "...\n";
+	LOG("Looking for input video file %s ...", filename.c_str());
 
-	_cap = boost::shared_ptr<cv::VideoCapture>(new cv::VideoCapture(filename.c_str()));
+	_cap = std::shared_ptr<cv::VideoCapture>(new cv::VideoCapture(filename.c_str()));
 	_open = _cap->isOpened();
 
 	if( _open ) {
@@ -75,7 +75,7 @@ bool CVSource::grab(cv::Mat& frame)
 {
 	if( !_open ) { return false; }
 	if( !_cap->read(_frame_cap) ) {
-		BOOST_LOG_TRIVIAL(error) << "Error grabbing image frame!\n";
+		LOG_ERR("Error grabbing image frame!");
 		return false;
 	}
 	_timestamp = _cap->get(CV_CAP_PROP_POS_MSEC);

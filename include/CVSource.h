@@ -10,8 +10,8 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
-#include <boost/shared_ptr.hpp>
 
+#include <memory>	// shared_ptr
 #include <cstdio>
 
 class CVSource : public FrameSource {
@@ -25,6 +25,6 @@ public:
 	virtual bool grab(cv::Mat& frame);
 
 private:
-	boost::shared_ptr<cv::VideoCapture> _cap;
+	std::shared_ptr<cv::VideoCapture> _cap;
 	cv::Mat _frame_cap;
 };

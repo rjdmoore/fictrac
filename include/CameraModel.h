@@ -4,16 +4,18 @@
 /// \author     Saul Thurrowgood
 /// \copyright  CC BY-NC-SA 3.0
 
-#ifndef _CAMERA_MODEL_H
-#define _CAMERA_MODEL_H 1
+#pragma once
+
 
 #include "typesvars.h"
-
 #include "SharedPointers.h"
-SHARED_PTR(CameraModel);
-#include <boost/enable_shared_from_this.hpp>
 
 #include <opencv2/opencv.hpp>
+
+#include <memory>	// shared_ptr, enable_shared_from_this
+
+SHARED_PTR(CameraModel);
+
 
 ///
 /// Basic camera model methods to convert between pixel coordinates
@@ -25,10 +27,10 @@ SHARED_PTR(CameraModel);
 /// Axes:  X-right  Y-down  Z-forward
 ///
 class CameraModel
-	: public boost::enable_shared_from_this<CameraModel>
+	: public std::enable_shared_from_this<CameraModel>
 {
 public:
-	typedef boost::shared_ptr<CameraModel> Ptr;
+	typedef std::shared_ptr<CameraModel> Ptr;
 
 	///
 	/// Must be virtual to allow proper subclass destruction.

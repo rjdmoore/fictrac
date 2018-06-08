@@ -1,11 +1,10 @@
 /// FicTrac http://rjdmoore.net/fictrac/
 /// \file       CmPoint.h
 /// \brief      3D vector type with several useful operations.
-/// \author     Saul Thurrowgood
+/// \author     Saul Thurrowgood, Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
-#ifndef _CM_POINT_H
-#define _CM_POINT_H 1
+#pragma once
 
 #include <opencv2/opencv.hpp>
 
@@ -222,5 +221,3 @@ inline const CmPoint64f operator^ (const CmPoint64f& lhs, const CmPoint64f& rhs)
 	{ return lhs.crs(rhs); }
 inline const CmPoint64f operator- (const CmPoint64f& p)
 	{ return CmPoint64f(-p.x, -p.y, -p.z); }
-
-#endif // _CM_POINT_H

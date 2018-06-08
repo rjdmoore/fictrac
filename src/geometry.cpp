@@ -8,7 +8,7 @@
 
 #include "CameraModel.h"
 #include "SquareRT.h"
-#include "logging.h"
+#include "Logger.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -31,7 +31,7 @@ bool planeFit_SVD(const vector<CmPoint>& points, CmPoint& normal)
     int n = points.size();
     
     if (n < 3) {
-        BOOST_LOG_TRIVIAL(error) << "Error! At least 3 points are needed to fit a plane (n=" << n << ")!";
+        LOG_ERR("Error! At least 3 points are needed to fit a plane (n = %d)!", n);
         return false;
     }
     
@@ -88,7 +88,7 @@ bool circleFit_camModel(const vector<Point2d>& pix2d, const CameraModelPtr cam_m
     
     /// Fit plane
     if (!planeFit_SVD(pts3d, c)) {
-        BOOST_LOG_TRIVIAL(error) << "Error! Could not fit plane to 3D points!";
+        LOG_ERR("Error! Could not fit plane to 3D points!");
         return false;
     }
     
@@ -114,7 +114,7 @@ bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, co
     vector<CmPoint> cnr_vecs;
     for (int i = 0; i < 4; i++) {
         if (!cam_model->pixelToVector(cnrs[i].x, cnrs[i].y, vec)) {
-            BOOST_LOG_TRIVIAL(error) << "Error finding square homography! Input points were invalid (" << cnrs[i].x << ", " << cnrs[i].y << ").";
+            LOG_ERR("Error finding square homography! Input points were invalid (%f, %f).", cnrs[i].x, cnrs[i].y);
             return false;
         }
         vec3normalise(vec);

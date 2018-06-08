@@ -11,7 +11,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include <boost\shared_array.hpp>
+#include <memory>	// shared_ptr
 
 ///
 /// Estimate track ball orientation and update surface map.
@@ -61,7 +61,7 @@ private:
     int _view_w, _view_h;
     double _r;
 
-    boost::shared_array<double> _p1s_lut;
+    std::shared_ptr<double[]> _p1s_lut;
 
     /// Display.
     cv::Mat _orient;
