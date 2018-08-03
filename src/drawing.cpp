@@ -121,7 +121,7 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
     cam_model->vectorToPixel(vec, pt.x, pt.y);
     
     cv::line(rgb, 4*pt0, 4*pt, colour, 1, CV_AA, 2);
-    cv::putText(rgb, "x", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1.0, CV_AA);
+    cv::putText(rgb, "x", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
     
     // y
     vec[0] = sy.at<double>(0,0);
@@ -130,7 +130,7 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
     cam_model->vectorToPixel(vec, pt.x, pt.y);
     
     cv::line(rgb, 4*pt0, 4*pt, colour, 1, CV_AA, 2);
-    cv::putText(rgb, "y", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1.0, CV_AA);
+    cv::putText(rgb, "y", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
     
     // z
     vec[0] = sz.at<double>(0,0);
@@ -139,7 +139,7 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
     cam_model->vectorToPixel(vec, pt.x, pt.y);
     
     cv::line(rgb, 4*pt0, 4*pt, colour, 1, CV_AA, 2);
-    cv::putText(rgb, "z", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1.0, CV_AA);
+    cv::putText(rgb, "z", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
 }
 
 ///

@@ -19,8 +19,8 @@ public:
 	PGRSource(int index=0);
 	virtual ~PGRSource();
 
-	virtual void setFPS(int fps);
-	virtual void rewind();
+	virtual bool setFPS(int fps);
+	virtual bool rewind();
 //	virtual void skip(unsigned int frames);
 	virtual bool grab(cv::Mat& frame);
 

@@ -16,10 +16,19 @@ extern const std::chrono::high_resolution_clock::time_point _t0;
 ///
 /// Return seconds since program start.
 ///
-static double ts_secs() {
+static double elapsed_secs() {
 	using namespace std::chrono;
 	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	return duration_cast<duration<double>>(t1 - _t0).count();
+}
+
+///
+/// Return system timestamp (ms)
+///
+static long long ts_ms() {
+    using namespace std::chrono;
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    return duration_cast<milliseconds>(t1.time_since_epoch()).count();
 }
 
 ///

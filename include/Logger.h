@@ -15,13 +15,14 @@
 #include <string>
 
 /// Helper macro
-#define MSG_FMT(fmt) std::to_string(ts_secs()) + "::" + std::string(__FUNCTION__) + ": " + (fmt) + "\n"
+#define MSG_FMT(fmt) std::to_string(elapsed_secs()) + "::" + std::string(__FUNCTION__) + ": " + (fmt) + "\n"
 
 /// Logging macros
 #define LOG(fmt, ...) Logger::mprintf(Logger::INF, MSG_FMT(fmt), __VA_ARGS__)
 #define LOG_DBG(fmt, ...) Logger::mprintf(Logger::DBG, MSG_FMT(fmt), __VA_ARGS__)
 #define LOG_WRN(fmt, ...) Logger::mprintf(Logger::WRN, MSG_FMT(fmt), __VA_ARGS__)
 #define LOG_ERR(fmt, ...) Logger::mprintf(Logger::ERR, MSG_FMT(fmt), __VA_ARGS__)
+
 #define DISP(fmt, ...) Logger::mprintf(Logger::DSP, std::string(fmt) + "\n", __VA_ARGS__)
 
 #define SET_LOG_LEVEL(v) Logger::verbosity() = (v)
@@ -82,7 +83,7 @@ public:
 			vprintf(format.c_str(), args);
             
             // also log to file
-			if (_fileopened) {
+			if (_fileopened && (lvl != DSP)) {
 				vfprintf(_outputfile, format.c_str(), args);
 			}
 			va_end(args);

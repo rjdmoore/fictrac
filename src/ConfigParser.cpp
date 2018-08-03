@@ -55,7 +55,7 @@ int ConfigParser::read(string fn)
 
     /// Parse to map
     string line;
-    _string_data.clear();
+    _data.clear();
     while (getline(f,line)) {
         if ((line[0] == '#') || (line[0] == '%')) { continue; }   // skip comment lines
 
@@ -67,14 +67,14 @@ int ConfigParser::read(string fn)
         string val = line.substr(line.find_first_not_of(whitespace,delim+1));
 
         /// Add to map
-        _string_data[key] = val;
+        _data[key] = val;
 
         LOG_DBG("Extracted key: %s  val: %s", key, val);
     }
 
     /// Clean up
     f.close();
-    return _string_data.size();
+    return _data.size();
 }
 
 ///
@@ -118,9 +118,9 @@ int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
 /// Retrieve string value corresponding to specified key from map.
 ///
 bool ConfigParser::getStr(string key, string& val) {
-    auto it = _string_data.find(key);
-    if (it != _string_data.end()) {
-        val = _string_data[key];
+    auto it = _data.find(key);
+    if (it != _data.end()) {
+        val = _data[key];
         return true;
     }
     LOG_WRN("Could not find specified key (%s)!", key);
@@ -268,7 +268,7 @@ void ConfigParser::printAll()
     printf("Config file (%s):\n", _fn.c_str());
     
     std::stringstream s;
-    for (auto& it : _string_data) {
+    for (auto& it : _data) {
         s << "\t" << it.first << "\t: " << it.second << std::endl;
     }
     std::cout << s.str();
