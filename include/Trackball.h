@@ -8,6 +8,7 @@
 
 #include "NLoptFunc.h"
 #include "CameraModel.h"
+#include "typesvars.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -19,49 +20,67 @@
 class Trackball : public NLoptFunc
 {
 public:
-    Trackball(  CameraModelPtr  cam_model,
-                int             sphere_w,
-                int             sphere_h,
-                double          sphere_r_d_ratio,
+    Trackball(  int             sphere_map_w,
+                int             sphere_map_h,
+                CameraModelPtr  roi_model,
+                CmPoint64f&     roi_to_cam_r,
+                CmPoint64f&     cam_to_lab_r,
+                double          sphere_diam_rad,
+                double          error_thresh,
                 cv::Mat&        mask,
                 cv::Mat&        sphere_template,
                 bool            do_display,
-                bool            do_update,
-                double          lower_bound,
-                double          upper_bound,
+                double          bound,
                 double          tol,
                 int             max_eval
     );
     ~Trackball();
 
-    void setCurrentView(cv::Mat view) { _view = view; }
+    void reset();
 
-    void clearSphere();
-
-    cv::Mat& updateSphere(CmPoint64f& angleAxis);
-
-    double testRotation(const double x[3]);
-
-    virtual double objective(unsigned n, const double* x, double* grad)
-    {
-        return testRotation(x);
-    }
+    /// cv::Mat not copied - careful not to modify incoming mat until we're done with it here.
+    bool update(cv::Mat view, double timestamp, bool allow_global);
 
     void drawDebug(cv::Mat& sphere, cv::Mat& orient);
 
-    cv::Mat& getR() { return _R; }
-    cv::Mat& getTemplate() { return _sphere; }
+    //const cv::Mat& get_R() { return _R_roi; }
+    //const CmPoint64f& get_dR() { return _dr_roi; }
+    //double get_err() { return _err; }
+    //const cv::Mat& get_template() { return _sphere; }
 
 private:
-    CameraModelPtr _cam_model, _sphere_model;
-    cv::Mat _sphere, _view, _mask, _R;
-    cv::Mat _sphere_hist, _sphere_max;
+    double testRotation(const double x[3]);
+    virtual double objective(unsigned n, const double* x, double* grad) { return testRotation(x); }
+    void setCurrentView(cv::Mat view, double timestamp) { _roi = view; _ts = timestamp; }
+    bool doSearch(bool allow_global);
+    void updateSphere();
+    void updatePath();
+    bool logData();
 
-    int _w, _h;
-    int _view_w, _view_h;
-    double _r;
+    /// Vars.
+    int _map_w, _map_h;
+    int _roi_w, _roi_h;
+    double _r_d_ratio, _error_thresh, _bound, _err;
+
+    CameraModelPtr _roi_model, _sphere_model;
+    cv::Mat _sphere, _roi, _mask;
+    cv::Mat _roi_to_cam_R, _cam_to_lab_R;
+    cv::Mat _sphere_hist, _sphere_max;
+    double _ts;
 
     std::shared_ptr<double[]> _p1s_lut;
+
+    /// Data.
+    unsigned int _cnt, _seq;
+    CmPoint64f _dr_roi;
+    cv::Mat _R_roi;
+    CmPoint64f _dr_cam, _r_cam;
+    cv::Mat _R_cam;
+    CmPoint64f _dr_lab, _r_lab;
+    cv::Mat _R_lab;
+
+    double _velx, _vely, _step_mag, _step_dir, _intx, _inty, _heading, _posx, _posy;
+    
 
     /// Display.
     cv::Mat _orient;

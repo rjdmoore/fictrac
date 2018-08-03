@@ -228,7 +228,7 @@ float CmPointT<float>::getAngleToNorm(const CmPointT<float>& b) const
 {
 	const CmPointT<float> &a = *this;
 	float cosAngle = a % b;
-	const float thresh = 0.95; /// prefer acos since it's cheaper
+	const float thresh = 0.95f; /// prefer acos since it's cheaper
 	if (std::fabs(cosAngle) < thresh) {
 		return std::acos(cosAngle);
 	} else {
@@ -266,7 +266,8 @@ cv::Mat_<T> CmPointT<T>::omegaToMatrix(const CmPointT<T>& omega)
     return (cv::Mat_<T>(3,3) << R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7], R[8]);
 }
 
-CmPointT<double> CmPointT<double>::matrixToOmega(const cv::Mat_<double>& m)
+template <typename T>
+CmPointT<T> CmPointT<T>::matrixToOmega(const cv::Mat_<T>& m)
 {
 	if (!((m.rows == 3) && (m.cols == 3))) {
 		LOG_ERR("Invalid matrix resolution (%d x %d)!", m.rows, m.cols);
@@ -276,13 +277,13 @@ CmPointT<double> CmPointT<double>::matrixToOmega(const cv::Mat_<double>& m)
 	}
                         
     // make sure m is not ill-conditioned
-    double angle = acos(clamp((m.at<double>(0,0)+m.at<double>(1,1)+m.at<double>(2,2)-1)/2.0, -1.0, 1.0));
+    double angle = acos(clamp((m.at<T>(0,0)+m.at<T>(1,1)+m.at<T>(2,2)-1)/2.0, -1.0, 1.0));
     double sin_angle = sin(angle);
     if( sin_angle != 0 ) { angle /= 2.0*sin_angle; }
-    return CmPointT<double>(
-        angle*(m.at<double>(2,1)-m.at<double>(1,2)),
-        angle*(m.at<double>(0,2)-m.at<double>(2,0)),
-        angle*(m.at<double>(1,0)-m.at<double>(0,1)));
+    return CmPointT<T>(
+        angle*(m.at<T>(2,1)-m.at<T>(1,2)),
+        angle*(m.at<T>(0,2)-m.at<T>(2,0)),
+        angle*(m.at<T>(1,0)-m.at<T>(0,1)));
 }
 
 template <typename T>
@@ -298,6 +299,20 @@ void CmPointT<T>::omegaToAzElMag(T& az, T& el, T& mag) const
 }
 
 template <typename T>
+CmPointT<T> CmPointT<T>::getTransformed(cv::Mat_<T> m) const
+{
+    if (!((m.rows == 3) && (m.cols == 3))) {
+        LOG_ERR("Error! Invalid input matrix dimensions (%dx%d).", m.cols, m.rows);
+        return CmPointT<T>(*this);
+    }
+    T* M = reinterpret_cast<T*>(m.data);
+    return CmPointT<T>(
+        x*M[0] + y * M[1] + z * M[2],
+        x*M[3] + y * M[4] + z * M[5],
+        x*M[6] + y * M[7] + z * M[8]);
+}
+
+template <typename T>
 void CmPointT<T>::getRotationAbout(T angle, T R[9]) const
 {
 	CmPointT<T> a = *this;
@@ -309,6 +324,23 @@ template <typename T>
 void CmPointT<T>::getRotationAboutNorm(T angle, T R[9]) const
 {
 	angleUnitAxisToMatrix(std::cos(angle), std::sin(angle), *this, R);
+}
+
+template <typename T>
+CmPointT<T> CmPointT<T>::getRotationTo(CmPointT<T> vec) const
+{
+    CmPointT<T> a = *this;
+    a.normalise();
+    return a.getRotationToNorm(vec.getNormalised());
+}
+
+template <typename T>
+CmPointT<T> CmPointT<T>::getRotationToNorm(CmPointT<T> vec) const
+{
+    CmPointT<T> axis = crs(vec);
+    double angle = asin(axis.normalise());
+    axis *= angle;
+    return axis;
 }
 
 template <typename T>
