@@ -20,8 +20,8 @@ public:
 	CVSource(std::string filename);
 	virtual ~CVSource();
 
-	virtual void setFPS(int fps);
-	virtual void rewind();
+	virtual bool setFPS(int fps);
+	virtual bool rewind();
 	virtual bool grab(cv::Mat& frame);
 
 private:

@@ -15,8 +15,8 @@ public:
 	FrameSource() : _open(false), _bayerType(BAYER_NONE), _width(-1), _height(-1), _timestamp(-1) {}
 	virtual ~FrameSource() {}
 
-	virtual void setFPS(int fps)=0;
-	virtual void rewind()=0;
+	virtual bool setFPS(int fps)=0;
+	virtual bool rewind()=0;
 	virtual bool grab(cv::Mat& frame)=0;
 
 	bool isOpen() { return _open; }
@@ -24,10 +24,12 @@ public:
 	int getHeight() { return _height; }
 	double getTimestamp() { return _timestamp; }
 	void setBayerType(BAYER_TYPE bayer_type) { _bayerType = bayer_type; }
+    bool isLive() { return _live; }
 
 protected:
 	bool _open;
 	BAYER_TYPE _bayerType;
 	int _width, _height;
 	double _timestamp;
+    bool _live;
 };

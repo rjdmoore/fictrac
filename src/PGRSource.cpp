@@ -57,16 +57,20 @@ PGRSource::PGRSource(int index)
 	_width = testImg.GetCols();
 	_height = testImg.GetRows();
 	_open = true;
+
+    _live = true;
 }
 
-void PGRSource::setFPS(int fps)
+bool PGRSource::setFPS(int fps)
 {
 	// do nothing
+    return false;
 }
 
-void PGRSource::rewind()
+bool PGRSource::rewind()
 {
 	// do nothing
+    return false;
 }
 
 //void PGRSource::skip(unsigned int frames)
@@ -84,7 +88,7 @@ bool PGRSource::grab(cv::Mat& frame)
 		return false;
 	}
 	TimeStamp ts = _frame_cap.GetTimeStamp();
-	_timestamp = ts.seconds+ts.microSeconds/(double)1e6;
+	_timestamp = ts.seconds*(double)1e3+ts.microSeconds/(double)1e3;
 
 	Image frame_bgr;
 	error = _frame_cap.Convert(PIXEL_FORMAT_BGR, &frame_bgr);

@@ -7,6 +7,7 @@
 #include "CVSource.h"
 
 #include "Logger.h"
+#include "timing.h"
 
 
 ///
@@ -23,6 +24,8 @@ CVSource::CVSource(int index)
 		_width = _cap->get(CV_CAP_PROP_FRAME_WIDTH);
 		_height = _cap->get(CV_CAP_PROP_FRAME_HEIGHT);
 	}
+
+    _live = true;
 }
 
 ///
@@ -39,6 +42,8 @@ CVSource::CVSource(std::string filename)
 		_width = _cap->get(CV_CAP_PROP_FRAME_WIDTH);
 		_height = _cap->get(CV_CAP_PROP_FRAME_HEIGHT);
 	}
+
+    _live = false;
 }
 
 ///
@@ -50,22 +55,30 @@ CVSource::~CVSource()
 ///
 /// Set input source fps.
 ///
-void CVSource::setFPS(int fps)
+bool CVSource::setFPS(int fps)
 {
+    bool ret = false;
 	if( _open && (fps > 0) ) {
-		_cap->set(CV_CAP_PROP_FPS, fps);
-	}
+        if (!_cap->set(CV_CAP_PROP_FPS, fps)) {
+            LOG_WRN("Warning! Failed to set source fps (attempted to set fps=%d).", fps);
+        } else { ret = true; }
+    }
+    return ret;
 }
 
 ///
 /// Rewind input source to beginning.
 /// Ignored by non-file sources.
 ///
-void CVSource::rewind()
+bool CVSource::rewind()
 {
+    bool ret = false;
 	if (_open) {
-		_cap->set(CV_CAP_PROP_POS_FRAMES, 0);
+        if (!_cap->set(CV_CAP_PROP_POS_FRAMES, 0)) {
+            LOG_WRN("Warning! Failed to rewind source.");
+        } else { ret = true; }
 	}
+    return ret;
 }
 
 ///
@@ -78,7 +91,11 @@ bool CVSource::grab(cv::Mat& frame)
 		LOG_ERR("Error grabbing image frame!");
 		return false;
 	}
+    double ts = static_cast<double>(ts_ms());    // backup, in case the device timestamp is junk
 	_timestamp = _cap->get(CV_CAP_PROP_POS_MSEC);
+    if (_timestamp <= 0) {
+        _timestamp = ts;
+    }
 	if( _frame_cap.channels() == 1 ) {
 		switch( _bayerType ) {
 			case BAYER_BGGR:
