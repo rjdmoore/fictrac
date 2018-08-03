@@ -6,6 +6,7 @@
 
 //TODO: check config.is_open()
 //TODO: Add support for fisheye camera model.
+//TODO: Add support for edge clicks rather than square corner clicks.
 
 #include "ConfigGui.h"
 
@@ -185,7 +186,6 @@ bool ConfigGui::setFrame(Mat& frame)
 
     LOG("Using vfov: %f deg", vfov);
     
-    //TODO: Add support for fisheye camera model.
     _cam_model = CameraModel::createRectilinear(static_cast<int>(_w), static_cast<int>(_h), vfov * CM_D2R);
     
     return _open;
@@ -258,6 +258,13 @@ bool ConfigGui::updateC2ATransform(const Mat& ref_cnrs, Mat& R, Mat& t)
 {
 	bool ret = false;
 	if (_input_data.newEvent) {
+        //FIXME: also support edge clicks! e.g.:
+        //  double x1 = click[2 * i + 0].x;     double y1 = click[2 * i + 0].y;
+        //  double x2 = click[2 * i + 1].x;     double y2 = click[2 * i + 1].y;
+        //  double x3 = click[2 * i + 2].x;     double y3 = click[2 * i + 2].y;
+        //  double x4 = click[2 * i + 3].x;     double y4 = click[2 * i + 3].y;
+        //  double px = ((x1*y2 - y1 * x2)*(x3 - x4) - (x1 - x2)*(x3*y4 - y3 * x4)) / ((x1 - x2)*(y3 - y4) - (y1 - y2)*(x3 - x4));
+        //  double py = ((x1*y2 - y1 * x2)*(y3 - y4) - (y1 - y2)*(x3*y4 - y3 * x4)) / ((x1 - x2)*(y3 - y4) - (y1 - y2)*(x3 - x4));
 		ret = computeRtFromSquare(_cam_model, ref_cnrs, _input_data.sqrPts, R, t);
 		_input_data.newEvent = false;
 	}
@@ -302,8 +309,6 @@ void ConfigGui::changeState(INPUT_MODE new_state)
 ///
 bool ConfigGui::run()
 {
-    if (!_open) { return _open; }
-    
     /// Interactive window.
     cv::namedWindow("configGUI", cv::WINDOW_AUTOSIZE);
     cv::setMouseCallback("configGUI", onMouseEvent, &_input_data);
@@ -328,7 +333,7 @@ bool ConfigGui::run()
     const int click_rad = std::max(int(_w/150+0.5), 5);
     Mat disp_frame, zoom_frame(ZOOM_DIM, ZOOM_DIM, CV_8UC1);
     const int scaled_zoom_dim = static_cast<int>(ZOOM_DIM * ZOOM_SCL + 0.5);
-    while (key != exit_key) {
+    while (_open && (key != exit_key)) {
         /// Create frame for drawing.
         cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
         
@@ -382,7 +387,7 @@ bool ConfigGui::run()
                                         std::getchar(); // discard \n
                                         break;
                                     default:
-                                        LOG_ERR("Invalid input!");
+                                        LOG_WRN("Invalid input!");
                                         std::getchar(); // discard \n
                                         continue;
                                         break;
@@ -445,12 +450,15 @@ bool ConfigGui::run()
                         // write to config file
                         LOG("Adding roi_circ to config file and writing to disk (%s) ...", _config_fn);
                         _cfg.add("roi_circ", cfg_pts);
-                        assert(_cfg.write() > 0);
+                        if (_cfg.write() <= 0) {
+                            LOG_ERR("Error writing to config file (%s)!", _config_fn);
+                            _open = false;  // will cause exit
+                        }
                         
-                        // test read
-                        LOG_DBG("Re-loading config file and reading roi_circ ...");
-                        _cfg.read(_config_fn);
-                        assert(_cfg.getVecInt("roi_circ", cfg_pts));
+                        //// test read
+                        //LOG_DBG("Re-loading config file and reading roi_circ ...");
+                        //_cfg.read(_config_fn);
+                        //assert(_cfg.getVecInt("roi_circ", cfg_pts));
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
@@ -512,7 +520,7 @@ bool ConfigGui::run()
                                 std::getchar(); // discard \n
                                 break;
                             default:
-                                LOG_ERR("Invalid input!");
+                                LOG_WRN("Invalid input!");
                                 std::getchar(); // discard \n
                                 continue;
                                 break;
@@ -573,12 +581,15 @@ bool ConfigGui::run()
                         // write to config file
                         LOG("Adding roi_ignr to config file and writing to disk (%s) ...", _config_fn);
                         _cfg.add("roi_ignr", cfg_polys);
-                        assert(_cfg.write() > 0);
+                        if (_cfg.write() <= 0) {
+                            LOG_ERR("Error writing to config file (%s)!", _config_fn);
+                            _open = false;      // will cause exit
+                        }
                         
-                        // test read
-                        LOG_DBG("Re-loading config file and reading roi_ignr ...");
-                        _cfg.read(_config_fn);
-                        assert(_cfg.getVVecInt("roi_ignr", cfg_polys));
+                        //// test read
+                        //LOG_DBG("Re-loading config file and reading roi_ignr ...");
+                        //_cfg.read(_config_fn);
+                        //assert(_cfg.getVVecInt("roi_ignr", cfg_polys));
                         
                         // advance state
                         cv::destroyWindow("zoomROI");
@@ -672,7 +683,7 @@ bool ConfigGui::run()
 								std::getchar(); // discard \n
 								break;
 							default:
-								LOG_ERR("Invalid input!");
+								LOG_WRN("Invalid input!");
 								std::getchar(); // discard \n
 								continue;
 								break;
@@ -708,7 +719,7 @@ bool ConfigGui::run()
                     } else {
                         try { in = std::stoi(str); }
                         catch(...) {
-                            LOG_ERR("Invalid input!");
+                            LOG_WRN("Invalid input!");
                             continue;
                         }
                     }
@@ -744,7 +755,7 @@ bool ConfigGui::run()
                             break;
                             
                         default:
-                            LOG_ERR("Invalid input!");
+                            LOG_WRN("Invalid input!");
                             continue;
                             break;
                     }
@@ -783,6 +794,7 @@ bool ConfigGui::run()
                         // dump corner points to config file
 						if (!saveC2ATransform(R, t)) {
 							LOG_ERR("Error writing coordinate transform to config file!");
+                            _open = false;      // will cause exit
 						}
                         
                         // advance state
@@ -831,6 +843,7 @@ bool ConfigGui::run()
                         // dump corner points to config file
 						if (!saveC2ATransform(R, t)) {
 							LOG_ERR("Error writing coordinate transform to config file!");
+                            _open = false;      // will cause exit
 						}
                         
                         // advance state
@@ -879,6 +892,7 @@ bool ConfigGui::run()
                         // dump corner points to config file
 						if (!saveC2ATransform(R, t)) {
 							LOG_ERR("Error writing coordinate transform to config file!");
+                            _open = false;      // will cause exit
 						}
                         
                         // advance state
@@ -928,7 +942,10 @@ bool ConfigGui::run()
                 }
                 _cfg.add("c2a_src", string("ext"));
 
-                assert(_cfg.write() > 0);
+                if (_cfg.write() <= 0) {
+                    LOG_ERR("Error writing to config file (%s)!", _config_fn);
+                    _open = false;      // will cause exit
+                }
             
                 // advance state
 				changeState(EXIT);
@@ -985,8 +1002,13 @@ bool ConfigGui::run()
 		LOG_ERR("Error writing config image to disk!");
 	}
 
-	printf("\n\nThe configuration is complete. The configuration file (%s) has been updated.\n\nPress any key to exit...\n", _config_fn.c_str());
-	std::getchar();
+    if (_open) {
+        printf("\n\nThe configuration is complete. The configuration file (%s) has been updated.\n\nPress any key to exit...\n", _config_fn.c_str());
+    }
+    else {
+        printf("\n\nWarning! There were errors and the configuration file may not have been properly updated. Please run configuration again.\n\nPress any key to exit...\n");
+    }
+    std::getchar();
     
     LOG("Exiting configGui!");
     return _open;

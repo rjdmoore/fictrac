@@ -134,7 +134,7 @@ unsigned NLoptFunc::getNumEval()
 	{ return _nEval; }
 
 void NLoptFunc::getOptX(float *x)
-	{ for (unsigned i=0; x && i<_x.size(); ++i) x[i] = _x[i]; }
+	{ for (unsigned i=0; x && i<_x.size(); ++i) x[i] = static_cast<float>(_x[i]); }
 
 void NLoptFunc::getOptX(double *x)
 	{ for (unsigned i=0; x && i<_x.size(); ++i) x[i] = _x[i]; }

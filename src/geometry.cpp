@@ -28,7 +28,7 @@ using std::string;
 bool planeFit_SVD(const vector<CmPoint>& points, CmPoint& normal)
 {
     CmPoint c;
-    int n = points.size();
+    int n = static_cast<int>(points.size());
     
     if (n < 3) {
         LOG_ERR("Error! At least 3 points are needed to fit a plane (n = %d)!", n);
@@ -84,7 +84,7 @@ bool circleFit_camModel(const vector<Point2d>& pix2d, const CameraModelPtr cam_m
 {
     /// Project points to unit sphere
     vector<CmPoint> pts3d;
-    int n = project2dPointsToUnitSphere(pix2d, cam_model, pts3d);
+    size_t n = project2dPointsToUnitSphere(pix2d, cam_model, pts3d);
     
     /// Fit plane
     if (!planeFit_SVD(pts3d, c)) {
@@ -106,8 +106,10 @@ bool circleFit_camModel(const vector<Point2d>& pix2d, const CameraModelPtr cam_m
 ///
 bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, const vector<Point2d>& cnrs, Mat& R, Mat& t)
 {
-    assert((ref_cnrs.rows == 3) && (ref_cnrs.cols == 4));
-    assert(cnrs.size() == 4);
+    if ((ref_cnrs.rows != 3) || (ref_cnrs.cols != 4) || (cnrs.size() != 4)) {
+        LOG_ERR("Error! Invalid format for computing Rt matrices from square corners (ref=%dx%d, n=%d)!", ref_cnrs.cols, ref_cnrs.rows, cnrs.size());
+        return false;
+    }
     
     /// Project square corners.
     double vec[3];
@@ -126,8 +128,10 @@ bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, co
     double guess[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
     if (!R.empty() && !t.empty()) {
         // init guess
-        assert(R.depth() == CV_64F);
-        assert(t.depth() == CV_64F);
+        if ((R.depth() != CV_64F) || (t.depth() != CV_64F)) {
+            LOG_ERR("Error finding square homography! R or t matrix has invalid depth (R=%f, t=%f).", R.depth(), t.depth());
+            return false;
+        }
         CmPoint64f angleAxis = CmPoint64f::matrixToOmega(R);
         for (int i = 0; i < 3; i++) {
             guess[i] = angleAxis[i];

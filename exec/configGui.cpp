@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     DISP("/// configGui:\tA GUI for configuring FicTrac.\n///\n/// This program should be run once for each new input source (or if the camera is moved).");
     DISP("/// Usage: configGui INPUT -c CONFIG_FN [-v LOG_VERBOSITY]");
 	DISP("///\n");
-    
+
     /// Parse args.
     string input_fn = "0";     // default to primary webcam
     string log_level = "info";
