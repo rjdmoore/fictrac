@@ -48,6 +48,7 @@ Trackball::Trackball(
     CmPoint64f&     cam_to_lab_r,
     double          sphere_diam_rad,
     double          error_thresh,
+    int             max_bad_frames = 1,
     Mat&            mask = Mat(),
     Mat&            sphere_template = Mat(),
     bool            do_display = false,
@@ -58,6 +59,7 @@ Trackball::Trackball(
     _roi_w(roi_model->width()), _roi_h(roi_model->height()),
     _roi_model(roi_model),
     _error_thresh(error_thresh), _bound(bound), _err(0),
+    _max_bad_frames (max_bad_frames), _reset(true),
     _cnt(0), _seq(0),
     _intx(0), _inty(0), _posx(0), _posy(0), _heading(0),
     _do_display(do_display)
@@ -139,6 +141,9 @@ Trackball::Trackball(
         }
     }
 
+    /// Data recording.
+    _log = std::unique_ptr<Recorder>(new Recorder("fictrac.dat"));
+
     /// Display.
     if (_do_display) {
         _orient.create(_map_h, _map_w, CV_8U);
@@ -157,6 +162,8 @@ Trackball::~Trackball()
 ///
 void Trackball::reset()
 {
+    _reset = true;
+
     /// Clear maps.
     _sphere.setTo(Scalar::all(128));
     _sphere_max.setTo(Scalar::all(0));
@@ -170,7 +177,6 @@ void Trackball::reset()
     _posx = 0;      // reset because heading was lost
     _posy = 0;
     _heading = 0;
-
 }
 
 ///
@@ -178,19 +184,36 @@ void Trackball::reset()
 ///
 bool Trackball::update(cv::Mat view, double timestamp, bool allow_global)
 {
-    bool ret = false;
+    bool ret = true;
+    static int nbad = 0;
+
+    /// Localise current view on sphere.
     setCurrentView(view, timestamp);
     if (!doSearch(allow_global)) {
         LOG_ERR("Error! Could not match current sphere orientation to within error threshold (%d). No data will be output for this frame!", _error_thresh);
+        nbad++;
     }
     else {
         updateSphere();
         updatePath();
         logData();
-        ret = true;
     }
-    _cnt++;
-    _seq++;
+
+    /// Handle failed localisation.
+    if ((_max_bad_frames >= 0) && (nbad > _max_bad_frames)) {
+        _seq = 0;
+        nbad = 0;
+        reset();
+        ret = false;
+    }
+    else {
+        _cnt++;
+        _seq++;
+    }
+
+    /// Clear reset flag.
+    _reset = false;
+    
     return ret;
 }
 
@@ -471,6 +494,7 @@ void Trackball::updatePath()
         const int steps = 4;	// increasing this doesn't help much
         double step = _step_mag / steps;
         static double prev_heading = 0;
+        if (_reset) { prev_heading = 0; }
         double heading_step = (_heading - prev_heading) / steps;
         while (heading_step >= 180 * CM_D2R) { heading_step -= 360 * CM_D2R; }
         while (heading_step < -180 * CM_D2R) { heading_step += 360 * CM_D2R; }
