@@ -6,7 +6,7 @@
 
 #include "Logger.h"
 
-#include "Timing.h"
+#include "timing.h"
 
 #include <cstdio>   // vsnprintf
 #include <cstdarg>  // va_list, va_start, va_end
@@ -14,7 +14,7 @@
 
 using namespace std;
 
-static string _fn = "fictrac.log";
+static string _fn = string("fictrac_") + execTime() + ".log";
 void Logger::setLogFile(std::string fn)
 {
     _fn = fn;

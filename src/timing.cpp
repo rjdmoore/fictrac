@@ -7,3 +7,4 @@
 #include "timing.h"
 
 static const std::chrono::high_resolution_clock::time_point _t0 = std::chrono::high_resolution_clock::now();
+static const std::chrono::system_clock::time_point _tExec = std::chrono::system_clock::now();   // duplicate for easy stringification
