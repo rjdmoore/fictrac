@@ -20,10 +20,12 @@ using std::string;
 
 int main(int argc, char *argv[])
 {
-	DISP("///");
-    DISP("/// configGui:\tA GUI for configuring FicTrac.\n///\n/// This program should be run once for each new input source (or if the camera is moved).");
-    DISP("/// Usage: configGui INPUT -c CONFIG_FN [-v LOG_VERBOSITY]");
-	DISP("///\n");
+    Logger::setLogFile("something.txt");
+
+	PRINT("///");
+    PRINT("/// configGui:\tA GUI for configuring FicTrac.\n///\n/// This program should be run once for each new input source (or if the camera is moved).");
+    PRINT("/// Usage: configGui INPUT -c CONFIG_FN [-v LOG_VERBOSITY]");
+    PRINT("///\n");
 
     /// Parse args.
     string input_fn = "0";     // default to primary webcam
@@ -50,17 +52,7 @@ int main(int argc, char *argv[])
     }
     
     /// Set logging level.
-	if (log_level.compare("debug")) {
-		SET_LOG_LEVEL(Logger::DBG);
-	} else if (log_level.compare("info")) {
-		SET_LOG_LEVEL(Logger::INF);
-	}
-	else if(log_level.compare("warning")) {
-		SET_LOG_LEVEL(Logger::WRN);
-	}
-	else if(log_level.compare("error")) {
-		SET_LOG_LEVEL(Logger::ERR);
-	}
+    Logger::setVerbosity(log_level);
     
     /// Load and parse config file.
     LOG("Looking for config file: %s ...", config_fn.c_str());

@@ -1,92 +1,61 @@
 /// FicTrac http://rjdmoore.net/fictrac/
 /// \file       Logger.h
-/// \brief      Simple threadsafe logger.
+/// \brief      Simple thread-safe logger.
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
 #pragma once
 
-#include "timing.h"		// dateString
+#include "Recorder.h"
 
 #include <mutex>
-#include <thread>
-#include <cstdio>       // vprintf
-#include <cstdarg>
+#include <memory>   // unique_ptr
 #include <string>
+#include <fstream>  // ofstream
 
-/// Helper macro
-#define MSG_FMT(fmt) std::to_string(elapsed_secs()) + "::" + std::string(__FUNCTION__) + ": " + (fmt) + "\n"
-
-/// Logging macros
-#define LOG(fmt, ...) Logger::mprintf(Logger::INF, MSG_FMT(fmt), __VA_ARGS__)
-#define LOG_DBG(fmt, ...) Logger::mprintf(Logger::DBG, MSG_FMT(fmt), __VA_ARGS__)
-#define LOG_WRN(fmt, ...) Logger::mprintf(Logger::WRN, MSG_FMT(fmt), __VA_ARGS__)
-#define LOG_ERR(fmt, ...) Logger::mprintf(Logger::ERR, MSG_FMT(fmt), __VA_ARGS__)
-
-#define DISP(fmt, ...) Logger::mprintf(Logger::DSP, std::string(fmt) + "\n", __VA_ARGS__)
-
-#define SET_LOG_LEVEL(v) Logger::verbosity() = (v)
-
-extern FILE * _outputfile;
-extern bool _fileopened;
+#define LOG(fmt, ...) Logger::mprintf(Logger::INF, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOG_DBG(fmt, ...) Logger::mprintf(Logger::DBG, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOG_WRN(fmt, ...) Logger::mprintf(Logger::WRN, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOG_ERR(fmt, ...) Logger::mprintf(Logger::ERR, __FUNCTION__, fmt, __VA_ARGS__)
+#define PRINT(fmt, ...) Logger::mprintf(Logger::PRT, __FUNCTION__, fmt, __VA_ARGS__)
 
 
 class Logger
 {
 public:
-    ///
-	/// Logger verbosity level (DBG < INF < WRN < ERR < DSP)
-	///
-    enum LOG_LEVEL { DBG, INF, WRN, ERR, DSP };
+    // logger verbosity level
+    enum LogLevel { DBG, INF, WRN, ERR, PRT };
 
-	///
+    /// Delete the copy constructors we wish to block (public decs give better compiler error msgs)
+    Logger(Logger const&) = delete;
+    void operator=(Logger const&) = delete;
+
     /// Get/set verbosity
-	///
-    static LOG_LEVEL& verbosity() {
-        static LOG_LEVEL v = INF;   // default to INF
+    static LogLevel& verbosity() {
+        static LogLevel v = INF;   // default to INF
         return v;
     };
 
-	///
-	/// Copy stdout to logfile
-	///
-	static void logToFile(std::string fn = "") {
-		if (fn.empty()) {
-			fn = "logfile_" + dateString() + ".log";
-		}
-		_outputfile = fopen(fn.c_str(), "wt");
-		_fileopened = true;
-	}
+    /// Verbosity helper functions
+    static void setVerbosity(LogLevel v) {
+        verbosity() = v;
+    }
 
-	///
-	/// Flush buffer
-	///
-	static void flush() {
-		fflush(stdout);
-		if (_fileopened) {
-			fflush(_outputfile);
-		}
-	}
+    static void setVerbosity(std::string v);
 
-	///
-	/// Printf wrapper - don't call directly; use macros!
-	///
-	static void mprintf(LOG_LEVEL lvl, std::string format, ...)
-	{
-		// re-entrant
-		static std::mutex printf_mutex;
-		std::lock_guard<std::mutex> lock(printf_mutex);
+    /// Set log file name.
+    /// Must be called before first log call to have effect!
+    static void setLogFile(std::string fn);
 
-		if ((int)lvl >= (int)verbosity()) {
-			va_list args;
-			va_start(args, format);
-			vprintf(format.c_str(), args);
-            
-            // also log to file
-			if (_fileopened && (lvl != DSP)) {
-				vfprintf(_outputfile, format.c_str(), args);
-			}
-			va_end(args);
-		}
-	};
+    /// Thread-safe printf wrapper
+    static void mprintf(LogLevel lvl, std::string func, std::string format, ...);
+
+private:
+    /// Hidden constructor to prevent direct instantiation
+    Logger();
+    ~Logger();
+
+private:
+    std::unique_ptr<Recorder> _log;
+    std::mutex _pMutex;
 };

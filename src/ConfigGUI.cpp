@@ -217,7 +217,7 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// write to config file
-	LOG("Adding %s to config file and writing to disk (%s) ...", sqr_type, _config_fn);
+	LOG("Adding %s to config file and writing to disk (%s) ...", sqr_type.c_str(), _config_fn.c_str());
 	_cfg.add(sqr_type, cfg_pts);
 	_cfg.add("c2a_src", sqr_type);
 
@@ -230,7 +230,7 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// write to config file
-	LOG("Adding R_c2a, t_c2a, and c2a_src to config file and writing to disk (%s) ...", _config_fn);
+	LOG("Adding R_c2a, t_c2a, and c2a_src to config file and writing to disk (%s) ...", _config_fn.c_str());
 	_cfg.add("R_c2a", cfg_R);
 	_cfg.add("t_c2a", cfg_t);
 
@@ -240,7 +240,7 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// test read
-	LOG_DBG("Re-loading config file and reading %s, R_c2a, t_c2a ...", sqr_type);
+	LOG_DBG("Re-loading config file and reading %s, R_c2a, t_c2a ...", sqr_type.c_str());
 	_cfg.read(_config_fn);
 
 	if (!_cfg.getVecInt(sqr_type, cfg_pts) || !_cfg.getVecDbl("R_c2a", cfg_R) || !_cfg.getVecDbl("t_c2a", cfg_t)) {
@@ -965,8 +965,6 @@ bool ConfigGui::run()
 
 	cv::destroyAllWindows();
 
-	printf("Writing configImg to disk...\n");
-
 	/// Save config image
 	cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
 
@@ -998,15 +996,16 @@ bool ConfigGui::run()
 
 	// write image to disk
 	string cfg_img_fn = _config_fn.substr(0, std::max(static_cast<int>(_config_fn.size() - 4), 0)) + "-configImg.png";
+    LOG("Writing config image to disk (%s)..", cfg_img_fn.c_str());
 	if (!cv::imwrite(cfg_img_fn, disp_frame)) {
 		LOG_ERR("Error writing config image to disk!");
 	}
 
     if (_open) {
-        printf("\n\nThe configuration is complete. The configuration file (%s) has been updated.\n\nPress any key to exit...\n", _config_fn.c_str());
+        PRINT("\n\Configuration is complete.\n\nPress any key to exit..");
     }
     else {
-        printf("\n\nWarning! There were errors and the configuration file may not have been properly updated. Please run configuration again.\n\nPress any key to exit...\n");
+        PRINT("\n\nWarning! There were errors and the configuration file may not have been properly updated. Please run configuration again.\n\nPress any key to exit..");
     }
     std::getchar();
     

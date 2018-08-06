@@ -74,7 +74,7 @@ int ConfigParser::read(string fn)
 
     /// Clean up
     f.close();
-    return _data.size();
+    return static_cast<int>(_data.size());
 }
 
 ///
@@ -106,10 +106,10 @@ int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
     }
 
     /// Clean up
-    long nbytes = f.tellp();
+    int nbytes = static_cast<int>(f.tellp());
     f.close();
 
-	LOG_DBG("Wrote %l bytes to disk!", nbytes);
+	LOG_DBG("Wrote %d bytes to disk!", nbytes);
 
     return nbytes;
 }

@@ -21,8 +21,8 @@ CVSource::CVSource(int index)
 	_open = _cap->isOpened();
 
 	if( _open ) {
-		_width = _cap->get(CV_CAP_PROP_FRAME_WIDTH);
-		_height = _cap->get(CV_CAP_PROP_FRAME_HEIGHT);
+		_width = static_cast<int>(_cap->get(CV_CAP_PROP_FRAME_WIDTH));
+		_height = static_cast<int>(_cap->get(CV_CAP_PROP_FRAME_HEIGHT));
 	}
 
     _live = true;
@@ -39,8 +39,8 @@ CVSource::CVSource(std::string filename)
 	_open = _cap->isOpened();
 
 	if( _open ) {
-		_width = _cap->get(CV_CAP_PROP_FRAME_WIDTH);
-		_height = _cap->get(CV_CAP_PROP_FRAME_HEIGHT);
+		_width = static_cast<int>(_cap->get(CV_CAP_PROP_FRAME_WIDTH));
+		_height = static_cast<int>(_cap->get(CV_CAP_PROP_FRAME_HEIGHT));
 	}
 
     _live = false;

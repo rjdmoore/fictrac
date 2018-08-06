@@ -115,31 +115,61 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
     cam_model->vectorToPixel(vec, pt0.x, pt0.y);
     
     // x
-    vec[0] = sx.at<double>(0,0);
-    vec[1] = sx.at<double>(1,0);
-    vec[2] = sx.at<double>(2,0);
-    cam_model->vectorToPixel(vec, pt.x, pt.y);
-    
-    cv::line(rgb, 4*pt0, 4*pt, colour, 1, CV_AA, 2);
-    cv::putText(rgb, "x", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
+    {
+        vec[0] = sx.at<double>(0, 0);
+        vec[1] = sx.at<double>(1, 0);
+        vec[2] = sx.at<double>(2, 0);
+        cam_model->vectorToPixel(vec, pt.x, pt.y);
+
+        cv::line(rgb, 4 * pt0, 4 * pt, colour, 2, CV_AA, 2);
+        cv::putText(rgb, "x", pt + Point2d(10, 0), cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
+        // indicate in to or out of the page
+        if (vec[2] < t.at<double>(2, 0)) {
+            cv::circle(rgb, 4 * pt, 4 * 4, colour, 2, CV_AA, 2);
+        }
+        else {
+            cv::line(rgb, 4 * (pt + Point2d(-4, -4)), 4 * (pt + Point2d(4, 4)), colour, 2, CV_AA, 2);
+            cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, CV_AA, 2);
+        }
+    }
     
     // y
-    vec[0] = sy.at<double>(0,0);
-    vec[1] = sy.at<double>(1,0);
-    vec[2] = sy.at<double>(2,0);
-    cam_model->vectorToPixel(vec, pt.x, pt.y);
-    
-    cv::line(rgb, 4*pt0, 4*pt, colour, 1, CV_AA, 2);
-    cv::putText(rgb, "y", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
+    {
+        vec[0] = sy.at<double>(0, 0);
+        vec[1] = sy.at<double>(1, 0);
+        vec[2] = sy.at<double>(2, 0);
+        cam_model->vectorToPixel(vec, pt.x, pt.y);
+
+        cv::line(rgb, 4 * pt0, 4 * pt, colour, 2, CV_AA, 2);
+        cv::putText(rgb, "y", pt + Point2d(10, 0), cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
+        // indicate in to or out of the page
+        if (vec[2] < t.at<double>(2, 0)) {
+            cv::circle(rgb, 4 * pt, 4 * 4, colour, 2, CV_AA, 2);
+        }
+        else {
+            cv::line(rgb, 4 * (pt + Point2d(-4, -4)), 4 * (pt + Point2d(4, 4)), colour, 2, CV_AA, 2);
+            cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, CV_AA, 2);
+        }
+    }
     
     // z
-    vec[0] = sz.at<double>(0,0);
-    vec[1] = sz.at<double>(1,0);
-    vec[2] = sz.at<double>(2,0);
-    cam_model->vectorToPixel(vec, pt.x, pt.y);
-    
-    cv::line(rgb, 4*pt0, 4*pt, colour, 1, CV_AA, 2);
-    cv::putText(rgb, "z", pt, cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
+    {
+        vec[0] = sz.at<double>(0, 0);
+        vec[1] = sz.at<double>(1, 0);
+        vec[2] = sz.at<double>(2, 0);
+        cam_model->vectorToPixel(vec, pt.x, pt.y);
+
+        cv::line(rgb, 4 * pt0, 4 * pt, colour, 2, CV_AA, 2);
+        cv::putText(rgb, "z", pt + Point2d(10, 0), cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
+        // indicate in to or out of the page
+        if (vec[2] < t.at<double>(2, 0)) {
+            cv::circle(rgb, 4 * pt, 4 * 4, colour, 2, CV_AA, 2);
+        }
+        else {
+            cv::line(rgb, 4 * (pt + Point2d(-4, -4)), 4 * (pt + Point2d(4, 4)), colour, 2, CV_AA, 2);
+            cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, CV_AA, 2);
+        }
+    }
 }
 
 ///

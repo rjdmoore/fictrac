@@ -6,13 +6,14 @@
 
 #pragma once
 
+#include "typesvars.h"
 #include "NLoptFunc.h"
 #include "CameraModel.h"
-#include "typesvars.h"
+#include "Recorder.h"
 
 #include <opencv2/opencv.hpp>
 
-#include <memory>	// shared_ptr
+#include <memory>	// unique_ptr
 
 ///
 /// Estimate track ball orientation and update surface map.
@@ -27,6 +28,7 @@ public:
                 CmPoint64f&     cam_to_lab_r,
                 double          sphere_diam_rad,
                 double          error_thresh,
+                int             max_bad_frames,
                 cv::Mat&        mask,
                 cv::Mat&        sphere_template,
                 bool            do_display,
@@ -57,10 +59,13 @@ private:
     void updatePath();
     bool logData();
 
+private:
     /// Vars.
     int _map_w, _map_h;
     int _roi_w, _roi_h;
     double _r_d_ratio, _error_thresh, _bound, _err;
+    int _max_bad_frames;
+    bool _reset;
 
     CameraModelPtr _roi_model, _sphere_model;
     cv::Mat _sphere, _roi, _mask;
@@ -80,7 +85,9 @@ private:
     cv::Mat _R_lab;
 
     double _velx, _vely, _step_mag, _step_dir, _intx, _inty, _heading, _posx, _posy;
-    
+
+    /// Data recording.
+    std::unique_ptr<Recorder> _log;
 
     /// Display.
     cv::Mat _orient;
