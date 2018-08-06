@@ -12,6 +12,7 @@
 #include <thread>	// this_thread::sleep_for
 
 extern const std::chrono::high_resolution_clock::time_point _t0;
+extern const std::chrono::system_clock::time_point _tExec;
 
 ///
 /// Return seconds since program start.
@@ -32,25 +33,51 @@ static long long ts_ms() {
 }
 
 ///
+/// Return formatted date/time string for program launch.
+///
+static std::string execTime()
+{
+    static std::string s;
+
+    if (s.empty()) {
+        std::time_t t = std::chrono::system_clock::to_time_t(_tExec);
+        struct tm* timeinfo = localtime(&t);
+
+        char tmps[16];
+        sprintf(tmps, "%4d%02d%02d_%02d%02d%02d",
+            timeinfo->tm_year + 1900,
+            timeinfo->tm_mon,
+            timeinfo->tm_mday,
+            timeinfo->tm_hour,
+            timeinfo->tm_min,
+            timeinfo->tm_sec);
+
+        s = std::string(tmps);
+    }
+    return s;
+}
+
+///
 /// Return formatted date/time string.
 ///
-static std::string dateString() {
-	time_t     rawtime;
-	struct tm* timeinfo;
+static std::string dateString()
+{
+    time_t     rawtime;
+    struct tm* timeinfo;
 
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
 
-	char tmps[16];
-	sprintf(tmps, "%4d%02d%02d_%02d%02d%02d",
-		timeinfo->tm_year+1900,
-		timeinfo->tm_mon,
-		timeinfo->tm_mday,
-		timeinfo->tm_hour,
-		timeinfo->tm_min,
-		timeinfo->tm_sec);
+    char tmps[16];
+    sprintf(tmps, "%4d%02d%02d_%02d%02d%02d",
+        timeinfo->tm_year + 1900,
+        timeinfo->tm_mon,
+        timeinfo->tm_mday,
+        timeinfo->tm_hour,
+        timeinfo->tm_min,
+        timeinfo->tm_sec);
 
-	return std::string(tmps);
+    return std::string(tmps);
 }
 
 ///

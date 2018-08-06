@@ -20,8 +20,6 @@ using std::string;
 
 int main(int argc, char *argv[])
 {
-    Logger::setLogFile("something.txt");
-
 	PRINT("///");
     PRINT("/// configGui:\tA GUI for configuring FicTrac.\n///\n/// This program should be run once for each new input source (or if the camera is moved).");
     PRINT("/// Usage: configGui INPUT -c CONFIG_FN [-v LOG_VERBOSITY]");
