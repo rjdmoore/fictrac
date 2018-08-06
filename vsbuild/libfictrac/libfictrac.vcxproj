@@ -146,6 +146,7 @@
     <ClInclude Include="..\..\include\Logger.h" />
     <ClInclude Include="..\..\include\NLoptFunc.h" />
     <ClInclude Include="..\..\include\PGRSource.h" />
+    <ClInclude Include="..\..\include\Recorder.h" />
     <ClInclude Include="..\..\include\Remapper.h" />
     <ClInclude Include="..\..\include\SharedPointers.h" />
     <ClInclude Include="..\..\include\SquareRT.h" />
@@ -167,6 +168,7 @@
     <ClCompile Include="..\..\src\Logger.cpp" />
     <ClCompile Include="..\..\src\NLoptFunc.cpp" />
     <ClCompile Include="..\..\src\PGRSource.cpp" />
+    <ClCompile Include="..\..\src\Recorder.cpp" />
     <ClCompile Include="..\..\src\RectilinearCameraModel.cpp" />
     <ClCompile Include="..\..\src\Remapper.cpp" />
     <ClCompile Include="..\..\src\SquareRT.cpp" />
