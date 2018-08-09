@@ -14,7 +14,7 @@
 
 #include <vector>
 
-SHARED_PTR(CameraModel);
+SHARED_PTR(CameraRemap);
 SHARED_PTR(RemapTransform);
 
 

@@ -23,8 +23,6 @@ public:
     ConfigGui(std::string config_fn);
     ~ConfigGui();
     
-    bool setFrame(cv::Mat& frame);
-    
     bool run();
     
     bool is_open() { return _open; }
@@ -78,6 +76,15 @@ public:
             ignrPts.push_back(std::vector<cv::Point2d>());
         }
     };
+
+private:
+    bool setFrame(cv::Mat& frame);
+
+    bool updateC2ATransform(const cv::Mat& ref_cnrs, cv::Mat& R, cv::Mat& t);
+    void drawC2ATransform(cv::Mat& disp_frame, const cv::Mat& ref_cnrs, const cv::Mat& R, const cv::Mat& t, const double& r, const CmPoint& c);
+    bool saveC2ATransform(const cv::Mat& R, const cv::Mat& t);
+
+    void changeState(INPUT_MODE new_state);
     
 private:
     bool _open;
@@ -87,10 +94,4 @@ private:
     size_t _w, _h;
     CameraModelPtr _cam_model;
     INPUT_DATA _input_data;
-
-	bool updateC2ATransform(const cv::Mat& ref_cnrs, cv::Mat& R, cv::Mat& t);
-	void drawC2ATransform(cv::Mat& disp_frame, const cv::Mat& ref_cnrs, const cv::Mat& R, const cv::Mat& t, const double& r, const CmPoint& c);
-	bool saveC2ATransform(const cv::Mat& R, const cv::Mat& t);
-
-	void changeState(INPUT_MODE new_state);
 };
