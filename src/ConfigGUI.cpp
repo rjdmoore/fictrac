@@ -141,6 +141,60 @@ ConfigGui::ConfigGui(string config_fn)
 {
     /// Load and parse config file.
     _open = (_cfg.read(_config_fn) > 0);
+
+    /// Read source file name and load image.
+    string input_fn;
+    if (_open) {
+        input_fn = _cfg("src_fn");
+        if (input_fn.empty()) {
+            _open = false;
+        }
+    }
+
+    /// Load an image to use for annotation.
+    Mat input_frame;
+    if (_open) {
+        try {
+            // try loading as image file first
+            LOG_DBG("Trying to load input %s as image ...", input_fn.c_str());
+            input_frame = cv::imread(input_fn, CV_LOAD_IMAGE_GRAYSCALE);
+            if (input_frame.empty()) { throw 0; }
+            LOG("Input frame read from image file (%s).", input_fn.c_str());
+        }
+        catch (...) {
+            try {
+                // then try loading as camera id
+                LOG_DBG("Trying to load input %s as camera id ...", input_fn.c_str());
+                int id = stoi(input_fn);
+                cv::VideoCapture cap(id);
+                cap >> input_frame;
+                if (input_frame.empty()) { throw 0; }
+                LOG("Input frame read from camera (%d).", id);
+            }
+            catch (...) {
+                try {
+                    // then try loading as video file
+                    LOG_DBG("Trying to load input %s as video file ...", input_fn.c_str());
+                    cv::VideoCapture cap(input_fn);
+                    cap >> input_frame;
+                    if (input_frame.empty()) { throw 0; }
+                    LOG("Input frame read from video file (%s).", input_fn.c_str());
+                }
+                catch (...) {
+                    LOG_ERR("Could not read frame from input (%s)!", input_fn.c_str());
+                    _open = false;
+                }
+            }
+        }
+        if (input_frame.empty()) {
+            _open = false;
+        }
+    }
+
+    /// Setup.
+    if (_open) {
+        _open = setFrame(input_frame);
+    }
 }
 
 ///
@@ -154,11 +208,6 @@ ConfigGui::~ConfigGui()
 ///
 bool ConfigGui::setFrame(Mat& frame)
 {
-	if (frame.channels() != 1 && frame.channels() != 3) {
-		LOG_ERR("Invalid number of image channels (%d)!", frame.channels());
-		return false;
-	}
-    
     /// Copy input frame.
     if (frame.channels() == 3) {
         cv::cvtColor(frame, _frame, CV_BGR2GRAY);
@@ -167,7 +216,7 @@ bool ConfigGui::setFrame(Mat& frame)
     } else {
         // uh oh, shouldn't get here
         LOG_ERR("Unexpected number of image channels (%d)!", frame.channels());
-        return (_open = false);
+        return false;
     }
     
     /// Stretch contrast for display
@@ -186,9 +235,10 @@ bool ConfigGui::setFrame(Mat& frame)
 
     LOG("Using vfov: %f deg", vfov);
     
+    //FIXME: support also fisheye models!
     _cam_model = CameraModel::createRectilinear(static_cast<int>(_w), static_cast<int>(_h), vfov * CM_D2R);
     
-    return _open;
+    return true;
 }
 
 ///
@@ -222,16 +272,16 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	_cfg.add("c2a_src", sqr_type);
 
 	// dump R to config file
-	vector<double> cfg_R, cfg_t;
+	vector<double> cfg_r, cfg_t;
 	CmPoint angleAxis = CmPoint64f::matrixToOmega(R);
 	for (int i = 0; i < 3; i++) {
-		cfg_R.push_back(angleAxis[i]);
+		cfg_r.push_back(angleAxis[i]);
 		cfg_t.push_back(t.at<double>(i, 0));
 	}
 
 	// write to config file
-	LOG("Adding R_c2a, t_c2a, and c2a_src to config file and writing to disk (%s) ...", _config_fn.c_str());
-	_cfg.add("R_c2a", cfg_R);
+	LOG("Adding r_c2a, t_c2a, and c2a_src to config file and writing to disk (%s) ...", _config_fn.c_str());
+	_cfg.add("r_c2a", cfg_r);
 	_cfg.add("t_c2a", cfg_t);
 
 	if (_cfg.write() <= 0) {
@@ -239,14 +289,14 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 		return false;
 	}
 
-	// test read
-	LOG_DBG("Re-loading config file and reading %s, R_c2a, t_c2a ...", sqr_type.c_str());
-	_cfg.read(_config_fn);
+	//// test read
+	//LOG_DBG("Re-loading config file and reading %s, r_c2a, t_c2a ...", sqr_type.c_str());
+	//_cfg.read(_config_fn);
 
-	if (!_cfg.getVecInt(sqr_type, cfg_pts) || !_cfg.getVecDbl("R_c2a", cfg_R) || !_cfg.getVecDbl("t_c2a", cfg_t)) {
-		LOG_ERR("Bad read!");
-		return false;
-	}
+	//if (!_cfg.getVecInt(sqr_type, cfg_pts) || !_cfg.getVecDbl("r_c2a", cfg_r) || !_cfg.getVecDbl("t_c2a", cfg_t)) {
+	//	LOG_ERR("Bad read!");
+	//	return false;
+	//}
 
 	return true;
 }
@@ -319,7 +369,7 @@ bool ConfigGui::run()
     double r = -1;
     char key = 0;
     string val;
-	string cfg_Rsrc;
+	string cfg_r_src;
     vector<int> cfg_pts;
     vector<double> cfg_vec;
     vector<vector<int> > cfg_polys;
@@ -606,14 +656,14 @@ bool ConfigGui::run()
             /// Choose method for defining animal frame.
             case R_INIT:
 				// test read
-				if (_cfg.getStr("c2a_src", cfg_Rsrc)) {
+				if (_cfg.getStr("c2a_src", cfg_r_src)) {
 
-					LOG_DBG("Found c2a_src: %s", cfg_Rsrc);
+					LOG_DBG("Found c2a_src: %s", cfg_r_src);
 
 					/// Load square corners from config file.
 					cfg_pts.clear();
-					if (!_cfg.getVecInt(cfg_Rsrc, cfg_pts)) {
-						LOG_DBG("Error reading %s from config file! Re-running configuration ...", cfg_Rsrc);
+					if (!_cfg.getVecInt(cfg_r_src, cfg_pts)) {
+						LOG_DBG("Error reading %s from config file! Re-running configuration ...", cfg_r_src);
 						changeState(R_SLCT);
 						break;
 					}
@@ -630,10 +680,10 @@ bool ConfigGui::run()
 
 					/// Load transform from config file.
 					cfg_vec.clear();
-					if (_cfg.getVecDbl("R_c2a", cfg_vec)) {
+					if (_cfg.getVecDbl("r_c2a", cfg_vec)) {
 						R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2]));
 					} else {
-						LOG_DBG("Error reading R_c2a from config file! Re-running configuration ...");
+						LOG_DBG("Error reading r_c2a from config file! Re-running configuration ...");
 						changeState(R_SLCT);
 						break;
 					}
@@ -649,11 +699,11 @@ bool ConfigGui::run()
 
 					/// Draw axes.
 					if (_input_data.sqrPts.size() == 4) {
-						if (cfg_Rsrc == "sqr_cnrs_xy") {
+						if (cfg_r_src == "sqr_cnrs_xy") {
 							drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
-						} else if (cfg_Rsrc == "sqr_cnrs_yz") {
+						} else if (cfg_r_src == "sqr_cnrs_yz") {
 							drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
-						} else if (cfg_Rsrc == "sqr_cnrs_xz") {
+						} else if (cfg_r_src == "sqr_cnrs_xz") {
 							drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
 						}
 					}
@@ -931,14 +981,14 @@ bool ConfigGui::run()
             /// Define animal coordinate frame.
             case R_EXT:
 
-                // ensure R_c2a exists in config file
-                if (!_cfg.getStr("R_c2a", val)) {
+                // ensure r_c2a exists in config file
+                if (!_cfg.getStr("r_c2a", val)) {
                     cfg_vec.clear();
                     cfg_vec.resize(3, 0);
 
                     // write to config file
-                    LOG("Adding R_c2a to config file and writing to disk (%s) ...", _config_fn);
-                    _cfg.add("R_c2a", cfg_vec);
+                    LOG("Adding r_c2a to config file and writing to disk (%s) ...", _config_fn);
+                    _cfg.add("r_c2a", cfg_vec);
                 }
                 _cfg.add("c2a_src", string("ext"));
 
@@ -985,11 +1035,11 @@ bool ConfigGui::run()
 
 	// draw animal axes
 	if (_input_data.sqrPts.size() == 4) {
-		if (cfg_Rsrc == "sqr_cnrs_xy") {
+		if (cfg_r_src == "sqr_cnrs_xy") {
 			drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
-		} else if (cfg_Rsrc == "sqr_cnrs_yz") {
+		} else if (cfg_r_src == "sqr_cnrs_yz") {
 			drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
-		} else if (cfg_Rsrc == "sqr_cnrs_xz") {
+		} else if (cfg_r_src == "sqr_cnrs_xz") {
 			drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
 		}
 	}
@@ -1002,13 +1052,15 @@ bool ConfigGui::run()
 	}
 
     if (_open) {
-        PRINT("\n\Configuration is complete.\n\nPress any key to exit..");
+        LOG("Configuration complete!");
+        PRINT("\n\nPress any key to exit..");
     }
     else {
-        PRINT("\n\nWarning! There were errors and the configuration file may not have been properly updated. Please run configuration again.\n\nPress any key to exit..");
+        LOG_WRN("\n\nWarning! There were errors and the configuration file may not have been properly updated. Please run configuration again.");
+        PRINT("\n\nPress any key to exit..");
     }
     std::getchar();
     
-    LOG("Exiting configGui!");
+    LOG("Exiting configuration!");
     return _open;
 }

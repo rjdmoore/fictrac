@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "CameraModel.h"
 #include "CameraRemap.h"
 #include "FrameSource.h"
 
@@ -15,6 +16,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 #include <deque>
 
 ///
@@ -23,13 +25,14 @@
 class FrameGrabber
 {
 public:
-    FrameGrabber(   std::shared_ptr<CameraRemap>    remapper,
-                    std::shared_ptr<FrameSource>    source,
+    FrameGrabber(   std::shared_ptr<FrameSource>    source,
+                    CameraRemapPtr                  remapper,
+                    const cv::Mat&                  remap_mask,
                     double                          thresh_ratio,
-                    double                          thresh_win,
-                    int                             max_buf_len,
-                    cv::Mat&                        remap_mask
+                    double                          thresh_win_pc,
+                    int                             max_buf_len = 10
     );
+    ~FrameGrabber();
     
     bool getFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, bool latest);
     bool getLatestFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp) {
@@ -43,19 +46,20 @@ private:
     /// Worker function.
     void process();
 
-    std::shared_ptr<CameraRemap> _remapper;
     std::shared_ptr<FrameSource> _source;
+    CameraRemapPtr _remapper;
 
     int _w, _h, _rw, _rh;
 
-    cv::Mat _remap_mask;
+    const cv::Mat _remap_mask;
 
     double _thresh_ratio;
     int _thresh_win, _thresh_rad;
 
     int _max_buf_len;
 
-    bool _active;
+    /// Thread stuff.
+    std::atomic_bool _active;
     std::unique_ptr<std::thread> _thread;
     std::mutex _qMutex;
     std::condition_variable _qCond;

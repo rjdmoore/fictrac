@@ -44,10 +44,12 @@ ConfigParser::~ConfigParser()
 ///
 int ConfigParser::read(string fn)
 {
+    LOG("Looking for config file: %s ...", fn.c_str());
+
     /// Open input file
     std::ifstream f(fn);
     if (!f.is_open()) {
-        LOG_ERR("Could not open config file (%s) for reading!", fn);
+        LOG_ERR("Could not open config file for reading!");
         return -1;
     }
     
@@ -63,17 +65,21 @@ int ConfigParser::read(string fn)
         const string whitespace = ", \t\n";
         std::size_t delim = line.find(":");
         if (delim >= line.size()) { continue; } // skip blank lines
-        string key = line.substr(0, line.find_last_not_of(whitespace,delim-1)+1);
-        string val = line.substr(line.find_first_not_of(whitespace,delim+1));
+        string key = line.substr(0, line.find_last_not_of(whitespace, delim - 1) + 1), val = "";
+        try { val = line.substr(line.find_first_not_of(whitespace, delim + 1)); }
+        catch (...) {}  // add blank values
 
         /// Add to map
         _data[key] = val;
 
-        LOG_DBG("Extracted key: %s  val: %s", key, val);
+        LOG_DBG("Extracted key: %s  val: %s", key.c_str(), val.c_str());
     }
 
     /// Clean up
     f.close();
+
+    LOG("Config file parsed (%d key/value pairs).", _data.size());
+
     return static_cast<int>(_data.size());
 }
 
@@ -96,7 +102,7 @@ int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
     static char tmps[4096];
     for (auto& it : map_to_write) {
         // warning: super long str vals will cause overwrite error!
-        try { sprintf(tmps, "%-12s : %s\n", it.first.c_str(), it.second.c_str()); }
+        try { sprintf(tmps, "%-16s : %s\n", it.first.c_str(), it.second.c_str()); }
         catch (std::exception& e) {
 			LOG_ERR("Error writing key/value pair (%s : %s)! Error was: %s", it.first, it.second, e.what());
             f.close();
@@ -115,6 +121,32 @@ int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
 }
 
 ///
+///
+///
+string ConfigParser::operator()(string key)
+{
+    string s;
+    if (getStr(key, s)) { return s; }
+    LOG_WRN("Key (%s) not found!", key.c_str());
+    return "";
+}
+
+///
+///
+///
+template<typename T>
+T ConfigParser::get(string key)
+{
+    std::stringstream ss(operator()(key));
+    T val;
+    try { ss >> val; }
+    catch (std::exception& e) {
+        LOG_ERR("Error parsing config file value (%s : %s)! Error was: %s", key.c_str(), ss.str().c_str(), e.what());
+    }
+    return val;
+}
+
+///
 /// Retrieve string value corresponding to specified key from map.
 ///
 bool ConfigParser::getStr(string key, string& val) {
@@ -123,7 +155,7 @@ bool ConfigParser::getStr(string key, string& val) {
         val = _data[key];
         return true;
     }
-    LOG_WRN("Could not find specified key (%s)!", key);
+    LOG_WRN("Key (%s) not found!", key.c_str());
     return false;
 }
 
@@ -135,7 +167,7 @@ bool ConfigParser::getInt(string key, int& val) {
     if (getStr(key, str)) {
         try { val = stoi(str); }
         catch (std::exception& e) {
-            LOG_ERR("Error parsing config file value (%s : %s) as INT! Error was: %s", key, str, e.what());
+            LOG_ERR("Error parsing config file value (%s : %s) as INT! Error was: %s", key.c_str(), str.c_str(), e.what());
             return false;
         }
         return true;
@@ -151,10 +183,31 @@ bool ConfigParser::getDbl(string key, double& val) {
     if (getStr(key, str)) {
         try { val = stod(str); }
         catch (std::exception& e) {
-			LOG_ERR("Error parsing config file value (%s : %s) as DBL! Error was: %s", key, str, e.what());
+			LOG_ERR("Error parsing config file value (%s : %s) as DBL! Error was: %s", key.c_str(), str.c_str(), e.what());
             return false;
         }
         return true;
+    }
+    return false;
+}
+
+///
+/// Retrieve bool value corresponding to specified key from map.
+///
+bool ConfigParser::getBool(string key, bool& val) {
+    string str;
+    if (getStr(key, str)) {
+        if (!str.compare("Y") || !str.compare("y") || !str.compare("1")) {
+            val = true;
+            return true;
+        }
+        else if (!str.compare("N") || !str.compare("n") || !str.compare("0")) {
+            val = false;
+            return true;
+        }
+        else {
+            LOG_ERR("Error parsing config file value (%s : %s) as BOOL!", key.c_str(), str.c_str());
+        }
     }
     return false;
 }
@@ -181,7 +234,7 @@ bool ConfigParser::getVecInt(std::string key, vector<int>& val) {
             if (s.substr(0,1) == "}") { break; }
             try { val.push_back(stoi(s)); }
             catch (std::exception& e) {
-				LOG_ERR("Error parsing config file value (%s : %s) as INT! Error was: %s", key, s, e.what());
+				LOG_ERR("Error parsing config file value (%s : %s) as INT! Error was: %s", key.c_str(), s.c_str(), e.what());
                 return false;
             }
         }
@@ -212,7 +265,7 @@ bool ConfigParser::getVecDbl(std::string key, vector<double>& val) {
             if (s.substr(0,1) == "}") { break; }
             try { val.push_back(stod(s)); }
             catch (std::exception& e) {
-				LOG_ERR("Error parsing config file value (%s : %s) as DBL! Error was: %s", e.what(), key, s);
+				LOG_ERR("Error parsing config file value (%s : %s) as DBL! Error was: %s", key.c_str(), s.c_str(), e.what());
                 return false;
             }
         }
@@ -249,7 +302,7 @@ bool ConfigParser::getVVecInt(std::string key, vector<vector<int> >& val) {
                 if (s.substr(0,1) == "}") { break; }
                 try { poly.push_back(stoi(s)); }
                 catch (std::exception& e) {
-					LOG_ERR("Error parsing config file value (%s : %s) as INT! Error was: %s", key, s, e.what());
+					LOG_ERR("Error parsing config file value (%s : %s) as INT! Error was: %s", key.c_str(), s.c_str(), e.what());
                     return false;
                 }
             }
@@ -265,11 +318,11 @@ bool ConfigParser::getVVecInt(std::string key, vector<vector<int> >& val) {
 ///
 void ConfigParser::printAll()
 {
-    printf("Config file (%s):\n", _fn.c_str());
+    LOG_DBG("Config file (%s):\n", _fn.c_str());
     
     std::stringstream s;
     for (auto& it : _data) {
         s << "\t" << it.first << "\t: " << it.second << std::endl;
     }
-    std::cout << s.str();
+    LOG_DBG("%s", s.str());
 }

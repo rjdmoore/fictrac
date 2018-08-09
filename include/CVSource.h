@@ -16,8 +16,7 @@
 
 class CVSource : public FrameSource {
 public:
-	CVSource(int index=0);
-	CVSource(std::string filename);
+	CVSource(std::string input);
 	virtual ~CVSource();
 
 	virtual bool setFPS(int fps);
