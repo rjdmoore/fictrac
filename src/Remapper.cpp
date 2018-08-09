@@ -90,11 +90,11 @@ void Remapper::apply(const IplImage *src, IplImage *dst)
 	/// Sanity check.
 	///
 	if (src->width!=_srcW || src->height!=_srcH) {
-		LOG_ERR("Error applying remapping! Unexpected source image size!");
+		LOG_ERR("Error applying remapping! Unexpected source image size (%dx%d)!", src->width, src->height);
 		return;
 	}
 	if (dst->width!=_dstW || dst->height!=_dstH) {
-		LOG_ERR("Error applying remapping! Unexpected destination image size!");
+		LOG_ERR("Error applying remapping! Unexpected destination image size (%dx%d)!", dst->width, dst->height);
 		return;
 	}
 
@@ -106,7 +106,7 @@ void Remapper::apply(const IplImage *src, IplImage *dst)
 	///       image and a three channel destination image.
 	///
 	if (src->depth != dst->depth) {
-		LOG_ERR("Error applying remapping! Image depth mismatch");
+		LOG_ERR("Error applying remapping! Image depth mismatch (%d != %d).", src->depth, dst->depth);
 		return;
 	}
 

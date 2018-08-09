@@ -60,7 +60,7 @@ static std::string execTime()
 ///
 /// Return formatted date/time string.
 ///
-static std::string dateString()
+static std::string dateTimeString()
 {
     time_t     rawtime;
     struct tm* timeinfo;
@@ -76,6 +76,26 @@ static std::string dateString()
         timeinfo->tm_hour,
         timeinfo->tm_min,
         timeinfo->tm_sec);
+
+    return std::string(tmps);
+}
+
+///
+/// Return formatted date string.
+///
+static std::string dateString()
+{
+    time_t     rawtime;
+    struct tm* timeinfo;
+
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+
+    char tmps[16];
+    sprintf(tmps, "%02d/%02d/%4d",
+        timeinfo->tm_mday,
+        timeinfo->tm_mon,
+        timeinfo->tm_year + 1900);
 
     return std::string(tmps);
 }

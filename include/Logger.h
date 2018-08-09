@@ -25,6 +25,7 @@ class Logger
 public:
     // logger verbosity level
     enum LogLevel { DBG, INF, WRN, ERR, PRT };
+    const char * const LogLevelStrings[4] = { "DBG", "INF", "WRN", "ERR" };
 
     /// Delete the copy constructors we wish to block (public decs give better compiler error msgs)
     Logger(Logger const&) = delete;

@@ -27,26 +27,16 @@ public:
     int write() { return write(_fn); }
 
     /// Quick accessor functions
-    std::string operator()(std::string key) {
-        std::string s;
-        if (getStr(key, s)) {
-            return s;
-        }
-        return "";
-    }
+    std::string operator()(std::string key);
 
     template<typename T>
-    T get(std::string key) {
-        std::stringstream ss(operator()(key));
-        T val;
-        ss >> val;
-        return val;
-    };
+    T get(std::string key);
 
     /// Accessor functions
     bool getStr(std::string key, std::string& val);
     bool getInt(std::string key, int& val);
     bool getDbl(std::string key, double& val);
+    bool getBool(std::string key, bool& val);
     bool getVecInt(std::string key, std::vector<int>& val);
     bool getVecDbl(std::string key, std::vector<double>& val);
     bool getVVecInt(std::string key, std::vector<std::vector<int> >& val);

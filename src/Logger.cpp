@@ -14,16 +14,16 @@
 
 using namespace std;
 
-static string _fn = string("fictrac_") + execTime() + ".log";
-void Logger::setLogFile(std::string fn)
-{
-    _fn = fn;
-}
-
 Logger::Logger()
 {
     // create log writer
-    _log = unique_ptr<Recorder>(new Recorder(_fn));
+    string fn = string("fictrac_") + execTime() + ".log";
+    _log = unique_ptr<Recorder>(new Recorder(fn));
+    if (_log->is_active()) {
+        cout << "Initialised logging to " << fn << endl;
+    } else {
+        cerr << "Error opening log file (" << fn << ")!" << endl;
+    }
 }
 
 Logger::~Logger()
@@ -31,16 +31,16 @@ Logger::~Logger()
 }
 
 void Logger::setVerbosity(std::string v) {
-    if ((v.compare("DBG") == 0) || (v.compare("dbg") == 0)) {
+    if ((v.compare("debug") == 0) || (v.compare("DBG") == 0) || (v.compare("dbg") == 0)) {
         setVerbosity(DBG);
     }
-    else if ((v.compare("INF") == 0) || (v.compare("inf") == 0)) {
+    else if ((v.compare("info") == 0) || (v.compare("INF") == 0) || (v.compare("inf") == 0)) {
         setVerbosity(INF);
     }
-    else if ((v.compare("WRN") == 0) || (v.compare("wrn") == 0)) {
+    else if ((v.compare("warn") == 0) || (v.compare("WRN") == 0) || (v.compare("wrn") == 0)) {
         setVerbosity(WRN);
     }
-    else if ((v.compare("ERR") == 0) || (v.compare("err") == 0)) {
+    else if ((v.compare("error") == 0) || (v.compare("ERR") == 0) || (v.compare("err") == 0)) {
         setVerbosity(ERR);
     }
     else {
@@ -62,7 +62,7 @@ void Logger::mprintf(LogLevel lvl, string func, string format, ...)
 
     // logging format
     if (lvl != PRT) {
-        format = to_string(elapsed_secs()) + "::" + func + ": " + format + "\n";
+        format = to_string(elapsed_secs()) + " " + func + " [" + log.LogLevelStrings[lvl] + "] " + format + "\n";
     } else {
         format = format + "\n";
     }

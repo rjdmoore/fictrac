@@ -8,7 +8,7 @@
 
 
 #include "Remapper.h"
-#include "logging.h"
+#include "Logger.h"
 
 #include <vector>
 #include <cstdio>
@@ -28,7 +28,7 @@ public:
 		: Remapper(srcW, srcH, mapX.cols, mapX.rows)
 	{
 		if (mapX.rows != mapY.rows || mapX.cols != mapY.cols) {
-			BOOST_LOG_TRIVIAL(error) << "Error, map dimensions don't match!\n";
+            LOG_ERR("Error! Map dimensions don't match!");
 			return;
 		}
 		int w = mapX.cols;
