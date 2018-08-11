@@ -9,6 +9,7 @@
 #include "Trackball.h"
 
 #include "geometry.h"
+#include "drawing.h"
 #include "Logger.h"
 #include "timing.h"
 #include "CameraRemap.h"
@@ -28,15 +29,16 @@ using cv::Mat;
 using cv::Scalar;
 using cv::Rect;
 using cv::Point2d;
+using cv::Point2i;
 
 const int POS_HIST_LENGTH = 250;
 const int DRAW_CELL_DIM = 160;
 const int FICTIVE_DRAW_POINTS = 1000;
 
 const int QUALITY_DEFAULT = 6;
-const double OPT_TOL_DEFAULT = 1e-4;
-const double OPT_BOUND_DEFAULT = 0.5;
-const int OPT_MAX_EVAL_DEFAULT = 100;
+const double OPT_TOL_DEFAULT = 1e-3;
+const double OPT_BOUND_DEFAULT = 0.25;
+const int OPT_MAX_EVAL_DEFAULT = 50;
 const bool OPT_GLOBAL_SEARCH_DEFAULT = false;
 const int OPT_MAX_BAD_FRAMES_DEFAULT = -1;
 
@@ -75,29 +77,18 @@ Trackball::Trackball(string cfg_fn)
     }
 
     /// Open frame source.
-    string source_fn = _cfg("src_fn");
+    string src_fn = _cfg("src_fn");
     //FIXME: support multiple frame sources
-    shared_ptr<CVSource> source = shared_ptr<CVSource>(new CVSource(source_fn));
+    shared_ptr<CVSource> source = shared_ptr<CVSource>(new CVSource(src_fn));
     if (!source->isOpen()) {
-        LOG_ERR("Error! Could not open input frame source (%s)!", source_fn.c_str());
+        LOG_ERR("Error! Could not open input frame source (%s)!", src_fn.c_str());
         return;
     }
-
-    /// Create source mask from ignore region.
-    //string mask_fn = _cfg("mask_fn");
-    //if (mask_fn.empty() && !source->isLive()) {
-    //    // default to source_fn-mask.jpg, if we're not running live from camera
-    //    mask_fn = source_fn.substr(0, source_fn.length() - 4) + "-mask.jpg";
-    //}
-    Mat source_mask;// = cv::imread(mask_fn, 0);
-    //if (source_mask.empty()) {
-    //    LOG_ERR("Error reading source mask image (%s)!", mask_fn.c_str());
-    //    return;
-    //}
-    //else if ((source_mask.cols != source->getWidth()) || (source_mask.rows != source->getHeight())) {
-    //    LOG_ERR("Error! Source mask image dimensions (%dx%d) do not match source (%dx%d).", source_mask.cols, source_mask.rows, source->getWidth(), source->getHeight());
-    //    return;
-    //}
+    int src_fps = -1;
+    if (_cfg.getInt("src_fps", src_fps) && (src_fps >= 0)) {
+        LOG("Setting source fps = %d..", src_fps);
+        source->setFPS(src_fps);
+    }
 
     /// Source camera model.
     double vfov = -1;
@@ -106,7 +97,7 @@ Trackball::Trackball(string cfg_fn)
         return;
     }
     //FIXME: support other camera models
-    _src_model = CameraModel::createRectilinear(source->getWidth(), source->getHeight(), vfov);
+    _src_model = CameraModel::createRectilinear(source->getWidth(), source->getHeight(), vfov * CM_D2R);
 
     /// Dimensions - quality defaults to 6 (remap_dim 60x60, sphere_dim 180x90).
     int quality_factor = QUALITY_DEFAULT;
@@ -117,7 +108,9 @@ Trackball::Trackball(string cfg_fn)
     _map_h = static_cast<int>(1.5 * _roi_h);
     _map_w = 2 * _map_h;
 
-    /// Load sphere circumference points and fit c, r.
+    /// Load sphere config and mask.
+    Mat src_mask(source->getHeight(), source->getWidth(), CV_8UC1);
+    src_mask.setTo(Scalar::all(0));
     {
         // read pts from config file
         bool pass = false;
@@ -129,9 +122,35 @@ Trackball::Trackball(string cfg_fn)
             }
 
             // fit circular fov
-            if ((circ_pts.size() >= 3) && circleFit_camModel(circ_pts, _src_model, _sphere_c, _sphere_fov)) {
+            if ((circ_pts.size() >= 3) && circleFit_camModel(circ_pts, _src_model, _sphere_c, _sphere_rad)) {
                 // NOTE: sin rather than tan to correct for apparent size of sphere
-                _r_d_ratio = sin(_sphere_fov / 2.0);
+                _r_d_ratio = sin(_sphere_rad);
+
+                /// Allow sphere region in mask.
+                shared_ptr<vector<Point2i>> int_circ = projCircleInt(_src_model, _sphere_c, _sphere_rad);
+                cv::fillConvexPoly(src_mask, *int_circ, CV_RGB(255, 255, 255));
+
+                /// Mask out ignore regions.
+                vector<vector<int>> ignr_polys;
+                if (_cfg.getVVecInt("roi_ignr", ignr_polys) && (ignr_polys.size() > 0)) {
+                    /// Load ignore polys from config file.
+                    vector<vector<Point2i>> ignr_polys_pts;
+                    for (auto poly : ignr_polys) {
+                        ignr_polys_pts.push_back(vector<Point2i>());
+                        for (unsigned int i = 1; i < poly.size(); i += 2) {
+                            ignr_polys_pts.back().push_back(Point2i(poly[i - 1], poly[i]));
+                        }
+                    }
+
+                    /// Fill ignore region polys.
+                    cv::fillPoly(src_mask, ignr_polys_pts, CV_RGB(0, 0, 0));
+                }
+                else {
+                    LOG_WRN("Warning! No valid mask ignore regions specified in config file (roi_ignr)!");
+                }
+                
+                /// Sphere config read successfully.
+                LOG("Input sphere mask automatically generated using %d ignore ROIs!", ignr_polys.size());
                 pass = true;
             }
         }
@@ -159,27 +178,27 @@ Trackball::Trackball(string cfg_fn)
         _roi_to_cam_R = CmPoint64f::omegaToMatrix(roi_to_cam_r);
 
         // Cam to lab transformation from configuration.
-        vector<double> r_c2a;
-        if (_cfg.getVecDbl("r_c2a", r_c2a) && (r_c2a.size() == 3)) {
-            cam_to_lab_r = CmPoint64f(r_c2a[0], r_c2a[1], r_c2a[2]);
+        vector<double> c2a_r;
+        if (_cfg.getVecDbl("c2a_r", c2a_r) && (c2a_r.size() == 3)) {
+            cam_to_lab_r = CmPoint64f(c2a_r[0], c2a_r[1], c2a_r[2]);
             _cam_to_lab_R = CmPoint64f::omegaToMatrix(cam_to_lab_r);
         }
         else {
-            LOG_ERR("Error! Camera-to-lab coordinate tranformation specified in config file (r_c2a) is invalid!");
+            LOG_ERR("Error! Camera-to-lab coordinate tranformation specified in config file (c2a_r) is invalid!");
             return;
         }
     }
 
     ///// Remap (ROI) model and remapper.
-    double sphere_radPerPix = _sphere_fov / _roi_w;
-    CameraModelPtr roi_model = CameraModel::createFisheye(_roi_w, _roi_h, sphere_radPerPix, _sphere_fov);
+    double sphere_radPerPix = _sphere_rad * 2.0 / _roi_w;
+    _roi_model = CameraModel::createFisheye(_roi_w, _roi_h, sphere_radPerPix, _sphere_rad * 2.0);
     _cam_to_roi = MatrixRemapTransform::createFromOmega(-roi_to_cam_r);
-    CameraRemapPtr remapper = CameraRemapPtr(new CameraRemap(_src_model, roi_model, _cam_to_roi));
+    CameraRemapPtr remapper = CameraRemapPtr(new CameraRemap(_src_model, _roi_model, _cam_to_roi));
 
     /// ROI mask.
     _roi_mask.create(_roi_h, _roi_w, CV_8UC1);
     _roi_mask.setTo(cv::Scalar::all(255));
-    remapper->apply(source_mask, _roi_mask);
+    remapper->apply(src_mask, _roi_mask);
     erode(_roi_mask, _roi_mask, Mat(), cv::Point(-1, -1), 1, cv::BORDER_CONSTANT, 0);   // remove edge effects
 
      /// Frame source.
@@ -199,28 +218,27 @@ Trackball::Trackball(string cfg_fn)
     /// Init optimiser.
     double tol = OPT_TOL_DEFAULT;
     if (!_cfg.getDbl("opt_tol", tol)) {
-        LOG_WRN("Warning! Optimisation parameter specified in the config file (opt_tol) is invalid! Using default value (%f).", tol);
+        LOG_WRN("Warning! Using default value for opt_tol (%f).", tol);
     }
     _bound = OPT_BOUND_DEFAULT;
     if (!_cfg.getDbl("opt_bound", _bound)) {
-        LOG_WRN("Warning! Optimisation parameter specified in the config file (opt_bound) is invalid! Using default value (%f).", _bound);
+        LOG_WRN("Warning! Using default value for opt_bound (%f).", _bound);
     }
     int max_evals = OPT_MAX_EVAL_DEFAULT;
     if (!_cfg.getInt("opt_max_evals", max_evals)) {
-        LOG_WRN("Warning! Optimisation parameter specified in the config file (opt_max_eval) is invalid! Using default value (%d).", max_evals);
+        LOG_WRN("Warning! Using default value for opt_max_eval (%d).", max_evals);
     }
     _global_search = OPT_GLOBAL_SEARCH_DEFAULT;
     if (!_cfg.getBool("opt_do_global", _global_search)) {
-        LOG_WRN("Warning! Optimisation parameter specified in the config file (opt_do_global) is invalid! Using default value (%d).", _global_search);
+        LOG_WRN("Warning! Using default value for opt_do_global (%d).", _global_search);
     }
     _max_bad_frames = OPT_MAX_BAD_FRAMES_DEFAULT;
     if (!_cfg.getInt("max_bad_frames", _max_bad_frames)) {
-        LOG_WRN("Warning! Optimisation parameter specified in the config file (max_bad_frames) is invalid! Using default value (%d).", _max_bad_frames);
+        LOG_WRN("Warning! Using default value for max_bad_frames (%d).", _max_bad_frames);
     }
     _error_thresh = -1;
     if (!_cfg.getDbl("opt_max_err", _error_thresh) || _error_thresh < 0) {
-        LOG_ERR("Error! Optimisation parameter specified in the config file (opt_max_err) is invalid!");
-        return;
+        LOG_WRN("Warning! No optimisation error threshold specified in config file (opt_max_err) - poor matches will not be dropped!");
     }
     init(NLOPT_LN_BOBYQA, 3);
     setLowerBounds(-_bound);
@@ -234,30 +252,21 @@ Trackball::Trackball(string cfg_fn)
 
     /// Buffers.
     _sphere.create(_map_h, _map_w, CV_8UC1);
-    _sphere_max.create(_map_h, _map_w, CV_32SC1);
-    _sphere_hist.create(_map_h, _map_w * 3, CV_32SC1);	// hist stores histogram for 3 classes - black, grey, white
 
     /// Surface map template.
     Mat sphere_template;
     {
-        string sphere_template_fn = _cfg("sphere_map_fn");
-        sphere_template = cv::imread(sphere_template_fn, 0);
-        if ((sphere_template.cols != _map_w) || (sphere_template.rows != _map_h)) {
-            LOG_ERR("Error! Sphere map template specified in the config file (sphere_map_fn) is invalid (%dx%d)!", sphere_template.cols, sphere_template.rows);
-            return;
+        string sphere_template_fn;
+        if (_cfg.getStr("sphere_map_fn", sphere_template_fn)) {
+            sphere_template = cv::imread(sphere_template_fn, 0);
+            if ((sphere_template.cols != _map_w) || (sphere_template.rows != _map_h)) {
+                LOG_ERR("Error! Sphere map template specified in the config file (sphere_map_fn) is invalid (%dx%d)!", sphere_template.cols, sphere_template.rows);
+                return;
+            }
         }
     }
     if (!sphere_template.empty() && (sphere_template.size() == _sphere.size())) {
         sphere_template.copyTo(_sphere);
-        for (int i = 0; i < _map_h; i++) {
-            int32_t* pmax = (int32_t*)_sphere_max.ptr(i);
-            int32_t* phist = (int32_t*)_sphere_hist.ptr(i);
-            uint8_t* psphere = _sphere.ptr(i);
-            for (int j = 0; j < _map_w; j++) {
-                pmax[j] = 10;   // arbitrary start weight
-                phist[j * 3 + static_cast<int>(psphere[j]/127.f)] = pmax[j];	// thresholded sphere is quantised to levels 0 = black, 1 = grey, 2 = white
-            }
-        }
     }
 
     /// Pre-calc view rays.
@@ -269,7 +278,7 @@ Trackball::Trackball(string cfg_fn)
             if (pmask[j] < 255) { continue; }
 
             double l[3] = { 0 };
-            roi_model->pixelIndexToVector(j, i, l);
+            _roi_model->pixelIndexToVector(j, i, l);
             vec3normalise(l);
 
             double* s = &_p1s_lut[(i * _roi_w + j) * 3];
@@ -305,7 +314,7 @@ Trackball::Trackball(string cfg_fn)
 
     /// Thread stuff.
     _active = true;
-    _t1 = unique_ptr<std::thread>(new std::thread(&Trackball::process, this));
+    _thread = unique_ptr<std::thread>(new std::thread(&Trackball::process, this));
 }
 
 ///
@@ -317,8 +326,8 @@ Trackball::~Trackball()
 
     _active = false;
 
-    if (_t1 && _t1->joinable()) {
-        _t1->join();
+    if (_thread && _thread->joinable()) {
+        _thread->join();
     }
 }
 
@@ -331,8 +340,6 @@ void Trackball::reset()
 
     /// Clear maps.
     _sphere.setTo(Scalar::all(128));
-    _sphere_max.setTo(Scalar::all(0));
-    _sphere_hist.setTo(Scalar::all(0));
 
     /// Reset sphere.
     _R_roi = Mat::eye(3, 3, CV_64F);
@@ -359,17 +366,32 @@ void Trackball::process()
 
     /// Sphere tracking loop.
     int nbad = 0;
+    double t0 = ts_ms();
+    double t1, t2, t3, t4, t5, t6;
+    double t1avg = 0, t2avg = 0, t3avg = 0, t4avg = 0, t5avg = 0, t6avg = 0;
     while (_active && _frameGrabber->getNextFrameSet(_src_frame, _roi_frame, _ts)) {
+        t1 = ts_ms();
+
+        LOG("\nFrame %d", _cnt);
 
         /// Localise current view of sphere.
         if (!doSearch(_global_search)) {
+            t2 = ts_ms();
+            t3 = ts_ms();
+            t4 = ts_ms();
+            t5 = ts_ms();
             LOG_ERR("Error! Could not match current sphere orientation to within error threshold (%d). No data will be output for this frame!", _error_thresh);
             nbad++;
         }
         else {
+            t2 = ts_ms();
             updateSphere();
+            t3 = ts_ms();
             updatePath();
+            t4 = ts_ms();
             logData();  // only output good data
+            t5 = ts_ms();
+            nbad = 0;
         }
 
         /// Handle failed localisation.
@@ -391,15 +413,40 @@ void Trackball::process()
                 _active = false;
             }
         }
+        t6 = ts_ms();
+
+        /// Timing.
+        t1avg += t1 - t0;
+        t2avg += t2 - t1;
+        t3avg += t3 - t2;
+        t4avg += t4 - t3;
+        t5avg += t5 - t4;
+        t6avg += t6 - t5;
+        LOG("Timing grab/opt/map/plot/log/disp: %.1f / %.1f / %.1f / %.1f / %.1f / %.1f ms",
+            t1 - t0, t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5);
+        static double prev_t6 = t6;
+        double fps_out = (t6 - prev_t6) > 0 ? 1000 / (t6 - prev_t6) : 0;
+        static double fps_avg = fps_out;
+        fps_avg += 0.25 * (fps_out - fps_avg);
+        static double prev_ts = _ts;
+        double fps_in = (_ts - prev_ts) > 0 ? 1000 / (_ts - prev_ts) : 0;
+        LOG("Average frame rate [curr input / output]: %.1f [%.1f / %.1f] fps", fps_avg, fps_in, fps_out);
+        prev_t6 = t6;
+        prev_ts = _ts;
 
         /// Always increment frame counter.
         _cnt++;
 
         /// Clear reset flag.
         _reset = false;
+
+        t0 = ts_ms();
     }
 
     LOG_DBG("Stopping sphere tracking loop!");
+
+    LOG("Average timing grab/opt/map/plot/log/disp: %.1f / %.1f / %.1f / %.1f / %.1f / %.1f ms",
+        t1avg / _cnt, t2avg / _cnt, t3avg / _cnt, t4avg / _cnt, t5avg / _cnt, t6avg / _cnt);
 
     _active = false;
 }
@@ -410,8 +457,8 @@ void Trackball::process()
 bool Trackball::doSearch(bool allow_global = false)
 {
     /// Maintain a low-pass filtered rotation to use as guess.
-    static CmPoint64f guess;
-    guess = 0.9 * _dr_roi + 0.1 * guess;
+    static CmPoint64f guess(0, 0, 0);
+    if (_reset) { guess = CmPoint64f(0, 0, 0); }
 
     /// Constrain search to bound around guess.
     double lb[3] = { guess[0] - _bound, guess[1] - _bound, guess[2] - _bound };
@@ -420,12 +467,18 @@ bool Trackball::doSearch(bool allow_global = false)
     setUpperBounds(ub);
 
     /// Run optimisation and save result.
-    double guessv[3];
-    guess.copyTo(guessv);
-    optimize(guessv);
-    getOptX(guessv);
-    _dr_roi.copy(guessv);
-    _err = getOptF();
+    if (!_reset) {
+        double guessv[3];
+        guess.copyTo(guessv);
+        optimize(guessv);
+        getOptX(guessv);
+        _dr_roi.copy(guessv);
+        _err = getOptF();
+    }
+    else {
+        _dr_roi = CmPoint64f(0, 0, 0);
+        _err = 0;
+    }
 
     /// Check optimisation.
     bool bad_frame = _error_thresh >= 0 ? (_err > _error_thresh) : false;
@@ -559,6 +612,9 @@ bool Trackball::doSearch(bool allow_global = false)
 
     LOG("optimum sphere rotation:\t%.3f %.3f %.3f  (err=%.3f/its=%d)", _dr_roi[0], _dr_roi[1], _dr_roi[2], _err, getNumEval());
 
+    if (!bad_frame) { guess = 0.9 * _dr_roi + 0.1 * guess; }
+    else { guess = CmPoint64f(0,0,0); }
+
     return !bad_frame;
 }
 
@@ -570,38 +626,36 @@ void Trackball::updateSphere()
     Mat tmpR = CmPoint64f::omegaToMatrix(_dr_roi); // relative rotation (angle-axis) in ROI frame
                                                    // post-multiplication!
     _R_roi = _R_roi * tmpR;                        // absolute orientation (3d mat) in ROI frame
+    double* m = reinterpret_cast<double*>(_R_roi.data);
 
     if (_do_display) {
         _view.setTo(Scalar::all(128));
     }
 
-    Mat p2s(3, 1, CV_64F);
+    double p2s[3];
     int cnt = 0, good = 0;
+    int px = 0, py = 0;
     for (int i = 0; i < _roi_h; i++) {
-        uint8_t* pthresh = _roi_frame.ptr(i);
+        uint8_t* pmask = _roi_mask.ptr(i);
+        uint8_t* proi = _roi_frame.ptr(i);
         for (int j = 0; j < _roi_w; j++) {
-            if (_roi_mask.at<uint8_t>(i, j) < 255) { continue; }
+            if (pmask[j] < 255) { continue; }
             cnt++;
 
             // rotate point about rotation axis (sphere coords)
-            Mat p1s(3, 1, CV_64F, &_p1s_lut[(i * _roi_w + j) * 3]);
-            p2s = _R_roi * p1s;
+            double* v = &_p1s_lut[(i * _roi_w + j) * 3];
+            p2s[0] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2];
+            p2s[1] = m[3] * v[0] + m[4] * v[1] + m[5] * v[2];
+            p2s[2] = m[6] * v[0] + m[7] * v[1] + m[8] * v[2];
 
             // map vector in sphere coords to pixel
-            int x = 0, y = 0;
-            if (!_sphere_model->vectorToPixelIndex(reinterpret_cast<double*>(p2s.data), x, y)) { continue; }
+            if (!_sphere_model->vectorToPixelIndex(p2s, px, py)) { continue; }
 
-            int32_t* smax = &_sphere_max.at<int32_t>(y, x);
-            if (*smax > 0) { good++; }
-
-            int h = ++(_sphere_hist.at<int32_t>(y, x * 3 + static_cast<int>(pthresh[j]/127.f)));	// thresholded sphere is quantised to levels 0 = black, 1 = grey, 2 = white
-            if (h > *smax) {
-                *smax = h;
-                _sphere.at<uint8_t>(y, x) = pthresh[j];
-            }
+            uint8_t* s = &_sphere.data[py * _sphere.step + px];
+            *s = (proi[j] == 255) ? std::min(255, *s + 1) : std::max(0, *s - 1);
 
             // display
-            if (_do_display) { _view.at<uint8_t>(y, x) = pthresh[j]; }
+            if (_do_display) { _view.at<uint8_t>(py, px) = proi[j]; }
         }
     }
 
@@ -755,41 +809,62 @@ bool Trackball::logData()
 ///
 double Trackball::testRotation(const double x[3])
 {
-    Mat tmpR = CmPoint64f::omegaToMatrix(CmPoint64f(x[0], x[1], x[2])); // relative rotation in camera frame
-                                                                        // post-multiplication!
-    Mat testR = _R_roi * tmpR;                                          // absolute orientation in camera frame
+    double rmat[9];
+    CmPoint64f tmp(x[0], x[1], x[2]);
+    tmp.omegaToMatrix(rmat);                // relative rotation in camera frame
+    double* lmat = (double*)_R_roi.data;    // post-multiplication!
+    double m[9];                            // absolute orientation in camera frame
+
+    m[0] = lmat[0] * rmat[0] + lmat[1] * rmat[3] + lmat[2] * rmat[6];
+    m[1] = lmat[0] * rmat[1] + lmat[1] * rmat[4] + lmat[2] * rmat[7];
+    m[2] = lmat[0] * rmat[2] + lmat[1] * rmat[5] + lmat[2] * rmat[8];
+
+    m[3] = lmat[3] * rmat[0] + lmat[4] * rmat[3] + lmat[5] * rmat[6];
+    m[4] = lmat[3] * rmat[1] + lmat[4] * rmat[4] + lmat[5] * rmat[7];
+    m[5] = lmat[3] * rmat[2] + lmat[4] * rmat[5] + lmat[5] * rmat[8];
+
+    m[6] = lmat[6] * rmat[0] + lmat[7] * rmat[3] + lmat[8] * rmat[6];
+    m[7] = lmat[6] * rmat[1] + lmat[7] * rmat[4] + lmat[8] * rmat[7];
+    m[8] = lmat[6] * rmat[2] + lmat[7] * rmat[5] + lmat[8] * rmat[8];
 
     double err = 0;
-    Mat p2s(3, 1, CV_64F);
+    double p2s[3];
     int cnt = 0, good = 0;
+    int px = 0, py = 0;
+    int s, r;
     for (int i = 0; i < _roi_h; i++) {
+        uint8_t* pmask = _roi_mask.ptr(i);
+        uint8_t* proi = _roi_frame.ptr(i);
+        double* v = &_p1s_lut[i * _roi_w * 3];
         for (int j = 0; j < _roi_w; j++) {
-            if (_roi_mask.at<uint8_t>(i, j) < 255) { continue; }
+            if (pmask[j] < 255) { continue; }
             cnt++;
 
             // rotate point about rotation axis (sphere coords)
-            Mat p1s(3, 1, CV_64F, &_p1s_lut[(i * _roi_w + j) * 3]);
-            p2s = testR * p1s;
+            p2s[0] = m[0] * v[3 * j + 0] + m[1] * v[3 * j + 1] + m[2] * v[3 * j + 2];
+            p2s[1] = m[3] * v[3 * j + 0] + m[4] * v[3 * j + 1] + m[5] * v[3 * j + 2];
+            p2s[2] = m[6] * v[3 * j + 0] + m[7] * v[3 * j + 1] + m[8] * v[3 * j + 2];
 
             // map vector in sphere coords to pixel
-            int x = 0, y = 0;
-            if (!_sphere_model->vectorToPixelIndex(reinterpret_cast<double*>(p2s.data), x, y)) { continue; }
+            if (!_sphere_model->vectorToPixelIndex(p2s, px, py)) { continue; }                  // sphere model is spherical, so pixel should never fall outside valid area
 
-            if (_sphere_max.at<int32_t>(y, x) == 0) { continue; }
-            int px = _roi_frame.at<uint8_t>(i, j);
-            if (px == 128) { continue; }
-            double diff = (px - static_cast<int>(_sphere.at<uint8_t>(y, x)));
-            err += diff*diff;
-            good++;
+            r = proi[j];
+            s = _sphere.data[py * _sphere.step + px];
+            if (((r == 0) && (s > 128)) || ((r == 255) && (s < 128))) { err++; }
+
+            good++; // number of overlapping pixels
         }
     }
 
-    /// Normalise for percentage overlap (avoid false positive good matches with little overlap)
-    if (good > 0) {
-        err *= cnt / static_cast<double>(good);
+    /// Compute avg squared diff error.
+    if (cnt > 0) {
+        double overlap_pc = good / static_cast<double>(cnt);
+        if (overlap_pc > 0.05) { err /= good; }
+        else { err = DBL_MAX; }
     } else {
         err = DBL_MAX;
     }
+
     return err;
 }
 
@@ -860,14 +935,7 @@ void makeSphereRotMaps(
     }
 }
 
-///
-///
-///
-void shadowText(Mat& img, string text, int px, int py, int r, int g, int b)
-{
-    cv::putText(img, text, cv::Point(px + 1, py + 1), CV_FONT_HERSHEY_SIMPLEX, 1.0, CV_RGB(0, 0, 0));
-    cv::putText(img, text, cv::Point(px, py), CV_FONT_HERSHEY_SIMPLEX, 1.0, CV_RGB(r, g, b));
-}
+
 
 ///
 ///
@@ -878,7 +946,7 @@ void Trackball::drawCanvas()
         _canvas.setTo(Scalar::all(0));
 
         /// Draw source image.
-        double radPerPix = _sphere_fov * 1.5 / (2 * DRAW_CELL_DIM);
+        double radPerPix = _sphere_rad * 3.0 / (2 * DRAW_CELL_DIM);
         static CameraModelPtr draw_camera = CameraModel::createFisheye(
             2 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, radPerPix, 360 * CM_D2R);
         static CameraRemapPtr draw_remapper = CameraRemapPtr(new CameraRemap(
@@ -1030,27 +1098,27 @@ void Trackball::drawCanvas()
         /// Draw text (with shadow).
         shadowText(_canvas, string("Processed ") + dateString(),
             2, 15,
-            0, 255, 255);
+            255, 255, 0);
         shadowText(_canvas, string("FicTrac (") + string(__DATE__) + string(")"),
             _canvas.cols - 184, 15,
-            0, 255, 255);
+            255, 255, 0);
         shadowText(_canvas, "input image",
             2, 2 * DRAW_CELL_DIM - 8, 
-            0, 255, 255);
+            255, 255, 0);
         shadowText(_canvas, "flat path",
             2, 3 * DRAW_CELL_DIM - 8,
-            0, 255, 255);
+            255, 255, 0);
         shadowText(_canvas, "accumulated map",
             2 * DRAW_CELL_DIM + 3, 3 * DRAW_CELL_DIM - 8,
-            0, 255, 255);
+            255, 255, 0);
         shadowText(_canvas, "sphere ROI",
             2 * DRAW_CELL_DIM + 3, 1 * DRAW_CELL_DIM - 8,
-            0, 255, 255);
+            255, 255, 0);
         shadowText(_canvas, "instant map",
             2 * DRAW_CELL_DIM + 3, 2 * DRAW_CELL_DIM - 8,
-            0, 255, 255);
+            255, 255, 0);
         shadowText(_canvas, "warped diff",
             3 * DRAW_CELL_DIM + 3, 1 * DRAW_CELL_DIM - 8,
-            0, 255, 255);
+            255, 255, 0);
     }
 }
