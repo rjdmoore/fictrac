@@ -46,3 +46,4 @@ vsbuild/x64/
 vsbuild/libfictrac/x64/
 vsbuild/.vs/
 bin/
+*.dat
