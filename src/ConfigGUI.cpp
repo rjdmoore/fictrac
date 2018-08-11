@@ -137,7 +137,7 @@ void createZoomROI(Mat& zoom_roi, const Mat& frame, const Point2d& pt, int orig_
 ///
 /// Helper function to force getchar to take new key press.
 ///
-int mgetchar()
+int getchar_clean()
 {
     double t1 = elapsed_secs();
     int ret;
@@ -436,23 +436,23 @@ bool ConfigGui::run()
                             while (true) {
                                 cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
                                 printf("\n  Would you like to keep the existing circumference points ([y]/n)? ");
-                                in = mgetchar();
+                                in = getchar();
                                 switch (in)
                                 {
                                     case 'y':
                                     case 'Y':
-                                        mgetchar(); // discard \n
+                                        getchar(); // discard \n
                                     case '\n':
                                         // advance state
 										changeState(IGNR_INIT);
                                         break;
                                     case 'n':
                                     case 'N':
-                                        mgetchar(); // discard \n
+                                        getchar(); // discard \n
                                         break;
                                     default:
                                         LOG_WRN("Invalid input!");
-                                        mgetchar(); // discard \n
+                                        getchar(); // discard \n
                                         continue;
                                         break;
                                 }
@@ -570,23 +570,23 @@ bool ConfigGui::run()
                     while (true) {
                         cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
                         printf("\n  Would you like to keep the existing ignore regions ([y]/n)? ");
-                        in = mgetchar();
+                        in = getchar();
                         switch (in)
                         {
                             case 'y':
                             case 'Y':
-                                mgetchar(); // discard \n
+                                getchar(); // discard \n
                             case '\n':
                                 // advance state
 								changeState(R_INIT);
                                 break;
                             case 'n':
                             case 'N':
-                                mgetchar(); // discard \n
+                                getchar(); // discard \n
                                 break;
                             default:
                                 LOG_WRN("Invalid input!");
-                                mgetchar(); // discard \n
+                                getchar(); // discard \n
                                 continue;
                                 break;
                         }
@@ -733,23 +733,23 @@ bool ConfigGui::run()
 					while (true) {
 						cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
 						printf("\n  Would you like to keep the existing transform ([y]/n)? ");
-						in = mgetchar();
+						in = getchar();
 						switch (in)
 						{
 							case 'y':
 							case 'Y':
-								mgetchar(); // discard \n
+								getchar(); // discard \n
 							case '\n':
 								// advance state
 								changeState(EXIT);
 								break;
 							case 'n':
 							case 'N':
-								mgetchar(); // discard \n
+								getchar(); // discard \n
 								break;
 							default:
 								LOG_WRN("Invalid input!");
-								mgetchar(); // discard \n
+								getchar(); // discard \n
 								continue;
 								break;
 						}
@@ -1074,7 +1074,7 @@ bool ConfigGui::run()
         LOG_WRN("\n\nWarning! There were errors and the configuration file may not have been properly updated. Please run configuration again.");
         PRINT("\n\nPress any key to exit..");
     }
-    mgetchar();
+    getchar_clean();
     
     LOG("Exiting configuration!");
     return _open;
