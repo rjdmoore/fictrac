@@ -60,8 +60,14 @@ int ConfigParser::read(string fn)
     /// Parse to map
     string line;
     _data.clear();
+    _comments.clear();
     while (getline(f,line)) {
-        if ((line[0] == '#') || (line[0] == '%')) { continue; }   // skip comment lines
+        if ((line.length() < 3) || ((line[0] == '#') && (line[1] == '#'))) { continue; }    // skip short lines or special comment lines
+        if ((line[0] == '#') || (line[0] == '%')) {
+            // save comment lines
+            _comments.push_back(line);
+            continue;
+        }
 
         /// Tokenise
         const string whitespace = ", \t\n";
@@ -111,6 +117,12 @@ int ConfigParser::write(string fn)
             return -1;
         }
         f << tmps;
+    }
+
+    /// Write comments
+    f << std::endl;
+    for (auto c : _comments) {
+        f << c << std::endl;
     }
 
     /// Clean up

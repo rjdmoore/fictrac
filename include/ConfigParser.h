@@ -77,6 +77,7 @@ public:
     void printAll();
 
 private:
-    std::string _fn;                                // keep track of config filename
-    std::map<std::string,std::string> _data; // string data written/read to/from file
+    std::string _fn;    // keep track of config filename
+    std::map<std::string,std::string> _data;    // string data written/read to/from file
+    std::vector<std::string> _comments;
 };
