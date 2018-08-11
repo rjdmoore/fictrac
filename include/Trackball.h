@@ -56,10 +56,10 @@ private:
     int _map_w, _map_h;
     int _roi_w, _roi_h;
     cv::Mat _src_frame, _roi_frame, _roi_mask;
-    cv::Mat _sphere, _sphere_hist, _sphere_max;
+    cv::Mat _sphere;
 
     /// Sphere vars.
-    double _sphere_fov, _r_d_ratio;
+    double _sphere_rad, _r_d_ratio;
     CmPoint64f _sphere_c;
     
     /// Optimisation.
@@ -88,7 +88,7 @@ private:
 
     /// Thread stuff.
     std::atomic_bool _active;
-    std::unique_ptr<std::thread> _t1;
+    std::unique_ptr<std::thread> _thread;
 
     /// Display.
     bool _do_display;

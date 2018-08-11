@@ -19,7 +19,7 @@
 class Recorder
 {
 public:
-    Recorder(std::string fn);
+    Recorder(std::string fn = "");
     ~Recorder();
 
     bool is_active() { return _active; }
@@ -32,8 +32,12 @@ private:
 
 private:
     std::atomic<bool> _active;
+
+    std::ostream _out;
     std::ofstream _file;
-    std::unique_ptr<std::thread> _t1;
+    bool _isFile;
+
+    std::unique_ptr<std::thread> _thread;
     std::deque<std::string> _msgQ;
     std::mutex _qMutex;
     std::condition_variable _qCond;

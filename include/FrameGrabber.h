@@ -30,7 +30,8 @@ public:
                     const cv::Mat&                  remap_mask,
                     double                          thresh_ratio,
                     double                          thresh_win_pc,
-                    int                             max_buf_len = 10
+                    int                             max_buf_len = 10,
+                    int                             max_frame_cnt = -1
     );
     ~FrameGrabber();
     
@@ -56,7 +57,7 @@ private:
     double _thresh_ratio;
     int _thresh_win, _thresh_rad;
 
-    int _max_buf_len;
+    int _max_buf_len, _max_frame_cnt;
 
     /// Thread stuff.
     std::atomic_bool _active;

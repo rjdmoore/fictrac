@@ -11,16 +11,31 @@
 using namespace std;
 
 Recorder::Recorder(string fn)
-    : _active(false)
+    : _active(false), _out(nullptr), _isFile(false)
 {
-    _file.open(fn.c_str());
-    if (_file.is_open()) {
-        _active = true;
-        _t1 = unique_ptr<thread>(new thread(&Recorder::processMsgQ, this));
+    /// Open source.
+    std::streambuf* buf = nullptr;
+    if (!fn.empty()) {
+        _file.open(fn);
+        if (_file.is_open()) {
+            buf = _file.rdbuf();
+            _isFile = true;
+        }
+        else {
+            cerr << "Error! Recorder could not open output file (" << fn << ") and will pipe to cout instead!" << endl;
+        }
     }
-    else {
-        cerr << "Error! Recorder could not open output file (" << fn << ")!" << endl;
+    if (!_isFile) {
+        buf = cout.rdbuf();
+        _isFile = false;
     }
+
+    /// Set stream buffer source.
+    _out.rdbuf(buf);
+
+    /// Activate thread.
+    _active = true;
+    _thread = unique_ptr<thread>(new thread(&Recorder::processMsgQ, this));
 }
 
 Recorder::~Recorder()
@@ -32,11 +47,13 @@ Recorder::~Recorder()
     _qCond.notify_all();
     l.unlock();
 
-    if (_t1 && _t1->joinable()) {
-        _t1->join();
+    if (_thread && _thread->joinable()) {
+        _thread->join();
     }
 
-    _file.close();
+    if (_isFile) {
+        _file.close();
+    }
 }
 
 bool Recorder::addMsg(string msg)
@@ -68,7 +85,7 @@ void Recorder::processMsgQ()
             l.unlock();
 
             // do async i/o
-            _file << msg.c_str();
+            _out << msg.c_str();
             l.lock();
         }
     }

@@ -11,8 +11,15 @@
 
 #include <opencv2/opencv.hpp>
 
+#include <vector>
+#include <memory>
+#include <string>
+
 /// Draw a circle using linear circumference segements.
-void drawCircle_camModel(cv::Mat& img, const CameraModelPtr cam_model, const CmPoint c, const double r, const cv::Scalar colour, bool solid=true);
+std::shared_ptr<std::vector<cv::Point2i>> projCircleInt(const CameraModelPtr cam_model, const CmPoint c, const double r);
+std::shared_ptr<std::vector<cv::Point2d>> projCircle(const CameraModelPtr cam_model, const CmPoint c, const double r);
+void drawCircle(cv::Mat& img, std::shared_ptr<std::vector<cv::Point2d>> circ_pts, const cv::Scalar colour, bool solid = true);
+void drawCircle_camModel(cv::Mat& img, const CameraModelPtr cam_model, const CmPoint c, const double r, const cv::Scalar colour, bool solid = true);
 
 /// Stretch contrast of grey image to cover range [0,255].
 void histStretch(cv::Mat& grey);
@@ -25,3 +32,6 @@ void drawAxes(cv::Mat& rgb, const CameraModelPtr cam_model, const cv::Mat& R, co
 
 /// Draw rect corners.
 void drawRectCorners(cv::Mat& rgb, const CameraModelPtr cam_model, cv::Mat& cnrs, const cv::Scalar colour);
+
+/// Place text with shadow.
+void shadowText(cv::Mat& img, std::string text, int px, int py, int r, int g, int b);
