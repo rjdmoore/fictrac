@@ -137,9 +137,9 @@ bool CVSource::grab(cv::Mat& frame)
         static double prev_ts = ts - 100; // initially 10 Hz
         static double av_fps = 10;      // initially 10 Hz
         static double sleep_ms = 100;
-        av_fps = 0.9 * av_fps + 0.1 * (1000 / (ts - prev_ts));
-        sleep_ms *= 0.1 * av_fps / _fps;
-        sleep(sleep_ms);
+        av_fps = 0.15 * av_fps + 0.85 * (1000 / (ts - prev_ts));
+        sleep_ms *= 0.25 * (av_fps / static_cast<double>(_fps)) + 0.75;
+        sleep(static_cast<long>(round(sleep_ms)));
         prev_ts = ts;
     }
 

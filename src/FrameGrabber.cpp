@@ -25,7 +25,8 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
                             const Mat&              remap_mask,
                             double                  thresh_ratio,
                             double                  thresh_win_pc,
-                            int                     max_buf_len
+                            int                     max_buf_len,
+                            int                     max_frame_cnt
 )   : _source(source), _remapper(remapper), _remap_mask(remap_mask), _active(false)
 {
     /// Quick sizes.
@@ -51,6 +52,7 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
     LOG_DBG("Thresholding window size: %d (ROI: %d x %d)", _thresh_win, _rw, _rh);
 
     _max_buf_len = max_buf_len;
+    _max_frame_cnt = max_frame_cnt;
 
     /// Thread stuff.
     _active = true;
@@ -85,13 +87,26 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
     }
     size_t n = _frame_q.size();
     if (!_active && (n == 0)) {   // n test allows us to finish processing the queue before quitting
-        // mutex unlocked in unique_lock dstr
         LOG_DBG("No more processed frames in queue!");
+
+        // shouldn't be needed - but just in case :-)
+        _qCond.notify_all();
+
+        // mutex unlocked in unique_lock dstr
         return false;
     }
 
     if ((n != _remap_q.size()) || (n != _ts_q.size())) {
         LOG_ERR("Error! Input processed frame queues are misaligned!");
+        
+        // drop all frames
+        _frame_q.clear();
+        _remap_q.clear();
+        _ts_q.clear();
+
+        // wake processing thread
+        _qCond.notify_all();
+
         // mutex unlocked in unique_lock dstr
         return false;
     }
@@ -115,10 +130,17 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
         remap = _remap_q.front();
         timestamp = _ts_q.front();
 
+        _frame_q.pop_front();
+        _remap_q.pop_front();
+        _ts_q.pop_front();
+
         if (n > 1) {
             LOG_DBG("%d frames remaining in processed frame queue.", _frame_q.size());
         }
     }
+
+    // wake processing thread
+    _qCond.notify_all();
 
     // mutex unlocked in unique_lock dstr
     return true;
@@ -150,6 +172,7 @@ void FrameGrabber::process()
     LOG_DBG("Starting frame grabbing loop!");
 
     /// Frame grab loop.
+    int cnt = 0;
     while (_active) {
         /// Wait until we need to capture a new frame.
         unique_lock<mutex> l(_qMutex);
@@ -162,7 +185,7 @@ void FrameGrabber::process()
         /// Capture new frame.
         Mat frame_bgr(_h, _w, CV_8UC3);
         frame_bgr.setTo(cv::Scalar::all(0));
-        if (!_source->grab(frame_bgr)) {
+        if (!_source->grab(frame_bgr) || (++cnt > _max_frame_cnt)) {
             LOG_ERR("Error grabbing new frame!");
             _active = false;
             l.lock();   // predicate check and wait are not atomic in other thread, so if we don't lock before notifying, notification could be dropped.
