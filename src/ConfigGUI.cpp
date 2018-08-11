@@ -15,6 +15,7 @@
 #include "geometry.h"
 #include "drawing.h"
 #include "Logger.h"
+#include "timing.h"
 
 #include <iostream> // getline, stoi
 #include <cstdio>   // getchar
@@ -134,6 +135,19 @@ void createZoomROI(Mat& zoom_roi, const Mat& frame, const Point2d& pt, int orig_
 }
 
 ///
+/// Helper function to force getchar to take new key press.
+///
+int mgetchar()
+{
+    double t1 = elapsed_secs();
+    int ret;
+    do {
+        ret = std::getchar();
+    } while ((elapsed_secs() - t1) < 0.1);
+    return ret;
+}
+
+///
 /// Constructor.
 ///
 ConfigGui::ConfigGui(string config_fn)
@@ -249,13 +263,13 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	string sqr_type = "";
 	switch (_input_data.mode) {
 		case R_XY:
-			sqr_type = "sqr_cnrs_xy";
+			sqr_type = "c2a_cnrs_xy";
 			break;
 		case R_YZ:
-			sqr_type = "sqr_cnrs_yz";
+			sqr_type = "c2a_cnrs_yz";
 			break;
 		case R_XZ:
-			sqr_type = "sqr_cnrs_xz";
+			sqr_type = "c2a_cnrs_xz";
 			break;
 	}
 
@@ -280,9 +294,9 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// write to config file
-	LOG("Adding r_c2a, t_c2a, and c2a_src to config file and writing to disk (%s) ...", _config_fn.c_str());
-	_cfg.add("r_c2a", cfg_r);
-	_cfg.add("t_c2a", cfg_t);
+	LOG("Adding c2a_r, c2a_t, and c2a_src to config file and writing to disk (%s) ...", _config_fn.c_str());
+	_cfg.add("c2a_r", cfg_r);
+	_cfg.add("c2a_t", cfg_t);
 
 	if (_cfg.write() <= 0) {
 		LOG_ERR("Bad write!");
@@ -290,10 +304,10 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	//// test read
-	//LOG_DBG("Re-loading config file and reading %s, r_c2a, t_c2a ...", sqr_type.c_str());
+	//LOG_DBG("Re-loading config file and reading %s, c2a_r, c2a_t ...", sqr_type.c_str());
 	//_cfg.read(_config_fn);
 
-	//if (!_cfg.getVecInt(sqr_type, cfg_pts) || !_cfg.getVecDbl("r_c2a", cfg_r) || !_cfg.getVecDbl("t_c2a", cfg_t)) {
+	//if (!_cfg.getVecInt(sqr_type, cfg_pts) || !_cfg.getVecDbl("c2a_r", cfg_r) || !_cfg.getVecDbl("c2a_t", cfg_t)) {
 	//	LOG_ERR("Bad read!");
 	//	return false;
 	//}
@@ -372,7 +386,7 @@ bool ConfigGui::run()
 	string cfg_r_src;
     vector<int> cfg_pts;
     vector<double> cfg_vec;
-    vector<vector<int> > cfg_polys;
+    vector<vector<int>> cfg_polys;
 	changeState(CIRC_INIT);
     const char exit_key = 0x1b;
 #ifdef WIN32
@@ -422,23 +436,23 @@ bool ConfigGui::run()
                             while (true) {
                                 cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
                                 printf("\n  Would you like to keep the existing circumference points ([y]/n)? ");
-                                in = std::getchar();
+                                in = mgetchar();
                                 switch (in)
                                 {
                                     case 'y':
                                     case 'Y':
-                                        std::getchar(); // discard \n
+                                        mgetchar(); // discard \n
                                     case '\n':
                                         // advance state
 										changeState(IGNR_INIT);
                                         break;
                                     case 'n':
                                     case 'N':
-                                        std::getchar(); // discard \n
+                                        mgetchar(); // discard \n
                                         break;
                                     default:
                                         LOG_WRN("Invalid input!");
-                                        std::getchar(); // discard \n
+                                        mgetchar(); // discard \n
                                         continue;
                                         break;
                                 }
@@ -498,7 +512,7 @@ bool ConfigGui::run()
                         }
                         
                         // write to config file
-                        LOG("Adding roi_circ to config file and writing to disk (%s) ...", _config_fn);
+                        LOG("Adding roi_circ to config file and writing to disk (%s) ...", _config_fn.c_str());
                         _cfg.add("roi_circ", cfg_pts);
                         if (_cfg.write() <= 0) {
                             LOG_ERR("Error writing to config file (%s)!", _config_fn);
@@ -529,10 +543,11 @@ bool ConfigGui::run()
                     /// Load ignore polys from config file.
                     _input_data.ignrPts.clear();
                     for (auto poly : cfg_polys) {
-                        _input_data.ignrPts.push_back(vector<cv::Point2d>());
+                        vector<cv::Point2d> tmp;
                         for (unsigned int i = 1; i < poly.size(); i+=2) {
-                            _input_data.ignrPts.back().push_back(cv::Point2d(poly[i-1],poly[i]));
+                            tmp.push_back(cv::Point2d(poly[i-1],poly[i]));
                         }
+                        if (!tmp.empty()) { _input_data.ignrPts.push_back(tmp); }
                     }
                     
                     /// Draw previous clicks.
@@ -555,23 +570,23 @@ bool ConfigGui::run()
                     while (true) {
                         cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
                         printf("\n  Would you like to keep the existing ignore regions ([y]/n)? ");
-                        in = std::getchar();
+                        in = mgetchar();
                         switch (in)
                         {
                             case 'y':
                             case 'Y':
-                                std::getchar(); // discard \n
+                                mgetchar(); // discard \n
                             case '\n':
                                 // advance state
 								changeState(R_INIT);
                                 break;
                             case 'n':
                             case 'N':
-                                std::getchar(); // discard \n
+                                mgetchar(); // discard \n
                                 break;
                             default:
                                 LOG_WRN("Invalid input!");
-                                std::getchar(); // discard \n
+                                mgetchar(); // discard \n
                                 continue;
                                 break;
                         }
@@ -615,8 +630,8 @@ bool ConfigGui::run()
                 /// State machine logic.
                 if (key == enter_key) {
                     // if current poly is empty, assume we've finished
-                    if (_input_data.ignrPts.back().empty()) {
-                        _input_data.ignrPts.pop_back();
+                    if (_input_data.ignrPts.empty() || _input_data.ignrPts.back().empty()) {
+                        if (!_input_data.ignrPts.empty()) { _input_data.ignrPts.pop_back(); }
                         
                         // dump ignore region polys to config file
                         cfg_polys.clear();
@@ -629,7 +644,7 @@ bool ConfigGui::run()
                         }
                         
                         // write to config file
-                        LOG("Adding roi_ignr to config file and writing to disk (%s) ...", _config_fn);
+                        LOG("Adding roi_ignr to config file and writing to disk (%s) ...", _config_fn.c_str());
                         _cfg.add("roi_ignr", cfg_polys);
                         if (_cfg.write() <= 0) {
                             LOG_ERR("Error writing to config file (%s)!", _config_fn);
@@ -680,30 +695,30 @@ bool ConfigGui::run()
 
 					/// Load transform from config file.
 					cfg_vec.clear();
-					if (_cfg.getVecDbl("r_c2a", cfg_vec)) {
+					if (_cfg.getVecDbl("c2a_r", cfg_vec)) {
 						R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2]));
 					} else {
-						LOG_DBG("Error reading r_c2a from config file! Re-running configuration ...");
+						LOG_DBG("Error reading c2a_r from config file! Re-running configuration ...");
 						changeState(R_SLCT);
 						break;
 					}
 					
 					cfg_vec.clear();
-					if (_cfg.getVecDbl("t_c2a", cfg_vec)) {
+					if (_cfg.getVecDbl("c2a_t", cfg_vec)) {
 						t = (cv::Mat_<double>(3, 1) << cfg_vec[0], cfg_vec[1], cfg_vec[2]);
 					} else {
-						LOG_DBG("Error reading t_c2a from config file! Re-running configuration ...");
+						LOG_DBG("Error reading c2a_t from config file! Re-running configuration ...");
 						changeState(R_SLCT);
 						break;
 					}
 
 					/// Draw axes.
 					if (_input_data.sqrPts.size() == 4) {
-						if (cfg_r_src == "sqr_cnrs_xy") {
+						if (cfg_r_src == "c2a_cnrs_xy") {
 							drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
-						} else if (cfg_r_src == "sqr_cnrs_yz") {
+						} else if (cfg_r_src == "c2a_cnrs_yz") {
 							drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
-						} else if (cfg_r_src == "sqr_cnrs_xz") {
+						} else if (cfg_r_src == "c2a_cnrs_xz") {
 							drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
 						}
 					}
@@ -718,23 +733,23 @@ bool ConfigGui::run()
 					while (true) {
 						cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
 						printf("\n  Would you like to keep the existing transform ([y]/n)? ");
-						in = std::getchar();
+						in = mgetchar();
 						switch (in)
 						{
 							case 'y':
 							case 'Y':
-								std::getchar(); // discard \n
+								mgetchar(); // discard \n
 							case '\n':
 								// advance state
 								changeState(EXIT);
 								break;
 							case 'n':
 							case 'N':
-								std::getchar(); // discard \n
+								mgetchar(); // discard \n
 								break;
 							default:
 								LOG_WRN("Invalid input!");
-								std::getchar(); // discard \n
+								mgetchar(); // discard \n
 								continue;
 								break;
 						}
@@ -981,14 +996,14 @@ bool ConfigGui::run()
             /// Define animal coordinate frame.
             case R_EXT:
 
-                // ensure r_c2a exists in config file
-                if (!_cfg.getStr("r_c2a", val)) {
+                // ensure c2a_r exists in config file
+                if (!_cfg.getStr("c2a_r", val)) {
                     cfg_vec.clear();
                     cfg_vec.resize(3, 0);
 
                     // write to config file
-                    LOG("Adding r_c2a to config file and writing to disk (%s) ...", _config_fn);
-                    _cfg.add("r_c2a", cfg_vec);
+                    LOG("Adding c2a_r to config file and writing to disk (%s) ...", _config_fn.c_str());
+                    _cfg.add("c2a_r", cfg_vec);
                 }
                 _cfg.add("c2a_src", string("ext"));
 
@@ -1035,11 +1050,11 @@ bool ConfigGui::run()
 
 	// draw animal axes
 	if (_input_data.sqrPts.size() == 4) {
-		if (cfg_r_src == "sqr_cnrs_xy") {
+		if (cfg_r_src == "c2a_cnrs_xy") {
 			drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
-		} else if (cfg_r_src == "sqr_cnrs_yz") {
+		} else if (cfg_r_src == "c2a_cnrs_yz") {
 			drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
-		} else if (cfg_r_src == "sqr_cnrs_xz") {
+		} else if (cfg_r_src == "c2a_cnrs_xz") {
 			drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
 		}
 	}
@@ -1059,7 +1074,7 @@ bool ConfigGui::run()
         LOG_WRN("\n\nWarning! There were errors and the configuration file may not have been properly updated. Please run configuration again.");
         PRINT("\n\nPress any key to exit..");
     }
-    std::getchar();
+    mgetchar();
     
     LOG("Exiting configuration!");
     return _open;

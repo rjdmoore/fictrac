@@ -26,10 +26,10 @@ static double elapsed_secs() {
 ///
 /// Return system timestamp (ms)
 ///
-static long long ts_ms() {
+static double ts_ms() {
     using namespace std::chrono;
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
-    return duration_cast<milliseconds>(t1.time_since_epoch()).count();
+    return duration_cast<microseconds>(t1.time_since_epoch()).count() / 1000.;
 }
 
 ///

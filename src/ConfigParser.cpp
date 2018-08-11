@@ -44,6 +44,8 @@ ConfigParser::~ConfigParser()
 ///
 int ConfigParser::read(string fn)
 {
+    //FIXME: replace corresponding keys rather than overwriting the whole file!
+
     LOG("Looking for config file: %s ...", fn.c_str());
 
     /// Open input file
@@ -86,7 +88,7 @@ int ConfigParser::read(string fn)
 ///
 /// Write specified map to file.
 ///
-int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
+int ConfigParser::write(string fn)
 {
     /// Open output file
     std::ofstream f(fn);
@@ -96,11 +98,11 @@ int ConfigParser::write(string fn, std::map<string,string>& map_to_write)
     }
     
     /// Write header string
-    f << "# FicTrac config file (build " << __DATE__ << ")" << std::endl;
+    f << "## FicTrac config file (build " << __DATE__ << ")" << std::endl;
 
     /// Write map
     static char tmps[4096];
-    for (auto& it : map_to_write) {
+    for (auto& it : _data) {
         // warning: super long str vals will cause overwrite error!
         try { sprintf(tmps, "%-16s : %s\n", it.first.c_str(), it.second.c_str()); }
         catch (std::exception& e) {
@@ -306,7 +308,7 @@ bool ConfigParser::getVVecInt(std::string key, vector<vector<int> >& val) {
                     return false;
                 }
             }
-            val.push_back(poly);
+            if (!poly.empty()) { val.push_back(poly); }
         }
         return true;
     }

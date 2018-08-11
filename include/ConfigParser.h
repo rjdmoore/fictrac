@@ -22,8 +22,7 @@ public:
 
     /// File IO
     int read(std::string fn);
-    int write(std::string fn, std::map<std::string, std::string>& pmap);    // write supplied map to file
-    int write(std::string fn) { return write(fn, _data); }
+    int write(std::string fn);
     int write() { return write(_fn); }
 
     /// Quick accessor functions
@@ -39,7 +38,7 @@ public:
     bool getBool(std::string key, bool& val);
     bool getVecInt(std::string key, std::vector<int>& val);
     bool getVecDbl(std::string key, std::vector<double>& val);
-    bool getVVecInt(std::string key, std::vector<std::vector<int> >& val);
+    bool getVVecInt(std::string key, std::vector<std::vector<int>>& val);
 
     /// Write access
     template<typename T>
@@ -61,7 +60,7 @@ public:
     
     // super special case: vector of vectors
     template<typename T>
-    void add(std::string key, std::vector<std::vector<T> >& val) {
+    void add(std::string key, std::vector<std::vector<T>>& val) {
         std::string str = "{ ";
         for (auto v : val) {
             str += "{ ";

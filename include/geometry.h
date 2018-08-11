@@ -62,11 +62,6 @@ static CmReal vec3normalise(CmReal a[3])
 	return mag;
 }
 
-// static inline CmReal clamp(CmReal x, CmReal min, CmReal max)
-// {
-	// return (x<=min) ? min : (x>=max) ? max : x;
-// }
-
 ///
 /// A simple clamp function.
 ///

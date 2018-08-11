@@ -10,38 +10,72 @@
 
 #include <opencv2/opencv.hpp>
 
+using std::shared_ptr;
+using std::vector;
 using cv::Mat;
 using cv::Point2d;
+using cv::Point2i;
 
 ///
 /// Draw a circle using linear circumference segements.
 ///
-void drawCircle_camModel(Mat& img, const CameraModelPtr cam_model, const CmPoint c, const double r, const cv::Scalar colour, bool solid)
+shared_ptr<vector<Point2d>> projCircle(const CameraModelPtr cam_model, const CmPoint c, const double r)
 {
     const int nsegs = 64;
     const double angleStep = 2 * CM_PI / nsegs;
-    
+
     /// Get initial circumference vector.
     CmPoint p0 = c.getRotatedAboutOrthVec(r);
-    
+
     /// Get pixel coords of first point.
-    Point2d p1, p2;
-    double vec[3] = {p0.x, p0.y, p0.z};
+    Point2d p1;
+    double vec[3] = { p0.x, p0.y, p0.z };
     cam_model->vectorToPixel(vec, p1.x, p1.y);
-    
-    /// Draw lines between circumference points.
+
+    shared_ptr<vector<Point2d>> circ_pts = shared_ptr<vector<Point2d>>(new vector<Point2d>());
+    circ_pts->push_back(p1);
+
+    /// Interpolate circumference.
     for (int i = 1; i <= nsegs; i++) {
         /// Rotate initial circumference vector by incrementing angle.
         CmPoint p = p0.getRotatedAboutNorm(c, i * angleStep);
-        
+
         /// Get pixel coords.
         p.copyTo(vec);
-        if (!cam_model->vectorToPixel(vec, p2.x, p2.y)) { continue; }
-        
+        if (!cam_model->vectorToPixel(vec, p1.x, p1.y)) { continue; }
+
+        circ_pts->push_back(p1);
+    }
+
+    return circ_pts;
+}
+
+shared_ptr<vector<Point2i>> projCircleInt(const CameraModelPtr cam_model, const CmPoint c, const double r)
+{
+    shared_ptr<vector<Point2d>> circ_pts = projCircle(cam_model, c, r);
+    shared_ptr<vector<Point2i>> circ_pts_int = shared_ptr<vector<Point2i>>(new vector<Point2i>());
+    for (Point2d pd : *circ_pts) { circ_pts_int->push_back(pd); }
+    return circ_pts_int;
+}
+
+void drawCircle(cv::Mat& img, shared_ptr<vector<cv::Point2d>> circ_pts, const cv::Scalar colour, bool solid)
+{
+    if (circ_pts->empty()) { return; }
+
+    /// Draw lines between circumference points.
+    Point2d p1 = circ_pts->front(), p2;
+    for (int i = 1; i < circ_pts->size(); i++) {
         /// Draw dashed/solid.
-        if (solid || (i%2)) { cv::line(img, 4*p1, 4*p2, colour, 2, CV_AA, 2); }
+        p2 = (*circ_pts)[i];
+        if (solid || (i % 2)) { cv::line(img, 4 * p1, 4 * p2, colour, 2, CV_AA, 2); }
         p1 = p2;
     }
+}
+
+void drawCircle_camModel(Mat& img, const CameraModelPtr cam_model, const CmPoint c, const double r, const cv::Scalar colour, bool solid)
+{
+    shared_ptr<vector<Point2d>> circ_pts = projCircle(cam_model, c, r);
+    drawCircle(img, circ_pts, colour, solid);
 }
 
 ///
@@ -190,4 +224,13 @@ void drawRectCorners(Mat& rgb, const CameraModelPtr cam_model, Mat& cnrs, const 
             drawCursor(rgb, pt, colour);
         }
     }
+}
+
+///
+/// Place text with shadow.
+///
+void shadowText(Mat& img, std::string text, int px, int py, int r, int g, int b)
+{
+    cv::putText(img, text, cv::Point(px + 1, py + 1), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(0, 0, 0));
+    cv::putText(img, text, cv::Point(px, py), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(r, g, b));
 }
