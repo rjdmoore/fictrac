@@ -44,10 +44,6 @@ public:
 
     static void setVerbosity(std::string v);
 
-    /// Set log file name.
-    /// Must be called before first log call to have effect!
-    static void setLogFile(std::string fn);
-
     /// Thread-safe printf wrapper
     static void mprintf(LogLevel lvl, std::string func, std::string format, ...);
 
@@ -58,5 +54,6 @@ private:
 
 private:
     std::unique_ptr<Recorder> _log;
+    std::unique_ptr<Recorder> _cout;
     std::mutex _pMutex;
 };

@@ -19,10 +19,11 @@ Logger::Logger()
     // create log writer
     string fn = string("fictrac_") + execTime() + ".log";
     _log = unique_ptr<Recorder>(new Recorder(fn));
-    if (_log->is_active()) {
+    _cout = unique_ptr<Recorder>(new Recorder());
+    if (_log->is_active() && _cout->is_active()) {
         cout << "Initialised logging to " << fn << endl;
     } else {
-        cerr << "Error opening log file (" << fn << ")!" << endl;
+        cerr << "Error opening log file (" << fn << ") or cout stream!" << endl;
     }
 }
 
@@ -60,27 +61,22 @@ void Logger::mprintf(LogLevel lvl, string func, string format, ...)
     // not re-entrant
     lock_guard<mutex> l1(log._pMutex);
 
-    // logging format
-    if (lvl != PRT) {
-        format = to_string(elapsed_secs()) + " " + func + " [" + log.LogLevelStrings[lvl] + "] " + format + "\n";
-    } else {
-        format = format + "\n";
-    }
-
-    // expand args
+    // print and log
     if ((int)lvl >= (int)verbosity()) {
+        
+        // expand args
         va_list args;
         va_start(args, format);
         vsnprintf(buf, buf_size, format.c_str(), args);
         va_end(args);
 
-        // print to console
-        cout << buf;
+        // async printing to console
+        log._cout->addMsg(string(buf) + "\n");
 
         // don't log display text to file
         if (lvl != PRT) {
-            // async logging to file
-            log._log->addMsg(string(buf));
+            // async logging to file (with additional info)
+            log._log->addMsg(to_string(elapsed_secs()) + " " + func + " [" + log.LogLevelStrings[lvl] + "] " + buf + "\n");
         }
     }
 }
