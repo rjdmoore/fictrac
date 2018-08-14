@@ -648,10 +648,9 @@ bool Trackball::doSearch(bool allow_global = false)
 ///
 void Trackball::updateSphere()
 {
-    Mat tmpR = CmPoint64f::omegaToMatrix(_dr_roi); // relative rotation (angle-axis) in ROI frame
-                                                   // post-multiplication!
-    _R_roi = _R_roi * tmpR;                        // absolute orientation (3d mat) in ROI frame
-    double* m = reinterpret_cast<double*>(_R_roi.data);
+    Mat tmpR = CmPoint64f::omegaToMatrix(_dr_roi);      // relative rotation (angle-axis) in ROI frame
+    _R_roi = tmpR * _R_roi;                             // pre-multiply to accumulate orientation matrix
+    double* m = reinterpret_cast<double*>(_R_roi.data); // absolute orientation (3d mat) in ROI frame
 
     if (_do_display) {
         _view.setTo(Scalar::all(128));
@@ -669,9 +668,14 @@ void Trackball::updateSphere()
 
             // rotate point about rotation axis (sphere coords)
             double* v = &_p1s_lut[(i * _roi_w + j) * 3];
-            p2s[0] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2];
-            p2s[1] = m[3] * v[0] + m[4] * v[1] + m[5] * v[2];
-            p2s[2] = m[6] * v[0] + m[7] * v[1] + m[8] * v[2];
+            //p2s[0] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2];
+            //p2s[1] = m[3] * v[0] + m[4] * v[1] + m[5] * v[2];
+            //p2s[2] = m[6] * v[0] + m[7] * v[1] + m[8] * v[2];
+            // transpose - see testRotation()
+            p2s[0] = m[0] * v[0] + m[3] * v[1] + m[6] * v[2];
+            p2s[1] = m[1] * v[0] + m[4] * v[1] + m[7] * v[2];
+            p2s[2] = m[2] * v[0] + m[5] * v[1] + m[8] * v[2];
+
 
             // map vector in sphere coords to pixel
             if (!_sphere_model->vectorToPixelIndex(p2s, px, py)) { continue; }
@@ -843,11 +847,11 @@ bool Trackball::logData()
 ///
 double Trackball::testRotation(const double x[3])
 {
-    double rmat[9];
+    static double lmat[9];
     CmPoint64f tmp(x[0], x[1], x[2]);
-    tmp.omegaToMatrix(rmat);                // relative rotation in camera frame
-    double* lmat = (double*)_R_roi.data;    // post-multiplication!
-    double m[9];                            // absolute orientation in camera frame
+    tmp.omegaToMatrix(lmat);                // relative rotation in camera frame
+    double* rmat = (double*)_R_roi.data;    // pre-multiply to orientation matrix
+    static double m[9];                     // absolute orientation in camera frame
 
     m[0] = lmat[0] * rmat[0] + lmat[1] * rmat[3] + lmat[2] * rmat[6];
     m[1] = lmat[0] * rmat[1] + lmat[1] * rmat[4] + lmat[2] * rmat[7];
@@ -860,6 +864,19 @@ double Trackball::testRotation(const double x[3])
     m[6] = lmat[6] * rmat[0] + lmat[7] * rmat[3] + lmat[8] * rmat[6];
     m[7] = lmat[6] * rmat[1] + lmat[7] * rmat[4] + lmat[8] * rmat[7];
     m[8] = lmat[6] * rmat[2] + lmat[7] * rmat[5] + lmat[8] * rmat[8];
+
+    /* Note:
+    
+    The orientation matrix, _R_roi, is accumulated by pre-multiplying each successive rotation, x.
+
+    When rotating the view vectors, the orientation matrix is also pre-multiplied,
+    such that the history of rotations is applied in order.
+
+    See here for explanation of pre- vs post-multiplying:
+    http://www.me.unm.edu/~starr/teaching/me582/postmultiply.pdf
+
+    The orientation matrix transpose is used below to rotate the vectors and not the axes.
+    */
 
     double err = 0;
     double p2s[3];
@@ -874,9 +891,14 @@ double Trackball::testRotation(const double x[3])
             cnt++;
 
             // rotate point about rotation axis (sphere coords)
-            p2s[0] = m[0] * v[3 * j + 0] + m[1] * v[3 * j + 1] + m[2] * v[3 * j + 2];
-            p2s[1] = m[3] * v[3 * j + 0] + m[4] * v[3 * j + 1] + m[5] * v[3 * j + 2];
-            p2s[2] = m[6] * v[3 * j + 0] + m[7] * v[3 * j + 1] + m[8] * v[3 * j + 2];
+            int jjj = 3 * j;
+            //p2s[0] = m[0] * v[jjj + 0] + m[1] * v[jjj + 1] + m[2] * v[jjj + 2];
+            //p2s[1] = m[3] * v[jjj + 0] + m[4] * v[jjj + 1] + m[5] * v[jjj + 2];
+            //p2s[2] = m[6] * v[jjj + 0] + m[7] * v[jjj + 1] + m[8] * v[jjj + 2];
+            // transpose
+            p2s[0] = m[0] * v[jjj + 0] + m[3] * v[jjj + 1] + m[6] * v[jjj + 2];
+            p2s[1] = m[1] * v[jjj + 0] + m[4] * v[jjj + 1] + m[7] * v[jjj + 2];
+            p2s[2] = m[2] * v[jjj + 0] + m[5] * v[jjj + 1] + m[8] * v[jjj + 2];
 
             // map vector in sphere coords to pixel
             if (!_sphere_model->vectorToPixelIndex(p2s, px, py)) { continue; }  // sphere model is spherical, so pixel should never fall outside valid area
@@ -946,7 +968,8 @@ void makeSphereRotMaps(
             p = u2 * p - sc;
 
             // rotate point about rotation axis (sphere coords)
-            p.rotateAbout(rot_angle_axis);
+            // -ve rotation to rotate vector, not axes (see testRotation())
+            p.rotateAbout(-rot_angle_axis);
 
             // check whether point has disappeared
             if (p.dot(sc) > 0) {
