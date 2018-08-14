@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="fictrac.cpp">
+    <ClCompile Include="..\..\exec\fictrac.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
