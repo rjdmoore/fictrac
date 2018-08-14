@@ -1,0 +1,7 @@
+* simulate circular fictive path (or find old simulation)
+* use simulated fictive path to create test suite for various output parameters
+* use test suite to optimise template matching procedure (speed vs accuracy)
+* compare accuracy between online mapping, and tracking using pre-loaded map
+* async drawing (may drop frames) for live display during fast tracking
+* allow specification of r2c_r in config file (at least for testing purposes)
+* if vfov is changed - R,t and c,r stored in config file should be recomputed (currently requires values to be deleted and config re-run..)
