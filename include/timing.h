@@ -94,7 +94,7 @@ static std::string dateString()
     char tmps[16];
     sprintf(tmps, "%02d/%02d/%4d",
         timeinfo->tm_mday,
-        timeinfo->tm_mon,
+        timeinfo->tm_mon+1,
         timeinfo->tm_year + 1900);
 
     return std::string(tmps);

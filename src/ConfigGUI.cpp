@@ -16,6 +16,7 @@
 #include "drawing.h"
 #include "Logger.h"
 #include "timing.h"
+#include "misc.h"
 
 #include <iostream> // getline, stoi
 #include <cstdio>   // getchar
@@ -132,19 +133,6 @@ void createZoomROI(Mat& zoom_roi, const Mat& frame, const Point2d& pt, int orig_
     if (pt.y >= 0) { y = clamp(int(pt.y - orig_dim/2 + 0.5), int(orig_dim/2), frame.rows - 1 - orig_dim); }
     Mat crop_rect = frame(cv::Rect(x, y, orig_dim, orig_dim));
     cv::resize(crop_rect, zoom_roi, zoom_roi.size());
-}
-
-///
-/// Helper function to force getchar to take new key press.
-///
-int getchar_clean()
-{
-    double t1 = elapsed_secs();
-    int ret;
-    do {
-        ret = std::getchar();
-    } while ((elapsed_secs() - t1) < 0.1);
-    return ret;
 }
 
 ///
@@ -281,9 +269,9 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// write to config file
-	LOG("Adding %s to config file and writing to disk (%s) ...", sqr_type.c_str(), _config_fn.c_str());
-	_cfg.add(sqr_type, cfg_pts);
-	_cfg.add("c2a_src", sqr_type);
+	LOG("Adding c2a_src and %s to config file and writing to disk (%s) ...", sqr_type.c_str(), _config_fn.c_str());
+    _cfg.add("c2a_src", sqr_type);
+    _cfg.add(sqr_type, cfg_pts);
 
 	// dump R to config file
 	vector<double> cfg_r, cfg_t;
@@ -294,7 +282,7 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// write to config file
-	LOG("Adding c2a_r, c2a_t, and c2a_src to config file and writing to disk (%s) ...", _config_fn.c_str());
+	LOG("Adding c2a_r and c2a_t to config file and writing to disk (%s) ...", _config_fn.c_str());
 	_cfg.add("c2a_r", cfg_r);
 	_cfg.add("c2a_t", cfg_t);
 
@@ -335,27 +323,56 @@ bool ConfigGui::updateC2ATransform(const Mat& ref_cnrs, Mat& R, Mat& t)
 	return ret;
 }
 
+/////
+///// Draw animal coordinate frame axes.
+/////
+//void ConfigGui::drawC2ATransform(Mat& disp_frame, const Mat& ref_cnrs, const Mat& R, const Mat& t, const double& r, const CmPoint& c)
+//{
+//	// make x4 mat for projecting corners
+//	Mat T(3, 4, CV_64F);
+//	for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
+//
+//	// project reference corners
+//	Mat p = R * ref_cnrs + T;
+//
+//	// draw re-projected reference corners
+//	drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0, 255, 0));
+//
+//	// draw re-projected animal axes.
+//	if (r > 0) {
+//		double scale = 1.0 / tan(r);
+//		Mat so = (cv::Mat_<double>(3, 1) << c.x, c.y, c.z) * scale;
+//		drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0, 0, 255));
+//	}
+//}
+
 ///
-/// Draw animal coordinate frame axes.
 ///
-void ConfigGui::drawC2ATransform(Mat& disp_frame, const Mat& ref_cnrs, const Mat& R, const Mat& t, const double& r, const CmPoint& c)
+///
+void ConfigGui::drawC2ACorners(Mat& disp_frame, const Mat& ref_cnrs, const Mat& R, const Mat& t)
 {
-	// make x4 mat for projecting corners
-	Mat T(3, 4, CV_64F);
-	for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
+    // make x4 mat for projecting corners
+    Mat T(3, 4, CV_64F);
+    for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
 
-	// project reference corners
-	Mat p = R * ref_cnrs + T;
+    // project reference corners
+    Mat p = R * ref_cnrs + T;
 
-	// draw re-projected reference corners
-	drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0, 255, 0));
+    // draw re-projected reference corners
+    drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0, 255, 0));
+}
 
-	// draw re-projected animal axes.
-	if (r > 0) {
-		double scale = 1.0 / tan(r);
-		Mat so = (cv::Mat_<double>(3, 1) << c.x, c.y, c.z) * scale;
-		drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0, 0, 255));
-	}
+///
+///
+///
+void ConfigGui::drawC2AAxes(Mat& disp_frame, const Mat& R, const Mat& t, const double& r, const CmPoint& c)
+{
+    // draw re-projected animal axes.
+    if (r > 0) {
+        double scale = 1.0 / tan(r);
+        Mat so = (cv::Mat_<double>(3, 1) << c.x, c.y, c.z) * scale;
+        drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0, 0, 255));
+    }
 }
 
 ///
@@ -410,55 +427,66 @@ bool ConfigGui::run()
             
                 // test read
                 cfg_pts.clear();
-                if (_cfg.getVecInt("roi_circ", cfg_pts)) {
-                    
+                if (_cfg.getVecDbl("roi_c", cfg_vec) && _cfg.getDbl("roi_r", r)) {
+                    c.copy(cfg_vec.data());
+                    LOG_DBG("Found roi_c = [%f %f %f] and roi_r = %f rad.", c[0], c[1], c[2], r);
+                    LOG_WRN("Warning! When roi_c and roi_r are specified in the config file, roi_circ will be ignored.\nTo re-compute roi_c and roi_r, please delete these values from the config file and reconfigure.");
+                } 
+                else if (_cfg.getVecInt("roi_circ", cfg_pts)) {
+
                     /// Load circumference points from config file.
                     _input_data.circPts.clear();
-                    for (unsigned int i = 1; i < cfg_pts.size(); i+=2) {
-                        _input_data.circPts.push_back(Point2d(cfg_pts[i-1], cfg_pts[i]));
+                    for (unsigned int i = 1; i < cfg_pts.size(); i += 2) {
+                        _input_data.circPts.push_back(Point2d(cfg_pts[i - 1], cfg_pts[i]));
                     }
-                    
+
                     /// Fit circular FoV to sphere.
                     if (_input_data.circPts.size() >= 3) {
                         circleFit_camModel(_input_data.circPts, _cam_model, c, r);
+
+                        LOG_DBG("Computed roi_c = [%f %f %f] and roi_r = %f rad from %d roi_circ points.", c[0], c[1], c[2], r, _input_data.circPts.size());
+                    }
+                }
+                else {
+                    LOG_DBG("No circumference points or sphere ROI specified in configuration file.");
+                    r = -1;
+                }
                         
-                        /// Draw fitted circumference.
-                        if (r > 0) {
-                            drawCircle_camModel(disp_frame, _cam_model, c, r, CV_RGB(255,0,0), false);
+                /// Draw fitted circumference.
+                if (r > 0) {
+                    drawCircle_camModel(disp_frame, _cam_model, c, r, CV_RGB(255,0,0), false);
                             
-                            /// Display.
-                            cv::imshow("configGUI", disp_frame);
-                            cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
+                    /// Display.
+                    cv::imshow("configGUI", disp_frame);
+                    cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
                             
-                            printf("\n\n\n  Sphere circumference points were found in the config file.\n  You can discard these points and re-run config or keep the existing points.\n");
+                    printf("\n\n\n  Sphere ROI configuration was found in the config file.\n  You can keep it, or discard it and reconfigure.\n");
                             
-                            // input loop
-                            while (true) {
-                                cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
-                                printf("\n  Would you like to keep the existing circumference points ([y]/n)? ");
-                                in = getchar();
-                                switch (in)
-                                {
-                                    case 'y':
-                                    case 'Y':
-                                        getchar(); // discard \n
-                                    case '\n':
-                                        // advance state
-										changeState(IGNR_INIT);
-                                        break;
-                                    case 'n':
-                                    case 'N':
-                                        getchar(); // discard \n
-                                        break;
-                                    default:
-                                        LOG_WRN("Invalid input!");
-                                        getchar(); // discard \n
-                                        continue;
-                                        break;
-                                }
+                    // input loop
+                    while (true) {
+                        cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
+                        printf("\n  Would you like to keep the existing spherer ROI configuration ([y]/n)? ");
+                        in = getchar();
+                        switch (in)
+                        {
+                            case 'y':
+                            case 'Y':
+                                getchar(); // discard \n
+                            case '\n':
+                                // advance state
+								changeState(IGNR_INIT);
                                 break;
-                            }
+                            case 'n':
+                            case 'N':
+                                getchar(); // discard \n
+                                break;
+                            default:
+                                LOG_WRN("Invalid input!");
+                                getchar(); // discard \n
+                                continue;
+                                break;
                         }
+                        break;
                     }
                 }
                 
@@ -504,16 +532,23 @@ bool ConfigGui::run()
                 /// State machine logic.
                 if (key == enter_key) {
                     if (_input_data.circPts.size() >= 3) {
-                        // dump circumference points to config file
+                        // dump circumference points, c, and r to config file
                         cfg_pts.clear();
                         for (auto p : _input_data.circPts) {
                             cfg_pts.push_back(static_cast<int>(p.x + 0.5));
                             cfg_pts.push_back(static_cast<int>(p.y + 0.5));
                         }
+
+                        cfg_vec.clear();
+                        cfg_vec.push_back(c[0]);
+                        cfg_vec.push_back(c[1]);
+                        cfg_vec.push_back(c[2]);
                         
                         // write to config file
-                        LOG("Adding roi_circ to config file and writing to disk (%s) ...", _config_fn.c_str());
+                        LOG("Adding roi_circ, roi_c, and roi_r to config file and writing to disk (%s) ...", _config_fn.c_str());
                         _cfg.add("roi_circ", cfg_pts);
+                        _cfg.add("roi_c", cfg_vec);
+                        _cfg.add("roi_r", r);
                         if (_cfg.write() <= 0) {
                             LOG_ERR("Error writing to config file (%s)!", _config_fn);
                             _open = false;  // will cause exit
@@ -670,91 +705,95 @@ bool ConfigGui::run()
             
             /// Choose method for defining animal frame.
             case R_INIT:
-				// test read
-				if (_cfg.getStr("c2a_src", cfg_r_src)) {
+                /// Load R+t transform from config file.
+                cfg_vec.clear();
+                if (_cfg.getVecDbl("c2a_r", cfg_vec)) {
+                    LOG_DBG("Read c2a_r = [%f %f %f]", cfg_vec[0], cfg_vec[1], cfg_vec[2]);
+                    R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2]));
+                }
+                else {
+                    LOG_DBG("Error reading c2a_r from config file! Re-running configuration ...");
+                    changeState(R_SLCT);
+                    break;
+                }
 
-					LOG_DBG("Found c2a_src: %s", cfg_r_src);
+                cfg_vec.clear();
+                if (_cfg.getVecDbl("c2a_t", cfg_vec)) {
+                    LOG_DBG("Read c2a_t = [%f %f %f]", cfg_vec[0], cfg_vec[1], cfg_vec[2]);
+                    t = (cv::Mat_<double>(3, 1) << cfg_vec[0], cfg_vec[1], cfg_vec[2]);
+                }
+                else {
+                    LOG_DBG("Error reading c2a_t from config file! Re-running configuration ...");
+                    changeState(R_SLCT);
+                    break;
+                }
 
-					/// Load square corners from config file.
-					cfg_pts.clear();
-					if (!_cfg.getVecInt(cfg_r_src, cfg_pts)) {
-						LOG_DBG("Error reading %s from config file! Re-running configuration ...", cfg_r_src);
-						changeState(R_SLCT);
-						break;
+                LOG_WRN("Warning! When c2a_r and c2a_t are specified in the config file, c2a_src and associated corners points will be ignored.\nTo re-compute c2a_r and c2a_t, please delete these values from the config file and reconfigure.");
+
+                /// Check also if corners specified (unnecessary).
+                if (_cfg.getStr("c2a_src", cfg_r_src)) {
+                    LOG_DBG("Found c2a_src: %s", cfg_r_src);
+
+                    /// Load square corners from config file.
+                    cfg_pts.clear();
+                    if (_cfg.getVecInt(cfg_r_src, cfg_pts)) {
+                        _input_data.sqrPts.clear();
+                        for (unsigned int i = 1; i < cfg_pts.size(); i += 2) {
+                            _input_data.sqrPts.push_back(cv::Point2d(cfg_pts[i - 1], cfg_pts[i]));
+                        }
+
+                        /// Draw previous clicks.
+                        for (auto click : _input_data.sqrPts) {
+                            cv::circle(disp_frame, click, click_rad, CV_RGB(255, 255, 0), 1, CV_AA);
+                        }
+
+                        /// Draw reference corners.
+                        if (cfg_r_src == "c2a_cnrs_xy") {
+                            drawC2ACorners(disp_frame, XY_CNRS, R, t);
+                        }
+                        else if (cfg_r_src == "c2a_cnrs_yz") {
+                            drawC2ACorners(disp_frame, YZ_CNRS, R, t);
+                        }
+                        else if (cfg_r_src == "c2a_cnrs_xz") {
+                            drawC2ACorners(disp_frame, XZ_CNRS, R, t);
+                        }
+                    }
+                }
+
+                /// Draw axes.
+                drawC2AAxes(disp_frame, R, t, r, c);
+
+				/// Display.
+				cv::imshow("configGUI", disp_frame);
+				cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
+
+				printf("\n\n\n  A camera-animal transform was found in the config file.\n  You can keep the existing transform, or discard and re-run config.\n");
+
+				// input loop
+				while (true) {
+					cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
+					printf("\n  Would you like to keep the existing transform ([y]/n)? ");
+					in = getchar();
+					switch (in)
+					{
+						case 'y':
+						case 'Y':
+							getchar(); // discard \n
+						case '\n':
+							// advance state
+							changeState(EXIT);
+							break;
+						case 'n':
+						case 'N':
+							getchar(); // discard \n
+							break;
+						default:
+							LOG_WRN("Invalid input!");
+							getchar(); // discard \n
+							continue;
+							break;
 					}
-
-					_input_data.sqrPts.clear();
-					for (unsigned int i = 1; i < cfg_pts.size(); i += 2) {
-						_input_data.sqrPts.push_back(cv::Point2d(cfg_pts[i - 1], cfg_pts[i]));
-					}
-
-					/// Draw previous clicks.
-					for (auto click : _input_data.sqrPts) {
-						cv::circle(disp_frame, click, click_rad, CV_RGB(255, 255, 0), 1, CV_AA);
-					}
-
-					/// Load transform from config file.
-					cfg_vec.clear();
-					if (_cfg.getVecDbl("c2a_r", cfg_vec)) {
-						R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2]));
-					} else {
-						LOG_DBG("Error reading c2a_r from config file! Re-running configuration ...");
-						changeState(R_SLCT);
-						break;
-					}
-					
-					cfg_vec.clear();
-					if (_cfg.getVecDbl("c2a_t", cfg_vec)) {
-						t = (cv::Mat_<double>(3, 1) << cfg_vec[0], cfg_vec[1], cfg_vec[2]);
-					} else {
-						LOG_DBG("Error reading c2a_t from config file! Re-running configuration ...");
-						changeState(R_SLCT);
-						break;
-					}
-
-					/// Draw axes.
-					if (_input_data.sqrPts.size() == 4) {
-						if (cfg_r_src == "c2a_cnrs_xy") {
-							drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
-						} else if (cfg_r_src == "c2a_cnrs_yz") {
-							drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
-						} else if (cfg_r_src == "c2a_cnrs_xz") {
-							drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
-						}
-					}
-
-					/// Display.
-					cv::imshow("configGUI", disp_frame);
-					cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
-
-					printf("\n\n\n  A camera-animal transform was found in the config file.\n  You can keep the existing transform, or discard and re-run config.\n");
-
-					// input loop
-					while (true) {
-						cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
-						printf("\n  Would you like to keep the existing transform ([y]/n)? ");
-						in = getchar();
-						switch (in)
-						{
-							case 'y':
-							case 'Y':
-								getchar(); // discard \n
-							case '\n':
-								// advance state
-								changeState(EXIT);
-								break;
-							case 'n':
-							case 'N':
-								getchar(); // discard \n
-								break;
-							default:
-								LOG_WRN("Invalid input!");
-								getchar(); // discard \n
-								continue;
-								break;
-						}
-						break;
-					}
+					break;
 				}
 
 				if (_input_data.mode == R_INIT) {
@@ -839,7 +878,8 @@ bool ConfigGui::run()
                 /// Draw axes.
                 if (_input_data.sqrPts.size() == 4) {
 					updateC2ATransform(XY_CNRS, R, t);
-					drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
+                    drawC2ACorners(disp_frame, XY_CNRS, R, t);
+                    drawC2AAxes(disp_frame, R, t, r, c);
                 }
                 
                 /// Draw cursor location.
@@ -888,7 +928,8 @@ bool ConfigGui::run()
                 /// Draw axes.
                 if (_input_data.sqrPts.size() == 4) {
 					updateC2ATransform(YZ_CNRS, R, t);
-					drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
+                    drawC2ACorners(disp_frame, YZ_CNRS, R, t);
+                    drawC2AAxes(disp_frame, R, t, r, c);
                 }
                 
                 /// Draw cursor location.
@@ -937,7 +978,8 @@ bool ConfigGui::run()
                 /// Draw axes.
                 if (_input_data.sqrPts.size() == 4) {
 					updateC2ATransform(XZ_CNRS, R, t);
-					drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
+                    drawC2ACorners(disp_frame, XZ_CNRS, R, t);
+                    drawC2AAxes(disp_frame, R, t, r, c);
                 }
                 
                 /// Draw cursor location.
@@ -1051,11 +1093,14 @@ bool ConfigGui::run()
 	// draw animal axes
 	if (_input_data.sqrPts.size() == 4) {
 		if (cfg_r_src == "c2a_cnrs_xy") {
-			drawC2ATransform(disp_frame, XY_CNRS, R, t, r, c);
+            drawC2ACorners(disp_frame, XY_CNRS, R, t);
+            drawC2AAxes(disp_frame, R, t, r, c);
 		} else if (cfg_r_src == "c2a_cnrs_yz") {
-			drawC2ATransform(disp_frame, YZ_CNRS, R, t, r, c);
+            drawC2ACorners(disp_frame, YZ_CNRS, R, t);
+            drawC2AAxes(disp_frame, R, t, r, c);
 		} else if (cfg_r_src == "c2a_cnrs_xz") {
-			drawC2ATransform(disp_frame, XZ_CNRS, R, t, r, c);
+            drawC2ACorners(disp_frame, XZ_CNRS, R, t);
+            drawC2AAxes(disp_frame, R, t, r, c);
 		}
 	}
 

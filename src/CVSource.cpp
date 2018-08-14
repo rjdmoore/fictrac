@@ -66,13 +66,13 @@ CVSource::~CVSource()
 ///
 /// Set input source fps.
 ///
-bool CVSource::setFPS(int fps)
+bool CVSource::setFPS(double fps)
 {
     bool ret = false;
 	if( _open && (fps > 0) ) {
         _fps = fps;
         if (!_cap->set(CV_CAP_PROP_FPS, fps)) {
-            LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%d).", fps);
+            LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%.2f).", fps);
         } else { ret = true; }
     }
     return ret;
@@ -138,7 +138,7 @@ bool CVSource::grab(cv::Mat& frame)
         static double av_fps = 10;      // initially 10 Hz
         static double sleep_ms = 100;
         av_fps = 0.15 * av_fps + 0.85 * (1000 / (ts - prev_ts));
-        sleep_ms *= 0.25 * (av_fps / static_cast<double>(_fps)) + 0.75;
+        sleep_ms *= 0.25 * (av_fps / _fps) + 0.75;
         sleep(static_cast<long>(round(sleep_ms)));
         prev_ts = ts;
     }
