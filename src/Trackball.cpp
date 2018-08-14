@@ -42,19 +42,20 @@ const int OPT_MAX_EVAL_DEFAULT = 50;
 const bool OPT_GLOBAL_SEARCH_DEFAULT = false;
 const int OPT_MAX_BAD_FRAMES_DEFAULT = -1;
 
+const int SPHERE_MAP_FIRST_HIT_BONUS = 50;
+
 const bool DO_DISPLAY_DEFAULT = true;
 
 ///
 ///
 ///
-bool intersectSphere(double camVec[3], double sphereVec[3], double r)
+bool intersectSphere(const double camVec[3], double sphereVec[3], const double r)
 {
-    double q = camVec[2] * camVec[2] + r*r;
-
-    if (q < 1) { return false; }
+    double q = camVec[2] * camVec[2] + r * r - 1;
+    if (q < 0) { return false; }
 
     // get point on front surface of sphere (camera coords)
-    double u = camVec[2] - sqrt(q - 1);
+    double u = camVec[2] - sqrt(q);
 
     // switch to sphere coords
     sphereVec[0] = camVec[0] * u;
@@ -68,7 +69,7 @@ bool intersectSphere(double camVec[3], double sphereVec[3], double r)
 /// 
 ///
 Trackball::Trackball(string cfg_fn)
-    : _active(false), _reset(true)
+    : _active(false), _reset(true), _tracking_completed(false)
 {
     /// Load and parse config file.
     if (_cfg.read(cfg_fn) <= 0) {
@@ -84,9 +85,9 @@ Trackball::Trackball(string cfg_fn)
         LOG_ERR("Error! Could not open input frame source (%s)!", src_fn.c_str());
         return;
     }
-    int src_fps = -1;
-    if (_cfg.getInt("src_fps", src_fps) && (src_fps >= 0)) {
-        LOG("Setting source fps = %d..", src_fps);
+    double src_fps = -1;
+    if (_cfg.getDbl("src_fps", src_fps) && (src_fps >= 0)) {
+        LOG("Setting source fps = %.2f..", src_fps);
         source->setFPS(src_fps);
     }
 
@@ -113,9 +114,14 @@ Trackball::Trackball(string cfg_fn)
     src_mask.setTo(Scalar::all(0));
     {
         // read pts from config file
-        bool pass = false;
+        _sphere_rad = -1;
         vector<int> circ_pxs;
-        if (_cfg.getVecInt("roi_circ", circ_pxs)) {
+        vector<double> sphere_c;
+        if (_cfg.getVecDbl("roi_c", sphere_c) && _cfg.getDbl("roi_r", _sphere_rad)) {
+            _sphere_c.copy(sphere_c.data());
+            LOG("Found sphere ROI centred at [%f %f %f], with radius %f rad.", _sphere_c[0], _sphere_c[1], _sphere_c[2], _sphere_rad);
+        }
+        else if (_cfg.getVecInt("roi_circ", circ_pxs)) {
             vector<Point2d> circ_pts;
             for (unsigned int i = 1; i < circ_pxs.size(); i += 2) {
                 circ_pts.push_back(Point2d(circ_pxs[i - 1], circ_pxs[i]));
@@ -123,39 +129,43 @@ Trackball::Trackball(string cfg_fn)
 
             // fit circular fov
             if ((circ_pts.size() >= 3) && circleFit_camModel(circ_pts, _src_model, _sphere_c, _sphere_rad)) {
-                // NOTE: sin rather than tan to correct for apparent size of sphere
-                _r_d_ratio = sin(_sphere_rad);
-
-                /// Allow sphere region in mask.
-                shared_ptr<vector<Point2i>> int_circ = projCircleInt(_src_model, _sphere_c, _sphere_rad);
-                cv::fillConvexPoly(src_mask, *int_circ, CV_RGB(255, 255, 255));
-
-                /// Mask out ignore regions.
-                vector<vector<int>> ignr_polys;
-                if (_cfg.getVVecInt("roi_ignr", ignr_polys) && (ignr_polys.size() > 0)) {
-                    /// Load ignore polys from config file.
-                    vector<vector<Point2i>> ignr_polys_pts;
-                    for (auto poly : ignr_polys) {
-                        ignr_polys_pts.push_back(vector<Point2i>());
-                        for (unsigned int i = 1; i < poly.size(); i += 2) {
-                            ignr_polys_pts.back().push_back(Point2i(poly[i - 1], poly[i]));
-                        }
-                    }
-
-                    /// Fill ignore region polys.
-                    cv::fillPoly(src_mask, ignr_polys_pts, CV_RGB(0, 0, 0));
-                }
-                else {
-                    LOG_WRN("Warning! No valid mask ignore regions specified in config file (roi_ignr)!");
-                }
-                
-                /// Sphere config read successfully.
-                LOG("Input sphere mask automatically generated using %d ignore ROIs!", ignr_polys.size());
-                pass = true;
+                LOG("Computed sphere ROI centred at [%f %f %f], with radius %f rad from %d roi_circ points.",
+                    _sphere_c[0], _sphere_c[1], _sphere_c[2], _sphere_rad, circ_pts.size());
             }
         }
-        if (!pass) {
-            LOG_ERR("Error! Sphere circumference points specified in config file (roi_circ) are invalid!");
+
+        if (_sphere_rad > 0) {
+            // NOTE: sin rather than tan to correct for apparent size of sphere
+            _r_d_ratio = sin(_sphere_rad);
+
+            /// Allow sphere region in mask.
+            shared_ptr<vector<Point2i>> int_circ = projCircleInt(_src_model, _sphere_c, _sphere_rad);
+            cv::fillConvexPoly(src_mask, *int_circ, CV_RGB(255, 255, 255));
+
+            /// Mask out ignore regions.
+            vector<vector<int>> ignr_polys;
+            if (_cfg.getVVecInt("roi_ignr", ignr_polys) && (ignr_polys.size() > 0)) {
+                /// Load ignore polys from config file.
+                vector<vector<Point2i>> ignr_polys_pts;
+                for (auto poly : ignr_polys) {
+                    ignr_polys_pts.push_back(vector<Point2i>());
+                    for (unsigned int i = 1; i < poly.size(); i += 2) {
+                        ignr_polys_pts.back().push_back(Point2i(poly[i - 1], poly[i]));
+                    }
+                }
+
+                /// Fill ignore region polys.
+                cv::fillPoly(src_mask, ignr_polys_pts, CV_RGB(0, 0, 0));
+            }
+            else {
+                LOG_WRN("Warning! No valid mask ignore regions specified in config file (roi_ignr)!");
+            }
+                
+            /// Sphere config read successfully.
+            LOG("Input sphere mask automatically generated using %d ignore ROIs!", ignr_polys.size());
+        }
+        else {
+            LOG_ERR("Error! Sphere ROI configuration specified in config file (roi_circ, roi_c, roi_r) is invalid!");
             return;
         }
     }
@@ -176,6 +186,8 @@ Trackball::Trackball(string cfg_fn)
         CmPoint64f z(0, 0, 1);      // forward in camera coords
         roi_to_cam_r = _sphere_c.getRotationTo(z);    // find axis-angle to rotate sphere centre to camera centre.
         _roi_to_cam_R = CmPoint64f::omegaToMatrix(roi_to_cam_r);
+
+        LOG_DBG("roi_to_cam_r: %.4f %.4f %.4f", roi_to_cam_r[0], roi_to_cam_r[1], roi_to_cam_r[2]);
 
         // Cam to lab transformation from configuration.
         vector<double> c2a_r;
@@ -251,7 +263,7 @@ Trackball::Trackball(string cfg_fn)
     _sphere_model = CameraModel::createEquiArea(_map_w, _map_h);
 
     /// Buffers.
-    _sphere.create(_map_h, _map_w, CV_8UC1);
+    _sphere_map.create(_map_h, _map_w, CV_8UC1);
 
     /// Surface map template.
     Mat sphere_template;
@@ -265,8 +277,8 @@ Trackball::Trackball(string cfg_fn)
             }
         }
     }
-    if (!sphere_template.empty() && (sphere_template.size() == _sphere.size())) {
-        sphere_template.copyTo(_sphere);
+    if (!sphere_template.empty() && (sphere_template.size() == _sphere_map.size())) {
+        sphere_template.copyTo(_sphere_map);
     }
 
     /// Pre-calc view rays.
@@ -339,7 +351,7 @@ void Trackball::reset()
     _reset = true;
 
     /// Clear maps.
-    _sphere.setTo(Scalar::all(128));
+    _sphere_map.setTo(Scalar::all(128));
 
     /// Reset sphere.
     _R_roi = Mat::eye(3, 3, CV_64F);
@@ -349,6 +361,12 @@ void Trackball::reset()
     _posx = 0;      // reset because heading was lost
     _posy = 0;
     _heading = 0;
+
+    // test data
+    _dist = 0;
+    _ang_dist = 0;
+    _step_avg = 0;
+    _step_var = 0;
 
     /// Drawing.
     if (_do_display) {
@@ -369,10 +387,12 @@ void Trackball::process()
     double t0 = ts_ms();
     double t1, t2, t3, t4, t5, t6;
     double t1avg = 0, t2avg = 0, t3avg = 0, t4avg = 0, t5avg = 0, t6avg = 0;
+    double tfirst = t0, tlast = 0;
     while (_active && _frameGrabber->getNextFrameSet(_src_frame, _roi_frame, _ts)) {
         t1 = ts_ms();
 
-        LOG("\nFrame %d", _cnt);
+        PRINT("");
+        LOG("Frame %d", _cnt);
 
         /// Localise current view of sphere.
         if (!doSearch(_global_search)) {
@@ -442,13 +462,18 @@ void Trackball::process()
 
         t0 = ts_ms();
     }
+    tlast = t0;
 
     LOG_DBG("Stopping sphere tracking loop!");
 
-    LOG("Average timing grab/opt/map/plot/log/disp: %.1f / %.1f / %.1f / %.1f / %.1f / %.1f ms",
+    PRINT("");
+    LOG("Trackball timing");
+    LOG("Average grab/opt/map/plot/log/disp time: %.1f / %.1f / %.1f / %.1f / %.1f / %.1f ms",
         t1avg / _cnt, t2avg / _cnt, t3avg / _cnt, t4avg / _cnt, t5avg / _cnt, t6avg / _cnt);
+    LOG("Average fps: %.2f", 1000. * _cnt / (tlast - tfirst));
 
     _active = false;
+    _tracking_completed = true;
 }
 
 ///
@@ -651,7 +676,7 @@ void Trackball::updateSphere()
             // map vector in sphere coords to pixel
             if (!_sphere_model->vectorToPixelIndex(p2s, px, py)) { continue; }
 
-            uint8_t* s = &_sphere.data[py * _sphere.step + px];
+            uint8_t* s = &_sphere_map.data[py * _sphere_map.step + px];
             *s = (proi[j] == 255) ? std::min(255, *s + 1) : std::max(0, *s - 1);
 
             // display
@@ -678,11 +703,9 @@ void Trackball::updatePath()
     
     // rel vec cam
     _dr_cam = _dr_roi.getTransformed(_roi_to_cam_R);
-    //FIXME: scale by -1?
 
     // abs mat cam
     _R_cam = _roi_to_cam_R * _R_roi;
-    //FIXME: transpose?
 
     // abs vec cam
     _r_cam = CmPoint64f::matrixToOmega(_R_cam);
@@ -725,6 +748,15 @@ void Trackball::updatePath()
     _velx = _dr_lab[1];
     _vely = -_dr_lab[0];
     _step_mag = sqrt(_velx * _velx + _vely * _vely); // magnitude (radians) of ball rotation excluding turning (change in heading)
+    
+    // test data
+    if (_cnt > 0) {
+        _dist += _step_mag;
+        double delta = _step_mag - _step_avg;
+        _step_avg += delta / static_cast<double>(_cnt); // running average
+        double delta2 = _step_mag - _step_avg;
+        _step_var += delta * delta2;                    // running variance (Welford's alg)
+    }
 
     // running direction
     _step_dir = atan2(_vely, _velx);
@@ -738,6 +770,7 @@ void Trackball::updatePath()
     _heading -= _dr_lab[2];
     while (_heading < 0) { _heading += 360 * CM_D2R; }
     while (_heading >= 360 * CM_D2R) { _heading -= 360 * CM_D2R; }
+    _ang_dist += abs(_dr_lab[2]);
 
     // integrate 2d position
     {
@@ -745,9 +778,10 @@ void Trackball::updatePath()
         double step = _step_mag / steps;
         static double prev_heading = 0;
         if (_reset) { prev_heading = 0; }
-        double heading_step = (_heading - prev_heading) / steps;
+        double heading_step = (_heading - prev_heading);
         while (heading_step >= 180 * CM_D2R) { heading_step -= 360 * CM_D2R; }
         while (heading_step < -180 * CM_D2R) { heading_step += 360 * CM_D2R; }
+        heading_step /= steps;  // do after wrapping above
 
         // super-res integration
         CmPoint64f dir(_velx, _vely, 0);
@@ -798,7 +832,7 @@ bool Trackball::logData()
     // integrated x movement | integrated y movement (mouse output equivalent)
     ss << _intx << ", " << _inty << ", ";
     // timestamp | sequence number
-    ss << _ts << ", " << _seq << ", ";
+    ss << _ts << ", " << _seq << std::endl;
 
     // async i/o
     return _log->addMsg(ss.str());
@@ -831,7 +865,6 @@ double Trackball::testRotation(const double x[3])
     double p2s[3];
     int cnt = 0, good = 0;
     int px = 0, py = 0;
-    int s, r;
     for (int i = 0; i < _roi_h; i++) {
         uint8_t* pmask = _roi_mask.ptr(i);
         uint8_t* proi = _roi_frame.ptr(i);
@@ -846,20 +879,20 @@ double Trackball::testRotation(const double x[3])
             p2s[2] = m[6] * v[3 * j + 0] + m[7] * v[3 * j + 1] + m[8] * v[3 * j + 2];
 
             // map vector in sphere coords to pixel
-            if (!_sphere_model->vectorToPixelIndex(p2s, px, py)) { continue; }                  // sphere model is spherical, so pixel should never fall outside valid area
+            if (!_sphere_model->vectorToPixelIndex(p2s, px, py)) { continue; }  // sphere model is spherical, so pixel should never fall outside valid area
 
-            r = proi[j];
-            s = _sphere.data[py * _sphere.step + px];
-            if (((r == 0) && (s > 128)) || ((r == 255) && (s < 128))) { err++; }
-
-            good++; // number of overlapping pixels
+            int r = proi[j];
+            int s = _sphere_map.data[py * _sphere_map.step + px];
+            if (s == 128) { continue; }
+            err += (r - s) * (r - s);
+            good++;     // number of test pixels that correspond to previously seen pixels
         }
     }
 
     /// Compute avg squared diff error.
     if (cnt > 0) {
         double overlap_pc = good / static_cast<double>(cnt);
-        if (overlap_pc > 0.05) { err /= good; }
+        if (overlap_pc > 0.25) { err /= good; }
         else { err = DBL_MAX; }
     } else {
         err = DBL_MAX;
@@ -993,7 +1026,7 @@ void Trackball::drawCanvas()
 
         /// Draw current sphere map.
         static Mat resize_map(DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, CV_8UC1);
-        cv::resize(_sphere, resize_map, resize_map.size());
+        cv::resize(_sphere_map, resize_map, resize_map.size());
         Mat draw_map = _canvas(Rect(2 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, DRAW_CELL_DIM));
         cv::cvtColor(resize_map, draw_map, CV_GRAY2BGR);
 
@@ -1121,4 +1154,17 @@ void Trackball::drawCanvas()
             3 * DRAW_CELL_DIM + 3, 1 * DRAW_CELL_DIM - 8,
             255, 255, 0);
     }
+}
+
+void Trackball::printState()
+{
+    PRINT("");
+    PRINT("Trackball state");
+    PRINT("Sphere orientation (cam): %f %f %f", _r_cam[0], _r_cam[1], _r_cam[2]);
+    PRINT("Total heading rotation: %f deg", _ang_dist * CM_R2D);
+    PRINT("Heading direction: %f deg (%f %% total heading rotation)", _heading * CM_R2D, _heading * 100. / _ang_dist);
+    PRINT("Accumulated X/Y motion: %f / %f rad (%f / %f * 2pi)", _intx, _inty, _intx / (2 * CM_PI), _inty / (2 * CM_PI));
+    PRINT("Distance travelled: %f rad (%f * 2pi)", _dist, _dist / (2 * CM_PI));
+    PRINT("Integrated X/Y position: (%.3e, %.3e) rad (%f / %f %% total path length)", _posx, _posy, _posx * 100. / _dist, _posy * 100. / _dist);
+    PRINT("Average/stdev velocity: %.3e / %.3e rad/frame", _step_avg, sqrt(_step_var / _cnt));  // population variance
 }

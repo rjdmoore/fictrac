@@ -30,6 +30,9 @@ public:
     Trackball(std::string cfg_fn);
     ~Trackball();
 
+    bool trackingCompleted() { return _tracking_completed; }
+    void printState();
+
 private:
     /// Worker function.
     void process();
@@ -56,7 +59,7 @@ private:
     int _map_w, _map_h;
     int _roi_w, _roi_h;
     cv::Mat _src_frame, _roi_frame, _roi_mask;
-    cv::Mat _sphere;
+    cv::Mat _sphere_map;
 
     /// Sphere vars.
     double _sphere_rad, _r_d_ratio;
@@ -68,7 +71,7 @@ private:
     int _max_bad_frames;
 
     /// Program.
-    bool _reset;
+    bool _reset, _tracking_completed;
 
     /// Data.
     unsigned int _cnt, _seq;
@@ -81,6 +84,9 @@ private:
     double _ts;
 
     double _velx, _vely, _step_mag, _step_dir, _intx, _inty, _heading, _posx, _posy;
+    
+    // test data
+    double _dist, _ang_dist, _step_avg, _step_var;
 
     /// Data i/o.
     std::unique_ptr<FrameGrabber> _frameGrabber;
