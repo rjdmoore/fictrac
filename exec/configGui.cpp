@@ -8,6 +8,7 @@
 
 #include "Logger.h"
 #include "ConfigGui.h"
+#include "misc.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -16,6 +17,7 @@
 
 using cv::Mat;
 using std::string;
+
 
 int main(int argc, char *argv[])
 {
@@ -37,6 +39,8 @@ int main(int argc, char *argv[])
                 log_level = argv[i];
             } else {
                 LOG_ERR("-v/--verbosity requires one argument (debug < info (default) < warn < error)!");
+                PRINT("\n\nPress any key to exit..");
+                getchar_clean();
                 return -1;
             }
         } else {
@@ -49,7 +53,12 @@ int main(int argc, char *argv[])
     
     /// Init config object, parse config file.
     ConfigGui cfg(config_fn);
-    if (!cfg.is_open()) { return -1; }
+    if (!cfg.is_open()) {
+        LOG_ERR("Error! Unable to open specified config file (%s).", config_fn.c_str());
+        PRINT("\n\nPress any key to exit..");
+        getchar_clean();
+        return -1;
+    }
     
     /// Run configuration GUI.
     return cfg.run() ? 0 : -1;

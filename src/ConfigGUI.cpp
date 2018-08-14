@@ -16,6 +16,7 @@
 #include "drawing.h"
 #include "Logger.h"
 #include "timing.h"
+#include "misc.h"
 
 #include <iostream> // getline, stoi
 #include <cstdio>   // getchar
@@ -132,19 +133,6 @@ void createZoomROI(Mat& zoom_roi, const Mat& frame, const Point2d& pt, int orig_
     if (pt.y >= 0) { y = clamp(int(pt.y - orig_dim/2 + 0.5), int(orig_dim/2), frame.rows - 1 - orig_dim); }
     Mat crop_rect = frame(cv::Rect(x, y, orig_dim, orig_dim));
     cv::resize(crop_rect, zoom_roi, zoom_roi.size());
-}
-
-///
-/// Helper function to force getchar to take new key press.
-///
-int getchar_clean()
-{
-    double t1 = elapsed_secs();
-    int ret;
-    do {
-        ret = std::getchar();
-    } while ((elapsed_secs() - t1) < 0.1);
-    return ret;
 }
 
 ///
