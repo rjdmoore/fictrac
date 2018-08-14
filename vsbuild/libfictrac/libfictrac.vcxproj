@@ -148,6 +148,7 @@
     <ClInclude Include="..\..\include\FrameSource.h" />
     <ClInclude Include="..\..\include\geometry.h" />
     <ClInclude Include="..\..\include\Logger.h" />
+    <ClInclude Include="..\..\include\misc.h" />
     <ClInclude Include="..\..\include\NLoptFunc.h" />
     <ClInclude Include="..\..\include\PGRSource.h" />
     <ClInclude Include="..\..\include\Recorder.h" />
@@ -170,6 +171,7 @@
     <ClCompile Include="..\..\src\FrameGrabber.cpp" />
     <ClCompile Include="..\..\src\geometry.cpp" />
     <ClCompile Include="..\..\src\Logger.cpp" />
+    <ClCompile Include="..\..\src\misc.cpp" />
     <ClCompile Include="..\..\src\NLoptFunc.cpp" />
     <ClCompile Include="..\..\src\PGRSource.cpp" />
     <ClCompile Include="..\..\src\Recorder.cpp" />
