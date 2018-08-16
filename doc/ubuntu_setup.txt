@@ -1,0 +1,37 @@
+Steps for setting up Ubuntu in virtual machine and building FicTrac from scratch.
+
+1. Download and install Oracle VM VirtualBox manager.
+2. Download and install latest Lubuntu 64-bit operating system image (*.iso).
+    https://lubuntu.net/
+3. Open VirtualBox and create new machine
+    a. Adjust memory, processor, and USB3 settings
+    b. Allocate virtual hard drive at least 8 GB
+4. Launch new virtual machine
+    a. Machine will fail to find operating system
+    b. Load Lubuntu OS image as optical drive (under device menu)
+5. Install and launch Lubuntu
+    a. Select lightweight installation (if you don't want games and office apps)
+    b. Allow installation of 3rd party libraries (non-free)
+6. Install guest additions in Lubuntu
+    a. Devices -> insert guest additions cd
+    b. Open terminal and navigate to mounted folder
+    c. sudo sh VBoxLinuxAdditions.run
+    d. Reboot Lubuntu
+6. Open terminal and install prerequisites
+    a. sudo apt-get install build-essential cmake cmake-gui pkg-config gedit cairomm-1.0 libjpeg-dev libpng-dev libavcodec-dev libavformat-dev libswscale-dev libx264-dev libatlas-base-dev libboost-system-dev libnlopt-dev libgtk2.0-dev libdc1394-22-dev
+7. Install latest version of OpenCV
+    a. Download and extract latest source package from https://opencv.org/releases.html
+    b. in terminal navigate to opencv folder
+    c. mkdir build
+    d. cd build
+    e. cmake-gui ..
+    f. configure
+    g. set install prefix to /usr/local
+    h. disable building perf tests, building tests
+    i. disable all modules except for core, highgui, imgcodecs, imgproc, video, videoio
+    j. generate and close cmake-gui
+    k. make -j4
+    l. sudo make install
+    m. sudo ldconfig
+    n. to check opencv has been installed run: pkg-config --modversion opencv
+8. Download and build FicTrac source code
