@@ -935,7 +935,7 @@ void makeSphereRotMaps(
             p = u2 * p - sc;
 
             // rotate point about rotation axis (sphere coords)
-            // -ve rotation to rotate vector, not axes (see Localiserr::testRotation())
+            // -ve rotation to rotate vector, not axes (see Localiser::testRotation())
             p.rotateAbout(-rot_angle_axis);
 
             // check whether point has disappeared
