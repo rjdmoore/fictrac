@@ -7,7 +7,7 @@
 #pragma once
 
 #include "typesvars.h"
-#include "NLoptFunc.h"
+#include "Localiser.h"
 #include "CameraModel.h"
 #include "Recorder.h"
 #include "FrameGrabber.h"
@@ -17,6 +17,8 @@
 
 #include <memory>	// unique_ptr, shared_ptr
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <atomic>
 #include <deque>
 #include <vector>
@@ -24,14 +26,15 @@
 ///
 /// Estimate track ball orientation and update surface map.
 ///
-class Trackball : public NLoptFunc
+class Trackball
 {
 public:
     Trackball(std::string cfg_fn);
     ~Trackball();
 
-    bool trackingCompleted() { return _tracking_completed; }
+    bool isActive() { return _active; }
     void printState();
+    bool writeTemplate(std::string fn = "");
 
 private:
     /// Worker function.
@@ -44,9 +47,34 @@ private:
     void updateSphere();
     void updatePath();
     bool logData();
-    void drawCanvas();
 
 private:
+    /// Drawing
+    struct DrawData {
+        cv::Mat src_frame, roi_frame, sphere_view, sphere_map;
+        CmPoint64f dr_roi;
+        cv::Mat R_roi;
+        std::deque<cv::Mat> R_roi_hist;
+        std::deque<CmPoint64f> pos_heading_hist;
+    };
+
+    bool updateCanvasAsync(std::shared_ptr<DrawData> data);
+    void processDrawQ();
+    void drawCanvas(std::shared_ptr<DrawData> data);
+
+    std::vector<std::shared_ptr<DrawData>> _drawQ;
+    std::mutex _drawMutex;
+    std::condition_variable _drawCond;
+
+    bool _do_display;
+    cv::Mat _sphere_view;
+    std::deque<cv::Mat> _R_roi_hist;
+    std::deque<CmPoint64f> _pos_heading_hist;
+
+    std::unique_ptr<std::thread> _drawThread;
+
+private:
+
     ConfigParser _cfg;
 
     /// Camera models and remapping.
@@ -59,19 +87,21 @@ private:
     int _map_w, _map_h;
     int _roi_w, _roi_h;
     cv::Mat _src_frame, _roi_frame, _roi_mask;
-    cv::Mat _sphere_map;
+    cv::Mat _sphere_map, _sphere_template;
 
     /// Sphere vars.
     double _sphere_rad, _r_d_ratio;
     CmPoint64f _sphere_c;
     
     /// Optimisation.
-    double _error_thresh, _bound, _err;
+    std::unique_ptr<Localiser> _localOpt, _globalOpt;
+    double _error_thresh, _err;
     bool _global_search;
     int _max_bad_frames;
+    int _nevals;
 
     /// Program.
-    bool _reset, _tracking_completed;
+    bool _init, _reset, _clean_map;
 
     /// Data.
     unsigned int _cnt, _seq;
@@ -86,19 +116,14 @@ private:
     double _velx, _vely, _step_mag, _step_dir, _intx, _inty, _heading, _posx, _posy;
     
     // test data
-    double _dist, _ang_dist, _step_avg, _step_var;
+    double _dist, _ang_dist, _step_avg, _step_var, _evals_avg;
 
     /// Data i/o.
+    std::string _base_fn;
     std::unique_ptr<FrameGrabber> _frameGrabber;
     std::unique_ptr<Recorder> _log;
 
     /// Thread stuff.
     std::atomic_bool _active;
     std::unique_ptr<std::thread> _thread;
-
-    /// Display.
-    bool _do_display;
-    cv::Mat _view, _canvas;
-    std::deque<cv::Mat> _R_roi_hist;
-    std::vector<CmPoint64f> _pos_heading_hist;
 };
