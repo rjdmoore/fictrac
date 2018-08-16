@@ -15,6 +15,7 @@
 #include "CameraRemap.h"
 #include "BasicRemapper.h"
 #include "CVSource.h"
+#include "misc.h"
 
 #include <sstream>
 #include <cmath>
