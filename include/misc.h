@@ -10,3 +10,15 @@
 /// Helper function to force getchar to take new key press.
 ///
 int getchar_clean();
+
+///
+/// Set process priority.
+///
+bool SetProcessHighPriority();
+
+///
+/// Set thread priority.
+///
+bool SetThreadVeryHighPriority();
+bool SetThreadHighPriority();
+bool SetThreadNormalPriority();

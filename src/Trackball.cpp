@@ -382,6 +382,13 @@ void Trackball::process()
 {
     LOG_DBG("Starting sphere tracking loop!");
 
+    /// Set thread high priority (when run as SU).
+    if (!SetThreadHighPriority()) {
+        LOG_ERR("Error! Unable to set thread priority!");
+    } else {
+        LOG("Set processing thread priority to HIGH!");
+    }
+
     /// Sphere tracking loop.
     int nbad = 0;
     double t0 = ts_ms();

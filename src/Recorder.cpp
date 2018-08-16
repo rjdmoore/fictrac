@@ -6,6 +6,8 @@
 
 #include "Recorder.h"
 
+#include "misc.h"
+
 #include <iostream> // cout/cerr
 
 using namespace std;
@@ -70,6 +72,11 @@ bool Recorder::addMsg(string msg)
 
 void Recorder::processMsgQ()
 {
+    /// Set thread high priority (when run as SU).
+    if (!SetThreadNormalPriority()) {
+        cerr << "Error! Recorder processing thread unable to set thread priority!" << endl;
+    }
+
     /// Get a un/lockable lock.
     unique_lock<mutex> l(_qMutex);
     while (_active) {
