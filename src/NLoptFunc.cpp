@@ -125,7 +125,10 @@ void NLoptFunc::setFtol(double tol)
 	{ nlopt_set_ftol_rel(_opt, tol); }
 
 void NLoptFunc::setXtol(double tol)
-	{ nlopt_set_xtol_rel(_opt, tol); }
+	{ nlopt_set_xtol_abs1(_opt, tol); }
+
+void NLoptFunc::setXtolRel(double tol)
+    { nlopt_set_xtol_rel(_opt, tol); }
 
 void NLoptFunc::setMaxEval(unsigned n)
 	{ nlopt_set_maxeval(_opt, n); }
@@ -144,6 +147,9 @@ double NLoptFunc::getOptF()
 
 void NLoptFunc::setInitialStep(const double *dx)
 	{ nlopt_set_initial_step(_opt, dx); }
+
+void NLoptFunc::setPopulation(unsigned int pop)
+    { nlopt_set_population(_opt, pop); }
 
 unsigned NLoptFunc::getDimension()
 	{ return nlopt_get_dimension(_opt); }
