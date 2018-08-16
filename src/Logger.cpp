@@ -17,7 +17,7 @@ using namespace std;
 Logger::Logger()
 {
     // create log writer
-    string fn = string("fictrac_") + execTime() + ".log";
+    string fn = string("fictrac-") + execTime() + ".log";
     _log = unique_ptr<Recorder>(new Recorder(fn));
     _cout = unique_ptr<Recorder>(new Recorder());
     if (_log->is_active() && _cout->is_active()) {

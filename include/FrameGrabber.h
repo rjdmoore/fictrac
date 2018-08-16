@@ -34,6 +34,8 @@ public:
                     int                             max_frame_cnt = -1
     );
     ~FrameGrabber();
+
+    void terminate();
     
     bool getFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, bool latest);
     bool getLatestFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp) {

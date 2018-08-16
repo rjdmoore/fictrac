@@ -151,11 +151,14 @@ string ConfigParser::operator()(string key)
 template<typename T>
 T ConfigParser::get(string key)
 {
-    std::stringstream ss(operator()(key));
     T val;
-    try { ss >> val; }
-    catch (std::exception& e) {
-        LOG_ERR("Error parsing config file value (%s : %s)! Error was: %s", key.c_str(), ss.str().c_str(), e.what());
+    string s;
+    if (getStr(key, s)) {
+        std::stringstream ss(s);
+        try { ss >> val; }
+        catch (std::exception& e) {
+            LOG_ERR("Error parsing config file value (%s : %s)! Error was: %s", key.c_str(), ss.str().c_str(), e.what());
+        }
     }
     return val;
 }

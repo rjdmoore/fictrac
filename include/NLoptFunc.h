@@ -51,6 +51,8 @@ public:
 	///
 	void init(nlopt_algorithm algo, unsigned n, bool minimise=true);
 
+    void setPopulation(unsigned int pop);
+
 	///
 	/// Set initial step size.
 	///
@@ -63,8 +65,9 @@ public:
 	void setUpperBounds(const double *ub);
 	void setLowerBounds(double lb); /// convenience: sets all to same value
 	void setUpperBounds(double ub);
-	void setFtol(double tol);
-	void setXtol(double tol);
+	void setFtol(double tol);   // relative
+	void setXtol(double tol);   // absolute
+    void setXtolRel(double tol);
 	void setMaxEval(unsigned n);
 
 	void getLowerBounds(double *lb);

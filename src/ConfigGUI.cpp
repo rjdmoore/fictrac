@@ -1113,13 +1113,9 @@ bool ConfigGui::run()
 
     if (_open) {
         LOG("Configuration complete!");
-        PRINT("\n\nPress any key to exit..");
-    }
-    else {
+    } else {
         LOG_WRN("\n\nWarning! There were errors and the configuration file may not have been properly updated. Please run configuration again.");
-        PRINT("\n\nPress any key to exit..");
     }
-    getchar_clean();
     
     LOG("Exiting configuration!");
     return _open;

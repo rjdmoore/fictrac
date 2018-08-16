@@ -9,6 +9,7 @@
 #include "FrameGrabber.h"
 
 #include "Logger.h"
+#include "misc.h"
 
 #include <cmath>    // round
 
@@ -149,6 +150,16 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
 ///
 ///
 ///
+void FrameGrabber::terminate()
+{
+    unique_lock<mutex> l(_qMutex);
+    _active = false;
+    _qCond.notify_all();
+}
+
+///
+///
+///
 void FrameGrabber::process()
 {
     /// Init storage arrays
@@ -171,6 +182,13 @@ void FrameGrabber::process()
 
     LOG_DBG("Starting frame grabbing loop!");
 
+    /// Set thread high priority (when run as SU).
+    if (!SetThreadVeryHighPriority()) {
+        LOG_ERR("Error! Unable to set thread priority!");
+    } else {
+        LOG("Set frame grabbing thread priority to HIGH!");
+    }
+
     /// Frame grab loop.
     int cnt = 0;
     while (_active) {
@@ -185,8 +203,12 @@ void FrameGrabber::process()
         /// Capture new frame.
         Mat frame_bgr(_h, _w, CV_8UC3);
         frame_bgr.setTo(cv::Scalar::all(0));
-        if (!_source->grab(frame_bgr) || (++cnt > _max_frame_cnt)) {
-            LOG_ERR("Error grabbing new frame!");
+        if (!_source->grab(frame_bgr) || ((_max_frame_cnt > 0) && (++cnt > _max_frame_cnt))) {
+            if ((_max_frame_cnt > 0) && (++cnt > _max_frame_cnt)) {
+                LOG("Max frame count (%d) reached!", _max_frame_cnt);
+            } else {
+                LOG_ERR("Error grabbing new frame!");
+            }
             _active = false;
             l.lock();   // predicate check and wait are not atomic in other thread, so if we don't lock before notifying, notification could be dropped.
             _qCond.notify_all();
@@ -291,7 +313,7 @@ void FrameGrabber::process()
             uint8_t* pthrmin = thresh_min.ptr(i);
             uint8_t* pthrmax = thresh_max.ptr(i);
             for (int j = 0; j < _rw; j++) {
-                if (pmask[j] < 255) {
+                if (pmask[j] != 255) {
                     premap[j] = 128;
                     continue;
                 }

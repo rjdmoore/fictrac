@@ -134,9 +134,9 @@ bool CVSource::grab(cv::Mat& frame)
 
     /// Correct average frame rate when reading from file.
     if (!_live && (_fps > 0)) {
-        static double prev_ts = ts - 100; // initially 10 Hz
-        static double av_fps = 10;      // initially 10 Hz
-        static double sleep_ms = 100;
+        static double prev_ts = ts - 25; // initially 40 Hz
+        static double av_fps = 40;      // initially 40 Hz
+        static double sleep_ms = 25;
         av_fps = 0.15 * av_fps + 0.85 * (1000 / (ts - prev_ts));
         sleep_ms *= 0.25 * (av_fps / _fps) + 0.75;
         sleep(static_cast<long>(round(sleep_ms)));

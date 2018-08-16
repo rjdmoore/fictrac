@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
                 log_level = argv[i];
             } else {
                 LOG_ERR("-v/--verbosity requires one argument (debug < info (default) < warn < error)!");
-                PRINT("\n\nPress any key to exit..");
+                PRINT("\n\nHit ENTER to exit..");
                 getchar_clean();
                 return -1;
             }
@@ -55,11 +55,16 @@ int main(int argc, char *argv[])
     ConfigGui cfg(config_fn);
     if (!cfg.is_open()) {
         LOG_ERR("Error! Unable to open specified config file (%s).", config_fn.c_str());
-        PRINT("\n\nPress any key to exit..");
+        PRINT("\n\nHit ENTER to exit..");
         getchar_clean();
         return -1;
     }
     
     /// Run configuration GUI.
-    return cfg.run() ? 0 : -1;
+    bool ret = cfg.run();
+
+    PRINT("\n\nHit ENTER to exit..");
+    getchar_clean();
+
+    return ret ? 0 : 1;
 }
