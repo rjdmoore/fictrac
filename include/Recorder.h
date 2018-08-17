@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "RecorderInterface.h"
+
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -13,16 +15,16 @@
 #include <memory>   // unique_ptr
 #include <deque>
 #include <string>
-#include <fstream>  // ofstream
 
 
 class Recorder
 {
 public:
-    Recorder(std::string fn = "");
+    Recorder(RecorderInterface::RecordType type, std::string fn = "");
     ~Recorder();
 
     bool is_active() { return _active; }
+    RecorderInterface::RecordType type() { return _record->type(); }
 
     /// Add msg to msgQ for async writing.
     bool addMsg(std::string msg);
@@ -33,9 +35,7 @@ private:
 private:
     std::atomic<bool> _active;
 
-    std::ostream _out;
-    std::ofstream _file;
-    bool _isFile;
+    std::unique_ptr<RecorderInterface> _record;
 
     std::unique_ptr<std::thread> _thread;
     std::deque<std::string> _msgQ;
