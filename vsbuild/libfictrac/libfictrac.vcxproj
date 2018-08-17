@@ -58,17 +58,21 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\winsocket.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\winsocket.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\winsocket.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\nlopt.props" />
     <Import Project="..\opencv.props" />
+    <Import Project="..\winsocket.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
@@ -142,8 +146,10 @@
     <ClInclude Include="..\..\include\CmPoint.h" />
     <ClInclude Include="..\..\include\ConfigGui.h" />
     <ClInclude Include="..\..\include\ConfigParser.h" />
+    <ClInclude Include="..\..\include\TermRecorder.h" />
     <ClInclude Include="..\..\include\CVSource.h" />
     <ClInclude Include="..\..\include\drawing.h" />
+    <ClInclude Include="..\..\include\FileRecorder.h" />
     <ClInclude Include="..\..\include\FrameGrabber.h" />
     <ClInclude Include="..\..\include\FrameSource.h" />
     <ClInclude Include="..\..\include\geometry.h" />
@@ -153,8 +159,10 @@
     <ClInclude Include="..\..\include\NLoptFunc.h" />
     <ClInclude Include="..\..\include\PGRSource.h" />
     <ClInclude Include="..\..\include\Recorder.h" />
+    <ClInclude Include="..\..\include\RecorderInterface.h" />
     <ClInclude Include="..\..\include\Remapper.h" />
     <ClInclude Include="..\..\include\SharedPointers.h" />
+    <ClInclude Include="..\..\include\SocketRecorder.h" />
     <ClInclude Include="..\..\include\SquareRT.h" />
     <ClInclude Include="..\..\include\timing.h" />
     <ClInclude Include="..\..\include\Trackball.h" />
@@ -165,9 +173,11 @@
     <ClCompile Include="..\..\src\CmPoint.cpp" />
     <ClCompile Include="..\..\src\ConfigGui.cpp" />
     <ClCompile Include="..\..\src\ConfigParser.cpp" />
+    <ClCompile Include="..\..\src\TermRecorder.cpp" />
     <ClCompile Include="..\..\src\CVSource.cpp" />
     <ClCompile Include="..\..\src\drawing.cpp" />
     <ClCompile Include="..\..\src\EquiareaCameraModel.cpp" />
+    <ClCompile Include="..\..\src\FileRecorder.cpp" />
     <ClCompile Include="..\..\src\FisheyeCameraModel.cpp" />
     <ClCompile Include="..\..\src\FrameGrabber.cpp" />
     <ClCompile Include="..\..\src\geometry.cpp" />
@@ -179,6 +189,7 @@
     <ClCompile Include="..\..\src\Recorder.cpp" />
     <ClCompile Include="..\..\src\RectilinearCameraModel.cpp" />
     <ClCompile Include="..\..\src\Remapper.cpp" />
+    <ClCompile Include="..\..\src\SocketRecorder.cpp" />
     <ClCompile Include="..\..\src\SquareRT.cpp" />
     <ClCompile Include="..\..\src\timing.cpp" />
     <ClCompile Include="..\..\src\Trackball.cpp" />
