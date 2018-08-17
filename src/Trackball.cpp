@@ -329,7 +329,7 @@ Trackball::Trackball(string cfg_fn)
 
     /// Output.
     string data_fn = _base_fn + "-" + execTime() + ".dat";
-    _log = unique_ptr<Recorder>(new Recorder(data_fn));
+    _log = unique_ptr<Recorder>(new Recorder(RecorderInterface::RecordType::FILE, data_fn));
 
     /// Display.
     _do_display = DO_DISPLAY_DEFAULT;

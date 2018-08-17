@@ -6,38 +6,40 @@
 
 #include "Recorder.h"
 
-#include "misc.h"
+#include "TermRecorder.h"
+#include "FileRecorder.h"
+#include "SocketRecorder.h"
+#include "misc.h"   // thread priority
 
 #include <iostream> // cout/cerr
 
 using namespace std;
 
-Recorder::Recorder(string fn)
-    : _active(false), _out(nullptr), _isFile(false)
+Recorder::Recorder(RecorderInterface::RecordType type, string fn)
+    : _active(false)
 {
-    /// Open source.
-    std::streambuf* buf = nullptr;
-    if (!fn.empty()) {
-        _file.open(fn);
-        if (_file.is_open()) {
-            buf = _file.rdbuf();
-            _isFile = true;
-        }
-        else {
-            cerr << "Error! Recorder could not open output file (" << fn << ") and will pipe to cout instead!" << endl;
-        }
-    }
-    if (!_isFile) {
-        buf = cout.rdbuf();
-        _isFile = false;
+    /// Set record type.
+    switch (type) {
+    case RecorderInterface::RecordType::TERM:
+        _record = unique_ptr<TermRecorder>(new TermRecorder());
+        break;
+    case RecorderInterface::RecordType::FILE:
+        _record = unique_ptr<FileRecorder>(new FileRecorder());
+        break;
+    case RecorderInterface::RecordType::SOCK:
+        _record = unique_ptr<SocketRecorder>(new SocketRecorder());
+    default:
+        break;
     }
 
-    /// Set stream buffer source.
-    _out.rdbuf(buf);
-
-    /// Activate thread.
-    _active = true;
-    _thread = unique_ptr<thread>(new thread(&Recorder::processMsgQ, this));
+    /// Open record and start async recording.
+    if (_record && _record->open(fn)) {
+        _active = true;
+        _thread = unique_ptr<thread>(new thread(&Recorder::processMsgQ, this));
+    }
+    else {
+        cerr << "Error initialising recorder!" << endl;
+    }
 }
 
 Recorder::~Recorder()
@@ -53,9 +55,7 @@ Recorder::~Recorder()
         _thread->join();
     }
 
-    if (_isFile) {
-        _file.close();
-    }
+    /// _record->close() called by unique_ptr dstr.
 }
 
 bool Recorder::addMsg(string msg)
@@ -92,7 +92,7 @@ void Recorder::processMsgQ()
             l.unlock();
 
             // do async i/o
-            _out << msg.c_str();
+            _record->write(msg);
             l.lock();
         }
     }
