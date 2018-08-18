@@ -21,13 +21,13 @@ FileRecorder::FileRecorder()
 ///
 FileRecorder::~FileRecorder()
 {
-    close();
+    closeRecord();
 }
 
 ///
 ///
 ///
-bool FileRecorder::open(std::string fn)
+bool FileRecorder::openRecord(std::string fn)
 {
     _file.open(fn);
     _open = _file.is_open();
@@ -40,17 +40,18 @@ bool FileRecorder::open(std::string fn)
 ///
 ///
 ///
-bool FileRecorder::write(std::string s)
+bool FileRecorder::writeRecord(std::string s)
 {
     if (!_open) { return false; }
     _file << s;
+    _file.flush();  // force flush in Linux
     return true;
 }
 
 ///
 ///
 ///
-void FileRecorder::close()
+void FileRecorder::closeRecord()
 {
     _open = false;
     _file.close();

@@ -10,7 +10,11 @@
 #include "CameraModel.h"
 #include "Logger.h"
 
+/// OpenCV individual includes required by gcc?
 #include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>  
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/videoio.hpp>
 
 
 Remapper::Remapper(int srcW, int srcH, int dstW, int dstH)

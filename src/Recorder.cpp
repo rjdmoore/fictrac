@@ -33,7 +33,7 @@ Recorder::Recorder(RecorderInterface::RecordType type, string fn)
     }
 
     /// Open record and start async recording.
-    if (_record && _record->open(fn)) {
+    if (_record && _record->openRecord(fn)) {
         _active = true;
         _thread = unique_ptr<thread>(new thread(&Recorder::processMsgQ, this));
     }
@@ -92,7 +92,7 @@ void Recorder::processMsgQ()
             l.unlock();
 
             // do async i/o
-            _record->write(msg);
+            _record->writeRecord(msg);
             l.lock();
         }
     }

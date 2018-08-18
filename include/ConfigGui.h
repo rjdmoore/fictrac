@@ -90,7 +90,7 @@ private:
     
 private:
     bool _open;
-    std::string _config_fn;
+    std::string _config_fn, _base_fn;
     ConfigParser _cfg;
     cv::Mat _frame;
     size_t _w, _h;

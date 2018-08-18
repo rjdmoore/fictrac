@@ -9,6 +9,12 @@
 #include "Logger.h"
 #include "timing.h"
 
+/// OpenCV individual includes required by gcc?
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>  
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/videoio.hpp>
+
 #include <exception>
 
 using cv::Mat;
@@ -52,8 +58,8 @@ CVSource::CVSource(std::string input)
     }
 
 	if( _open ) {
-		_width = static_cast<int>(_cap->get(CV_CAP_PROP_FRAME_WIDTH));
-		_height = static_cast<int>(_cap->get(CV_CAP_PROP_FRAME_HEIGHT));
+		_width = static_cast<int>(_cap->get(cv::CAP_PROP_FRAME_WIDTH));
+		_height = static_cast<int>(_cap->get(cv::CAP_PROP_FRAME_HEIGHT));
 	}
 }
 
@@ -71,7 +77,7 @@ bool CVSource::setFPS(double fps)
     bool ret = false;
 	if( _open && (fps > 0) ) {
         _fps = fps;
-        if (!_cap->set(CV_CAP_PROP_FPS, fps)) {
+        if (!_cap->set(cv::CAP_PROP_FPS, fps)) {
             LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%.2f).", fps);
         } else { ret = true; }
     }
@@ -86,7 +92,7 @@ bool CVSource::rewind()
 {
     bool ret = false;
 	if (_open) {
-        if (!_cap->set(CV_CAP_PROP_POS_FRAMES, 0)) {
+        if (!_cap->set(cv::CAP_PROP_POS_FRAMES, 0)) {
             LOG_WRN("Warning! Failed to rewind source.");
         } else { ret = true; }
 	}
@@ -104,7 +110,7 @@ bool CVSource::grab(cv::Mat& frame)
 		return false;
 	}
     double ts = static_cast<double>(ts_ms());    // backup, in case the device timestamp is junk
-	_timestamp = _cap->get(CV_CAP_PROP_POS_MSEC);
+	_timestamp = _cap->get(cv::CAP_PROP_POS_MSEC);
     if (_timestamp <= 0) {
         _timestamp = ts;
     }

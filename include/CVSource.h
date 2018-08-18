@@ -9,7 +9,8 @@
 #include "FrameSource.h"
 
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui.hpp>
+/// OpenCV individual includes required by gcc?
+#include <opencv2/videoio.hpp>
 
 #include <memory>	// shared_ptr
 #include <cstdio>

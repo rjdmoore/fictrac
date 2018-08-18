@@ -1,2 +1,7 @@
 * if vfov is changed - R,t and c,r stored in config file should be recomputed (currently requires values to be deleted and config re-run..)
 * SLAM-like map with elastic weights between pixels to enable distribution of error on loop closures
+* video recording
+* test with camera
+* test with diverse recordings
+* benchmark with noisy simulations
+* write win/linux socket clients

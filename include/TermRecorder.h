@@ -15,9 +15,9 @@ public:
     ~TermRecorder();
 
     /// Interface to be overridden by implementations.
-    bool open(std::string ignore = "") { _open = true; return true; }
-    bool write(std::string s);
-    void close() { _open = false; };
+    bool openRecord(std::string ignore = "") { _open = true; return true; }
+    bool writeRecord(std::string s);
+    void closeRecord() { _open = false; };
 
 private:
 };

@@ -29,9 +29,9 @@ public:
     RecordType type() { return _type; }
 
     /// Interface to be overridden by implementations.
-    virtual bool open(std::string f = "") = 0;
-    virtual bool write(std::string s) = 0;
-    virtual void close() = 0;
+    virtual bool openRecord(std::string f = "") = 0;
+    virtual bool writeRecord(std::string s) = 0;
+    virtual void closeRecord() = 0;
 
 protected:
     bool _open;

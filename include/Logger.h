@@ -13,11 +13,12 @@
 #include <string>
 #include <fstream>  // ofstream
 
-#define LOG(fmt, ...) Logger::mprintf(Logger::INF, __FUNCTION__, fmt, __VA_ARGS__)
-#define LOG_DBG(fmt, ...) Logger::mprintf(Logger::DBG, __FUNCTION__, fmt, __VA_ARGS__)
-#define LOG_WRN(fmt, ...) Logger::mprintf(Logger::WRN, __FUNCTION__, fmt, __VA_ARGS__)
-#define LOG_ERR(fmt, ...) Logger::mprintf(Logger::ERR, __FUNCTION__, fmt, __VA_ARGS__)
-#define PRINT(fmt, ...) Logger::mprintf(Logger::PRT, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOG(fmt, ...) Logger::mprintf(Logger::INF, __FUNCTION__, fmt, ##__VA_ARGS__)    // ## required for gcc?
+#define LOG_DBG(fmt, ...) Logger::mprintf(Logger::DBG, __FUNCTION__, fmt, ##__VA_ARGS__)
+#define LOG_WRN(fmt, ...) Logger::mprintf(Logger::WRN, __FUNCTION__, fmt, ##__VA_ARGS__)
+#define LOG_ERR(fmt, ...) Logger::mprintf(Logger::ERR, __FUNCTION__, fmt, ##__VA_ARGS__)
+#define PRINT(fmt, ...) Logger::mprintf(Logger::PRT, __FUNCTION__, fmt, ##__VA_ARGS__)
+
 
 
 class Logger

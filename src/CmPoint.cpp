@@ -277,13 +277,13 @@ CmPointT<T> CmPointT<T>::matrixToOmega(const cv::Mat_<T>& m)
 	}
                         
     // make sure m is not ill-conditioned
-    double angle = acos(clamp((m.at<T>(0,0)+m.at<T>(1,1)+m.at<T>(2,2)-1)/2.0, -1.0, 1.0));
+    double angle = acos(clamp((m.template at<T>(0,0) + m.template at<T>(1,1) + m.template at<T>(2,2) - 1) / 2.0, -1.0, 1.0));
     double sin_angle = sin(angle);
     if( sin_angle != 0 ) { angle /= 2.0*sin_angle; }
     return CmPointT<T>(
-        angle*(m.at<T>(2,1)-m.at<T>(1,2)),
-        angle*(m.at<T>(0,2)-m.at<T>(2,0)),
-        angle*(m.at<T>(1,0)-m.at<T>(0,1)));
+        angle*(m.template at<T>(2,1) - m.template at<T>(1,2)),
+        angle*(m.template at<T>(0,2) - m.template at<T>(2,0)),
+        angle*(m.template at<T>(1,0) - m.template at<T>(0,1)));
 }
 
 template <typename T>

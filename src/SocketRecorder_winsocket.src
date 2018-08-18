@@ -24,13 +24,13 @@ SocketRecorder::SocketRecorder()
 ///
 SocketRecorder::~SocketRecorder()
 {
-    close();
+    closeRecord();
 }
 
 ///
 ///
 ///
-bool SocketRecorder::open(std::string port)
+bool SocketRecorder::openRecord(std::string port)
 {
     // Initialize Winsock
     int iResult = WSAStartup(MAKEWORD(2, 2), &_wsaData);
@@ -96,7 +96,7 @@ bool SocketRecorder::open(std::string port)
 ///
 ///
 ///
-bool SocketRecorder::write(std::string s)
+bool SocketRecorder::writeRecord(std::string s)
 {
     if (_open) {
         int iSendResult = send(_clientSocket, s.c_str(), s.size(), 0);
@@ -111,7 +111,7 @@ bool SocketRecorder::write(std::string s)
 ///
 ///
 ///
-void SocketRecorder::close()
+void SocketRecorder::closeRecord()
 {
     _open = false;
     closesocket(_clientSocket);
