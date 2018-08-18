@@ -96,6 +96,12 @@
     <ClInclude Include="..\..\include\TermRecorder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\SocketRecorder_linux.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\SocketRecorder_winsocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\CmPoint.cpp">
@@ -170,5 +176,13 @@
     <ClCompile Include="..\..\src\TermRecorder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\src\SocketRecorder_winsocket.src">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="..\..\src\SocketRecorder_linux.src">
+      <Filter>Source Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

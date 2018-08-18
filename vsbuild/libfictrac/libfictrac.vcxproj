@@ -146,6 +146,8 @@
     <ClInclude Include="..\..\include\CmPoint.h" />
     <ClInclude Include="..\..\include\ConfigGui.h" />
     <ClInclude Include="..\..\include\ConfigParser.h" />
+    <ClInclude Include="..\..\include\SocketRecorder_linux.h" />
+    <ClInclude Include="..\..\include\SocketRecorder_winsocket.h" />
     <ClInclude Include="..\..\include\TermRecorder.h" />
     <ClInclude Include="..\..\include\CVSource.h" />
     <ClInclude Include="..\..\include\drawing.h" />
@@ -173,6 +175,12 @@
     <ClCompile Include="..\..\src\CmPoint.cpp" />
     <ClCompile Include="..\..\src\ConfigGui.cpp" />
     <ClCompile Include="..\..\src\ConfigParser.cpp" />
+    <Text Include="..\..\src\SocketRecorder_linux.src">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="..\..\src\SocketRecorder_winsocket.src">
+      <FileType>Document</FileType>
+    </Text>
     <ClCompile Include="..\..\src\TermRecorder.cpp" />
     <ClCompile Include="..\..\src\CVSource.cpp" />
     <ClCompile Include="..\..\src\drawing.cpp" />
