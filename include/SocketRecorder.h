@@ -6,23 +6,8 @@
 
 #pragma once
 
-#include "RecorderInterface.h"
-
-#include <winsock2.h>   // WSADATA, SOCKET
-#include <string>
-
-class SocketRecorder : public RecorderInterface
-{
-public:
-    SocketRecorder();
-    ~SocketRecorder();
-
-    /// Interface to be overridden by implementations.
-    bool open(std::string port);
-    bool write(std::string s);
-    void close();
-
-private:
-    WSADATA _wsaData;
-    SOCKET _listenSocket, _clientSocket;
-};
+#ifdef __linux__ 
+#include "SocketRecorder_linux.h"
+#elif _WIN32
+#include "SocketRecorder_winsocket.h"
+#endif

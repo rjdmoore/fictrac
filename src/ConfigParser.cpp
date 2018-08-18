@@ -12,7 +12,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <exception>
+#include <exception>    // try, catch
 
 using std::string;
 using std::vector;

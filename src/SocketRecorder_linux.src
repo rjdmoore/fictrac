@@ -1,0 +1,108 @@
+/// FicTrac http://rjdmoore.net/fictrac/
+/// \file       SocketRecorder_linux.cpp
+/// \brief      Linux implementation of socket recorder.
+/// \author     Richard Moore
+/// \copyright  CC BY-NC-SA 3.0
+
+#include "SocketRecorder_linux.h"
+
+#include <unistd.h>
+#include <sys/types.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#include <exception>	// try, catch
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>		// cout/cerr
+
+///
+///
+///
+SocketRecorder::SocketRecorder()
+    : _listenSocket(-1), _clientSocket(-1)
+{
+    _type = SOCK;
+}
+
+///
+///
+///
+SocketRecorder::~SocketRecorder()
+{
+    close();
+}
+
+///
+///
+///
+bool SocketRecorder::open(std::string port)
+{
+	struct sockaddr_in serv_addr, cli_addr;
+
+	// Create socket
+	_listenSocket = socket(AF_INET, SOCK_STREAM, 0);
+	if (_listenSocket < 0) {
+		std::cerr << "Error! Could not create valid socket on port " << port  << "!" << std::endl;
+		return false;
+	}
+
+	// Bind socket
+	bzero((char *) &serv_addr, sizeof(serv_addr));
+	int portno = -1;
+	try {
+		portno = atoi(port.c_str());
+	}
+	catch (...) {
+		std::cerr << "Error! Invalid socket port number (" << port << ")!" << std::endl;
+		return false;
+	}
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(portno);
+	if (bind(_listenSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+		std::cerr << "Error! Failed to bind socket on port " << port << "!" << std::endl;
+		return false;
+	}
+
+	// Listen on our socket
+	if (listen(_listenSocket,5) < 0) {
+		std::cerr << "Error! Failed to listen to socket on port " << port << "!" << std::endl;
+        return false;
+	}
+
+	// Wait for client connection...
+	socklen_t clilen = sizeof(cli_addr);
+	_clientSocket = accept(_listenSocket, (struct sockaddr *) &cli_addr, &clilen);		// blocking
+	if (_clientSocket < 0) {
+		std::cerr << "Error! Failed to accept socket connection on port " << port << "!" << std::endl;
+        return false;
+	}
+
+    return (_open = true);
+}
+
+///
+///
+///
+bool SocketRecorder::write(std::string s)
+{
+    if (_open) {
+		int n = write(_clientSocket,s.c_str(),s.size());
+		if (n < 0) {
+			std::cerr << "Error! Send failed!" << std::endl;
+            _open = false;  // should this be a terminal error?
+		}
+    }
+    return _open;
+}
+
+///
+///
+///
+void SocketRecorder::close()
+{
+    _open = false;
+    close(_clientSocket);
+    close(_listenSocket);
+}
