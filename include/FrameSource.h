@@ -12,7 +12,7 @@ enum BAYER_TYPE { BAYER_NONE, BAYER_RGGB, BAYER_GRBG, BAYER_GBRG, BAYER_BGGR };
 
 class FrameSource {
 public:
-	FrameSource() : _open(false), _bayerType(BAYER_NONE), _width(-1), _height(-1), _fps(-1), _timestamp(-1), _live(true) {}
+	FrameSource() : _open(false), _bayerType(BAYER_NONE), _width(-1), _height(-1), _timestamp(-1), _fps(-1), _live(true) {}
 	virtual ~FrameSource() {}
 
 	virtual bool setFPS(double fps)=0;

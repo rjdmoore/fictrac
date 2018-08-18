@@ -17,7 +17,7 @@ using cv::Mat;
 Localiser::Localiser(nlopt_algorithm alg, double bound, double tol, int max_evals,
     CameraModelPtr sphere_model, const Mat& sphere_map,
     const Mat& roi_mask, std::shared_ptr<double[]> p1s_lut)
-    : _bound(bound), _sphere_model(sphere_model), _sphere_map(sphere_map), _p1s_lut(p1s_lut), _roi_mask(roi_mask)
+    : _bound(bound), _sphere_model(sphere_model), _sphere_map(sphere_map), _roi_mask(roi_mask), _p1s_lut(p1s_lut)
 {
     init(alg, 3);
     setXtol(tol);

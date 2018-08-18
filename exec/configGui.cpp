@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     /// Init config object, parse config file.
     ConfigGui cfg(config_fn);
     if (!cfg.is_open()) {
-        LOG_ERR("Error! Unable to open specified config file (%s).", config_fn.c_str());
+        LOG_ERR("Error loading parameters from specified config file (%s)!", config_fn.c_str());
         PRINT("\n\nHit ENTER to exit..");
         getchar_clean();
         return -1;

@@ -21,15 +21,16 @@ TermRecorder::TermRecorder()
 ///
 TermRecorder::~TermRecorder()
 {
-    close();
+    closeRecord();
 }
 
 ///
 ///
 ///
-bool TermRecorder::write(std::string s)
+bool TermRecorder::writeRecord(std::string s)
 {
     if (!_open) { return false; }
     std::cout << s;
+    fflush(stdout);     // force flush in Linux
     return true;
 }

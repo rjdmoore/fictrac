@@ -13,6 +13,7 @@
 #include <fstream>
 #include <sstream>
 #include <exception>    // try, catch
+#include <algorithm>    // erase, remove
 
 using std::string;
 using std::vector;
@@ -46,7 +47,7 @@ int ConfigParser::read(string fn)
 {
     //FIXME: replace corresponding keys rather than overwriting the whole file!
 
-    LOG("Looking for config file: %s ...", fn.c_str());
+    LOG("Looking for config file: %s ..", fn.c_str());
 
     /// Open input file
     std::ifstream f(fn);
@@ -74,7 +75,10 @@ int ConfigParser::read(string fn)
         std::size_t delim = line.find(":");
         if (delim >= line.size()) { continue; } // skip blank lines
         string key = line.substr(0, line.find_last_not_of(whitespace, delim - 1) + 1), val = "";
-        try { val = line.substr(line.find_first_not_of(whitespace, delim + 1)); }
+        try {
+            val = line.substr(line.find_first_not_of(whitespace, delim + 1));
+            val.erase(std::remove(val.begin(), val.end(), '\r'), val.end());    // remove /r under linux
+        }
         catch (...) {}  // add blank values
 
         /// Add to map

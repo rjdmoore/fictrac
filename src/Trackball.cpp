@@ -17,6 +17,12 @@
 #include "CVSource.h"
 #include "misc.h"
 
+/// OpenCV individual includes required by gcc?
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>  
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/videoio.hpp>
+
 #include <sstream>
 #include <cmath>
 
@@ -72,7 +78,7 @@ bool intersectSphere(const double camVec[3], double sphereVec[3], const double r
 /// 
 ///
 Trackball::Trackball(string cfg_fn)
-    : _init(false), _active(true), _reset(true), _clean_map(true)
+    : _init(false), _reset(true), _clean_map(true), _active(true)
 {
     /// Load and parse config file.
     if (_cfg.read(cfg_fn) <= 0) {
@@ -1231,7 +1237,7 @@ void Trackball::printState()
 
 bool Trackball::writeTemplate(std::string fn)
 {
-    if (_init) { return false; }
+    if (!_init) { return false; }
     
     string template_fn = _base_fn + "-template.png";
 

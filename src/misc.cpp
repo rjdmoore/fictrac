@@ -8,8 +8,13 @@
 
 #include "timing.h"
 
+#ifdef __linux__ 
+// linux inludes
+#elif _WIN32
 #define NOMINMAX    // stop min/max macros being defined in windows.h
 #include <windows.h>
+#endif
+
 
 #include <cstdio>
 
@@ -31,9 +36,14 @@ int getchar_clean()
 ///
 bool SetProcessHighPriority()
 {
+#ifdef __linux__ 
+    // linux
+    return false;
+#elif _WIN32
     /// Sets process class to high priority level - care should be taken if FicTrac process uses all available CPU...
     /// See https://docs.microsoft.com/en-us/windows/desktop/procthread/scheduling-priorities
     return SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+#endif
 }
 
 ///
@@ -41,21 +51,36 @@ bool SetProcessHighPriority()
 ///
 bool SetThreadVeryHighPriority()
 {
-    /// Sets thread priority to high.
+#ifdef __linux__ 
+    // linux
+    return false;
+#elif _WIN32
+    /// Sets thread priority to highest.
     /// See https://docs.microsoft.com/en-us/windows/desktop/procthread/scheduling-priorities
     return SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+#endif
 }
 
 bool SetThreadHighPriority()
 {
+#ifdef __linux__ 
+    // linux
+    return false;
+#elif _WIN32
     /// Sets thread priority to high.
     /// See https://docs.microsoft.com/en-us/windows/desktop/procthread/scheduling-priorities
     return SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
+#endif
 }
 
 bool SetThreadNormalPriority()
 {
+#ifdef __linux__ 
+    // linux
+    return false;
+#elif _WIN32
     /// Sets thread priority to normal.
     /// See https://docs.microsoft.com/en-us/windows/desktop/procthread/scheduling-priorities
     return SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
+#endif
 }

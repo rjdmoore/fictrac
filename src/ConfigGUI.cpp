@@ -18,12 +18,19 @@
 #include "timing.h"
 #include "misc.h"
 
+/// OpenCV individual includes required by gcc?
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/videoio.hpp>
+
 #include <iostream> // getline, stoi
 #include <cstdio>   // getchar
 #include <exception>
 
 using cv::Mat;
 using cv::Point2d;
+using cv::Scalar;
 using std::vector;
 using std::string;
 
@@ -35,12 +42,12 @@ const double    ZOOM_SCL    = 1.0 / 10.0;
 
 const int NCOLOURS = 6;
 cv::Scalar COLOURS[NCOLOURS] = {
-    CV_RGB(255, 0,   0),
-    CV_RGB(0,   255, 0),
-    CV_RGB(0,   0,   255),
-    CV_RGB(255, 255, 0),
-    CV_RGB(0,   255, 255),
-    CV_RGB(255, 0,   255)
+    Scalar(255, 0,   0),
+    Scalar(0,   255, 0),
+    Scalar(0,   0,   255),
+    Scalar(255, 255, 0),
+    Scalar(0,   255, 255),
+    Scalar(255, 0,   255)
 };
 
 ///
@@ -51,10 +58,10 @@ void onMouseEvent(int event, int x, int y, int f, void* ptr)
     ConfigGui::INPUT_DATA* pdata = static_cast<ConfigGui::INPUT_DATA*>(ptr);
     switch(event)
     {
-        case CV_EVENT_LBUTTONDOWN:
+        case cv::EVENT_LBUTTONDOWN:
             break;
             
-        case CV_EVENT_LBUTTONUP:
+        case cv::EVENT_LBUTTONUP:
             switch(pdata->mode)
             {
                 case ConfigGui::CIRC_PTS:
@@ -82,7 +89,7 @@ void onMouseEvent(int event, int x, int y, int f, void* ptr)
             }
             break;
         
-        case CV_EVENT_RBUTTONUP:
+        case cv::EVENT_RBUTTONUP:
             switch(pdata->mode)
             {
                 case ConfigGui::CIRC_PTS:
@@ -112,7 +119,7 @@ void onMouseEvent(int event, int x, int y, int f, void* ptr)
             }
             break;
         
-        case CV_EVENT_MOUSEMOVE:
+        case cv::EVENT_MOUSEMOVE:
             pdata->cursorPt.x = x;
             pdata->cursorPt.y = y;
             break;
@@ -153,34 +160,47 @@ ConfigGui::ConfigGui(string config_fn)
         }
     }
 
+    /// Create base file name for output files.
+    _base_fn = _cfg("output_fn");
+
     /// Load an image to use for annotation.
     Mat input_frame;
     if (_open) {
+        LOG_DBG("Source is: %s", input_fn.c_str());
         try {
             // try loading as image file first
-            LOG_DBG("Trying to load input %s as image ...", input_fn.c_str());
-            input_frame = cv::imread(input_fn, CV_LOAD_IMAGE_GRAYSCALE);
+            LOG_DBG("Trying to load input as image ..");
+            input_frame = cv::imread(input_fn, cv::IMREAD_GRAYSCALE);
             if (input_frame.empty()) { throw 0; }
             LOG("Input frame read from image file (%s).", input_fn.c_str());
+            if (_base_fn.empty()) {
+                _base_fn = input_fn.substr(0, input_fn.length() - 4);
+            }
         }
         catch (...) {
             try {
                 // then try loading as camera id
-                LOG_DBG("Trying to load input %s as camera id ...", input_fn.c_str());
+                LOG_DBG("Trying to load input as camera id ..");
                 int id = stoi(input_fn);
                 cv::VideoCapture cap(id);
                 cap >> input_frame;
                 if (input_frame.empty()) { throw 0; }
                 LOG("Input frame read from camera (%d).", id);
+                if (_base_fn.empty()) {
+                    _base_fn = "fictrac";
+                }
             }
             catch (...) {
                 try {
                     // then try loading as video file
-                    LOG_DBG("Trying to load input %s as video file ...", input_fn.c_str());
+                    LOG_DBG("Trying to load input as video file ..");
                     cv::VideoCapture cap(input_fn);
                     cap >> input_frame;
                     if (input_frame.empty()) { throw 0; }
                     LOG("Input frame read from video file (%s).", input_fn.c_str());
+                    if (_base_fn.empty()) {
+                        _base_fn = input_fn.substr(0, input_fn.length() - 4);
+                    }
                 }
                 catch (...) {
                     LOG_ERR("Could not read frame from input (%s)!", input_fn.c_str());
@@ -259,6 +279,9 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 		case R_XZ:
 			sqr_type = "c2a_cnrs_xz";
 			break;
+        default:
+            LOG_ERR("Uh oh, something went wrong :-(");
+            return false;
 	}
 
 	// dump corner points to config file
@@ -269,7 +292,7 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// write to config file
-	LOG("Adding c2a_src and %s to config file and writing to disk (%s) ...", sqr_type.c_str(), _config_fn.c_str());
+	LOG("Adding c2a_src and %s to config file and writing to disk (%s) ..", sqr_type.c_str(), _config_fn.c_str());
     _cfg.add("c2a_src", sqr_type);
     _cfg.add(sqr_type, cfg_pts);
 
@@ -282,7 +305,7 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// write to config file
-	LOG("Adding c2a_r and c2a_t to config file and writing to disk (%s) ...", _config_fn.c_str());
+	LOG("Adding c2a_r and c2a_t to config file and writing to disk (%s) ..", _config_fn.c_str());
 	_cfg.add("c2a_r", cfg_r);
 	_cfg.add("c2a_t", cfg_t);
 
@@ -292,7 +315,7 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	//// test read
-	//LOG_DBG("Re-loading config file and reading %s, c2a_r, c2a_t ...", sqr_type.c_str());
+	//LOG_DBG("Re-loading config file and reading %s, c2a_r, c2a_t ..", sqr_type.c_str());
 	//_cfg.read(_config_fn);
 
 	//if (!_cfg.getVecInt(sqr_type, cfg_pts) || !_cfg.getVecDbl("c2a_r", cfg_r) || !_cfg.getVecDbl("c2a_t", cfg_t)) {
@@ -336,13 +359,13 @@ bool ConfigGui::updateC2ATransform(const Mat& ref_cnrs, Mat& R, Mat& t)
 //	Mat p = R * ref_cnrs + T;
 //
 //	// draw re-projected reference corners
-//	drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0, 255, 0));
+//	drawRectCorners(disp_frame, _cam_model, p, Scalar(0, 255, 0));
 //
 //	// draw re-projected animal axes.
 //	if (r > 0) {
 //		double scale = 1.0 / tan(r);
 //		Mat so = (cv::Mat_<double>(3, 1) << c.x, c.y, c.z) * scale;
-//		drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0, 0, 255));
+//		drawAxes(disp_frame, _cam_model, R, so, Scalar(0, 0, 255));
 //	}
 //}
 
@@ -359,7 +382,7 @@ void ConfigGui::drawC2ACorners(Mat& disp_frame, const Mat& ref_cnrs, const Mat& 
     Mat p = R * ref_cnrs + T;
 
     // draw re-projected reference corners
-    drawRectCorners(disp_frame, _cam_model, p, CV_RGB(0, 255, 0));
+    drawRectCorners(disp_frame, _cam_model, p, Scalar(0, 255, 0));
 }
 
 ///
@@ -371,7 +394,7 @@ void ConfigGui::drawC2AAxes(Mat& disp_frame, const Mat& R, const Mat& t, const d
     if (r > 0) {
         double scale = 1.0 / tan(r);
         Mat so = (cv::Mat_<double>(3, 1) << c.x, c.y, c.z) * scale;
-        drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0, 0, 255));
+        drawAxes(disp_frame, _cam_model, R, so, Scalar(0, 0, 255));
     }
 }
 
@@ -381,7 +404,7 @@ void ConfigGui::drawC2AAxes(Mat& disp_frame, const Mat& R, const Mat& t, const d
 void ConfigGui::changeState(INPUT_MODE new_state)
 {
 	_input_data.newEvent = true;
-	LOG_DBG("New state: %s", INPUT_MODE_STR[static_cast<int>(new_state)]);
+	LOG_DBG("New state: %s", INPUT_MODE_STR[static_cast<int>(new_state)].c_str());
 	_input_data.mode = new_state;
 }
 
@@ -454,7 +477,7 @@ bool ConfigGui::run()
                         
                 /// Draw fitted circumference.
                 if (r > 0) {
-                    drawCircle_camModel(disp_frame, _cam_model, c, r, CV_RGB(255,0,0), false);
+                    drawCircle_camModel(disp_frame, _cam_model, c, r, Scalar(255,0,0), false);
                             
                     /// Display.
                     cv::imshow("configGUI", disp_frame);
@@ -492,7 +515,7 @@ bool ConfigGui::run()
                 
                 if (_input_data.mode == CIRC_INIT) {
                     _input_data.circPts.clear();
-                    printf("\n\n\n  Define the circumference of the track ball.\n\n  Use the left mouse button to add new points.\n  You must select at least 3 (but preferably 6+) points around the circumference of the track ball.\n  NOTE! Be careful to place points only on the circumference of the track ball,\nand not along the outline of the visible track ball where the actual circumference has been partially obscured.\n  You can use the right mouse button to remove the last added point.\n  The fitted circumference is drawn in red.\n\n  Press ENTER when you are satisfied with the fitted circumference, or press ESC to exit...\n\n");
+                    printf("\n\n\n  Define the circumference of the track ball.\n\n  Use the left mouse button to add new points.\n  You must select at least 3 (but preferably 6+) points around the circumference of the track ball.\n  NOTE! Be careful to place points only on the circumference of the track ball,\nand not along the outline of the visible track ball where the actual circumference has been partially obscured.\n  You can use the right mouse button to remove the last added point.\n  The fitted circumference is drawn in red.\n\n  Press ENTER when you are satisfied with the fitted circumference, or press ESC to exit..\n\n");
 					changeState(CIRC_PTS);
                 }
                 break;
@@ -512,14 +535,14 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.circPts) {
-                    cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw fitted circumference.
-                if (r > 0) { drawCircle_camModel(disp_frame, _cam_model, c, r, CV_RGB(255,0,0), false); }
+                if (r > 0) { drawCircle_camModel(disp_frame, _cam_model, c, r, Scalar(255,0,0), false); }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
+                drawCursor(disp_frame, _input_data.cursorPt, Scalar(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -545,17 +568,17 @@ bool ConfigGui::run()
                         cfg_vec.push_back(c[2]);
                         
                         // write to config file
-                        LOG("Adding roi_circ, roi_c, and roi_r to config file and writing to disk (%s) ...", _config_fn.c_str());
+                        LOG("Adding roi_circ, roi_c, and roi_r to config file and writing to disk (%s) ..", _config_fn.c_str());
                         _cfg.add("roi_circ", cfg_pts);
                         _cfg.add("roi_c", cfg_vec);
                         _cfg.add("roi_r", r);
                         if (_cfg.write() <= 0) {
-                            LOG_ERR("Error writing to config file (%s)!", _config_fn);
+                            LOG_ERR("Error writing to config file (%s)!", _config_fn.c_str());
                             _open = false;  // will cause exit
                         }
                         
                         //// test read
-                        //LOG_DBG("Re-loading config file and reading roi_circ ...");
+                        //LOG_DBG("Re-loading config file and reading roi_circ ..");
                         //_cfg.read(_config_fn);
                         //assert(_cfg.getVecInt("roi_circ", cfg_pts));
                         
@@ -631,7 +654,7 @@ bool ConfigGui::run()
                 
                 if (_input_data.mode == IGNR_INIT) {
                     _input_data.ignrPts.clear();
-                    printf("\n\n\n  Define ignore regions.\n\n  Use the left mouse button to add points to a new polygon.\n  Polygons can be drawn around objects (such as the animal) that block the view of the track ball.\n  You can use the right mouse button to remove the last added point.\n\n  Press ENTER to start a new polygon, or press ENTER twice when you are satisfied with the selected ignore regions, or press ESC to exit...\n\n");
+                    printf("\n\n\n  Define ignore regions.\n\n  Use the left mouse button to add points to a new polygon.\n  Polygons can be drawn around objects (such as the animal) that block the view of the track ball.\n  You can use the right mouse button to remove the last added point.\n\n  Press ENTER to start a new polygon, or press ENTER twice when you are satisfied with the selected ignore regions, or press ESC to exit..\n\n");
 					changeState(IGNR_PTS);
                 }
                 break;
@@ -649,10 +672,10 @@ bool ConfigGui::run()
                 }
                 
                 /// Draw fitted circumference.
-                if (r > 0) { drawCircle_camModel(disp_frame, _cam_model, c, r, CV_RGB(255,0,0), false); }
+                if (r > 0) { drawCircle_camModel(disp_frame, _cam_model, c, r, Scalar(255,0,0), false); }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
+                drawCursor(disp_frame, _input_data.cursorPt, Scalar(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -679,15 +702,15 @@ bool ConfigGui::run()
                         }
                         
                         // write to config file
-                        LOG("Adding roi_ignr to config file and writing to disk (%s) ...", _config_fn.c_str());
+                        LOG("Adding roi_ignr to config file and writing to disk (%s) ..", _config_fn.c_str());
                         _cfg.add("roi_ignr", cfg_polys);
                         if (_cfg.write() <= 0) {
-                            LOG_ERR("Error writing to config file (%s)!", _config_fn);
+                            LOG_ERR("Error writing to config file (%s)!", _config_fn.c_str());
                             _open = false;      // will cause exit
                         }
                         
                         //// test read
-                        //LOG_DBG("Re-loading config file and reading roi_ignr ...");
+                        //LOG_DBG("Re-loading config file and reading roi_ignr ..");
                         //_cfg.read(_config_fn);
                         //assert(_cfg.getVVecInt("roi_ignr", cfg_polys));
                         
@@ -712,7 +735,7 @@ bool ConfigGui::run()
                     R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2]));
                 }
                 else {
-                    LOG_DBG("Error reading c2a_r from config file! Re-running configuration ...");
+                    LOG_DBG("Error reading c2a_r from config file! Re-running configuration ..");
                     changeState(R_SLCT);
                     break;
                 }
@@ -723,7 +746,7 @@ bool ConfigGui::run()
                     t = (cv::Mat_<double>(3, 1) << cfg_vec[0], cfg_vec[1], cfg_vec[2]);
                 }
                 else {
-                    LOG_DBG("Error reading c2a_t from config file! Re-running configuration ...");
+                    LOG_DBG("Error reading c2a_t from config file! Re-running configuration ..");
                     changeState(R_SLCT);
                     break;
                 }
@@ -732,7 +755,7 @@ bool ConfigGui::run()
 
                 /// Check also if corners specified (unnecessary).
                 if (_cfg.getStr("c2a_src", cfg_r_src)) {
-                    LOG_DBG("Found c2a_src: %s", cfg_r_src);
+                    LOG_DBG("Found c2a_src: %s", cfg_r_src.c_str());
 
                     /// Load square corners from config file.
                     cfg_pts.clear();
@@ -744,7 +767,7 @@ bool ConfigGui::run()
 
                         /// Draw previous clicks.
                         for (auto click : _input_data.sqrPts) {
-                            cv::circle(disp_frame, click, click_rad, CV_RGB(255, 255, 0), 1, CV_AA);
+                            cv::circle(disp_frame, click, click_rad, Scalar(255, 255, 0), 1, CV_AA);
                         }
 
                         /// Draw reference corners.
@@ -830,19 +853,19 @@ bool ConfigGui::run()
                     switch (in)
                     {
                         case 1:
-                            printf("\n\n\n  XY-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Y), (+X,+Y), (-X,+Y), (-X,-Y). If your camera is looking down on the animal from above, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is below the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit...\n\n");
+                            printf("\n\n\n  XY-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Y), (+X,+Y), (-X,+Y), (-X,-Y). If your camera is looking down on the animal from above, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is below the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit..\n\n");
                             // advance state
 							changeState(R_XY);
                             break;
                             
                         case 2:
-                            printf("\n\n\n  YZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's Y-Z axes. The corners must be clicked in the following order: (-Y,-Z), (+Y,-Z), (+Y,+Z), (-Y,+Z). If your camera is behind the animal, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is in front of the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit...\n\n");
+                            printf("\n\n\n  YZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's Y-Z axes. The corners must be clicked in the following order: (-Y,-Z), (+Y,-Z), (+Y,+Z), (-Y,+Z). If your camera is behind the animal, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is in front of the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit..\n\n");
                             // advance state
 							changeState(R_YZ);
                             break;
                             
                         case 3:
-                            printf("\n\n\n  XZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Z axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit...\n\n");
+                            printf("\n\n\n  XZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Z axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit..\n\n");
                             // advance state
 							changeState(R_XZ);
                             break;
@@ -872,7 +895,7 @@ bool ConfigGui::run()
             
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrPts) {
-                    cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
@@ -883,7 +906,7 @@ bool ConfigGui::run()
                 }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
+                drawCursor(disp_frame, _input_data.cursorPt, Scalar(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -922,7 +945,7 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrPts) {
-                    cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
@@ -933,7 +956,7 @@ bool ConfigGui::run()
                 }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
+                drawCursor(disp_frame, _input_data.cursorPt, Scalar(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -972,7 +995,7 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrPts) {
-                    cv::circle(disp_frame, click, click_rad, CV_RGB(255,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, CV_AA);
                 }
                 
                 /// Draw axes.
@@ -983,7 +1006,7 @@ bool ConfigGui::run()
                 }
                 
                 /// Draw cursor location.
-                drawCursor(disp_frame, _input_data.cursorPt, CV_RGB(0,255,0));
+                drawCursor(disp_frame, _input_data.cursorPt, Scalar(0,255,0));
                 
                 /// Create zoomed window.
                 createZoomROI(zoom_frame, disp_frame, _input_data.cursorPt, scaled_zoom_dim);
@@ -1027,7 +1050,7 @@ bool ConfigGui::run()
                 // if (r > 0) {
                     // double scale = 1.0/tan(r);
                     // Mat so = (cv::Mat_<double>(3,1) << c.x, c.y, c.z) * scale;
-                    // drawAxes(disp_frame, _cam_model, R, so, CV_RGB(0,0,255));
+                    // drawAxes(disp_frame, _cam_model, R, so, Scalar(0,0,255));
                 // }
                 
                 // // advance state
@@ -1044,13 +1067,13 @@ bool ConfigGui::run()
                     cfg_vec.resize(3, 0);
 
                     // write to config file
-                    LOG("Adding c2a_r to config file and writing to disk (%s) ...", _config_fn.c_str());
+                    LOG("Adding c2a_r to config file and writing to disk (%s) ..", _config_fn.c_str());
                     _cfg.add("c2a_r", cfg_vec);
                 }
                 _cfg.add("c2a_src", string("ext"));
 
                 if (_cfg.write() <= 0) {
-                    LOG_ERR("Error writing to config file (%s)!", _config_fn);
+                    LOG_ERR("Error writing to config file (%s)!", _config_fn.c_str());
                     _open = false;      // will cause exit
                 }
             
@@ -1077,7 +1100,7 @@ bool ConfigGui::run()
 
 	// draw fitted circumference
 	if (r > 0) {
-		drawCircle_camModel(disp_frame, _cam_model, c, r, CV_RGB(255, 0, 0), false);
+		drawCircle_camModel(disp_frame, _cam_model, c, r, Scalar(255, 0, 0), false);
 	}
 
 	// draw ignore regions
@@ -1090,22 +1113,20 @@ bool ConfigGui::run()
 		}
 	}
 
-	// draw animal axes
+	// draw animal coordinate frame
 	if (_input_data.sqrPts.size() == 4) {
 		if (cfg_r_src == "c2a_cnrs_xy") {
             drawC2ACorners(disp_frame, XY_CNRS, R, t);
-            drawC2AAxes(disp_frame, R, t, r, c);
 		} else if (cfg_r_src == "c2a_cnrs_yz") {
             drawC2ACorners(disp_frame, YZ_CNRS, R, t);
-            drawC2AAxes(disp_frame, R, t, r, c);
 		} else if (cfg_r_src == "c2a_cnrs_xz") {
             drawC2ACorners(disp_frame, XZ_CNRS, R, t);
-            drawC2AAxes(disp_frame, R, t, r, c);
 		}
 	}
+    drawC2AAxes(disp_frame, R, t, r, c);
 
 	// write image to disk
-	string cfg_img_fn = _config_fn.substr(0, std::max(static_cast<int>(_config_fn.size() - 4), 0)) + "-configImg.png";
+	string cfg_img_fn = _base_fn + "-configImg.png";
     LOG("Writing config image to disk (%s)..", cfg_img_fn.c_str());
 	if (!cv::imwrite(cfg_img_fn, disp_frame)) {
 		LOG_ERR("Error writing config image to disk!");

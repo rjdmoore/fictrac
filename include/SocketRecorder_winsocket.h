@@ -18,9 +18,9 @@ public:
     ~SocketRecorder();
 
     /// Interface to be overridden by implementations.
-    bool open(std::string port);
-    bool write(std::string s);
-    void close();
+    bool openRecord(std::string port);
+    bool writeRecord(std::string s);
+    void closeRecord();
 
 private:
     WSADATA _wsaData;
