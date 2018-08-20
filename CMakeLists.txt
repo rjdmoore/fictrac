@@ -22,8 +22,14 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 # find dependencies
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPENCV_DIR} ${NLOPT_DIR})
-find_package(opencv)
-find_library(NLOPT_LIB libnlopt-0.lib)
+if(MSVC)
+    find_package(opencv)
+    find_library(NLOPT_LIB libnlopt-0.lib)
+else()  # gcc
+    find_package(OpenCV)
+    find_library(NLOPT_LIB libnlopt.a)
+endif()
+get_filename_component(NLOPT_DIR ${NLOPT_LIB} DIRECTORY)
 if(NLOPT_LIB)
     message(STATUS "Found NLOpt lib ${NLOPT_LIB}")
     message(STATUS "You might need to add ${NLOPT_DIR} to your PATH to be able to run the executable.")
@@ -84,6 +90,7 @@ if(MSVC)
                         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/")
 else()  # gcc
     # socket libs, pthread
+    target_link_libraries(libfictrac PUBLIC pthread)
 endif()
 
 target_link_libraries(configGui libfictrac)
