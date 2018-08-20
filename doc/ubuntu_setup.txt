@@ -18,7 +18,7 @@ Steps for setting up Ubuntu in virtual machine and building FicTrac from scratch
     c. sudo sh VBoxLinuxAdditions.run
     d. Reboot Lubuntu
 6. Open terminal and install prerequisites
-    a. sudo apt-get install build-essential cmake cmake-gui pkg-config gedit cairomm-1.0 libjpeg-dev libpng-dev libavcodec-dev libavformat-dev libswscale-dev libx264-dev libatlas-base-dev libboost-system-dev libnlopt-dev libgtk2.0-dev libdc1394-22-dev
+    a. sudo apt-get install build-essential cmake cmake-gui pkg-config gedit cairomm-1.0 libjpeg-dev libpng-dev libtiff-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libx264-dev libatlas-base-dev libboost-system-dev libnlopt-dev libgtk-3-dev libdc1394-22-dev
 7. Install latest version of OpenCV
     a. Download and extract latest source package from https://opencv.org/releases.html
     b. in terminal navigate to opencv folder
