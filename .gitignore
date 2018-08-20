@@ -39,3 +39,4 @@ vs2015_FicTrac/x64/
 *.db
 vsbuild/
 bin/
+build/
