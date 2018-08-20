@@ -5,6 +5,8 @@
 # (restart docker for windows)
 ## To launch container:
 # docker run -v c:\Users\richardm:/home --name fictrac_dev -ti fictrac_dev /sbin/my_init -- bash -l
+## To launch privileged container (e.g. for dmesg access)
+# docker run --privileged [...]
 ## To exit/stop container:
 # exit
 ## To relaunch container:

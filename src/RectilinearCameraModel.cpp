@@ -7,6 +7,11 @@
 #include "typesvars.h"
 #include "CameraModel.h"
 
+#include <cmath>	// tan
+
+///
+/// Rectilinear camera model.
+///
 class RectilinearCameraModel : public CameraModel
 {
 public:
@@ -29,6 +34,9 @@ private:
 	}
 };
 
+///
+/// Shared pointer constructor.
+///
 CameraModelPtr CameraModel::createRectilinear(
 		int width, int height, CmReal verticalFOV,
 		CmReal centreX, CmReal centreY, CmReal imageCircleFOV)
@@ -39,6 +47,9 @@ CameraModelPtr CameraModel::createRectilinear(
 			centreX, centreY, imageCircleFOV));
 }
 
+///
+/// Constructor.
+///
 RectilinearCameraModel::RectilinearCameraModel(
 	int width, int height, CmReal verticalFOV,
 	CmReal centreX, CmReal centreY, CmReal imageCircleFOV)
@@ -55,6 +66,9 @@ RectilinearCameraModel::RectilinearCameraModel(
 	_imageCircleR2 = R * R;
 }
 
+///
+/// Image to world transform.
+///
 bool RectilinearCameraModel::pixelToVector(
 	CmReal x, CmReal y, CmReal direction[3]) const
 {
@@ -67,6 +81,9 @@ bool RectilinearCameraModel::pixelToVector(
 	return _validPixel(x, y, dx*dx + dy*dy);
 }
 
+///
+/// World to image transform.
+///
 bool RectilinearCameraModel::vectorToPixel(
 	const CmReal point[3], CmReal& x, CmReal& y) const
 {
@@ -84,6 +101,9 @@ bool RectilinearCameraModel::vectorToPixel(
 	return _validPixel(x, y, dx*dx + dy*dy);
 }
 
+///
+/// Check pixel falls within image.
+///
 bool RectilinearCameraModel::validPixel(CmReal x, CmReal y) const
 {
 	CmReal dx = x - _xc;

@@ -7,13 +7,14 @@
 #pragma once
 
 #include "typesvars.h"
-
 #include "SharedPointers.h"
-SHARED_PTR(CameraModel);
 
 #include <opencv2/opencv.hpp>
 
 #include <cmath>
+
+SHARED_PTR(CameraModel);
+
 
 static inline CmReal vec3dot(const CmReal a[3], const CmReal b[3])
 {

@@ -33,8 +33,8 @@
 
 # VS
 *.lastbuildstate
-*.tlog
 *.db
+*.tlog
 
 # Build dirs
 vsbuild/
@@ -42,5 +42,7 @@ gccbuild/
 bin/
 build/
 
-# Data dirs
+# Data
 data
+*.dat
+*.log
