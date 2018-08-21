@@ -1,7 +1,14 @@
-* if vfov is changed - R,t and c,r stored in config file should be recomputed (currently requires values to be deleted and config re-run..)
-* SLAM-like map with elastic weights between pixels to enable distribution of error on loop closures
+* SLAM-like map with elastic weights between pixels to enable distribution of error on loop closures?
+* weight view matching to lessen impact of bad pixels near horizon?
+* benchmark different ball patterns
 * video recording
 * test with camera
 * test with diverse recordings
 * benchmark with noisy simulations
+* compare performance with FicTrac v1
+* compare performance between Win/Ubuntu(VM)
 * write win/linux socket clients
+* test sockets
+* write new manual
+* update website
+* check version
