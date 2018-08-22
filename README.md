@@ -4,9 +4,11 @@
 
 **FicTrac** is an open source software library and set of executables for reconstructing the fictive path of an animal walking on a patterned sphere. The software is fast, flexible, and easy to use and simplifies the setup of closed-loop tracking experiments.
 
-FicTrac was originally developed by researchers at the [Queensland Brain Institute](http://qbi.uq.edu.au/) at the University of Queensland, Australia for tracking honeybees and fruit flies during closed-loop tethered walking experiments, but it has since proved useful for tracking a wide range of animals with different movement speeds, track ball diameters and patterns, and visual stimuli.
+FicTrac was originally developed by researchers at the [Queensland Brain Institute](http://qbi.uq.edu.au/) at the University of Queensland, Australia for tracking honeybees and fruit flies during closed-loop tethered walking experiments, but it has since proved useful for tracking a wide range of animals with different movement speeds, track ball diameters and patterns, and stimuli.
 
-You'll find everything you need to [get started](#getting-started) with FicTrac in the sections below. You might also be interested in:
+You'll find everything you need to [get started](#getting-started) with FicTrac in the sections below.
+
+You might also be interested in the following links:
 * [Demo video](http://youtu.be/BeGYOEOdWjw) - What does FicTrac do?? This 30s video will show you.
 * [Manual](http://link) - Usage, output data, parameters, recommendations, etc. If you have an issue, read this first. In fact read this anyway, then maybe you won't have any issues!
 * [Homepage](http://fictrac.rjdmoore.net) - Contact details for the main author/developer, links, and further info.
