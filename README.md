@@ -2,12 +2,17 @@
   <img src="http://rjdmoore.net/fictrac/header_text.jpg"><br><br>
 </div>
 
-**FicTrac** is an open source software library for ...
+**FicTrac** is an open source software library and set of executables for reconstructing the fictive path of an animal walking on a patterned sphere. The software is fast, flexible, and easy to use and simplifies the setup of closed-loop tracking experiments.
 
-FicTrac was originally developed by ...
+FicTrac was originally developed by researchers at the [Queensland Brain Institute](http://qbi.uq.edu.au/) at the University of Queensland, Australia for tracking honeybees and fruit flies during closed-loop tethered walking experiments, but it has since proved useful for tracking a wide range of animals with different movement speeds, tracking ball diameters and patterns, and visual stimuli.
 
-Keep up to date with release announcements and security updates by
-subscribing to ...
+You'll find all the information you need to start experimenting with FicTrac in the sections below. You might also be interested in:
+* [FicTrac homepage](http://fictrac.rjdmoore.net) - Contact details for the main author/developer, links, and further info.
+* [FicTrac forum](http://www.reddit.com/r/fictrac/) - Subreddit for FicTrac users to share issues and advice. If you'd rather make a private enquiry, feel free to send me a message directly.
+* [FicTrac mailing list](http://fictrac.rjdmoore.net/mail.html) - Subscribe to receive important announcements and keep up to date with all things FicTrac.
+* [FicTrac journal paper](http://doi.org/10.1016/j.jneumeth.2014.01.010) - Technical details, analysis, results, etc. See below sections for citation info and a link to the preprint.
+
+Happy tracking!
 
 ## Getting started
 
@@ -53,6 +58,10 @@ $ blah
 ```shell
 $ blah
 ```
+
+## Research
+
+citing ...
 
 ## Contribution guidelines
 
