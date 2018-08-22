@@ -6,7 +6,7 @@
 
 FicTrac was originally developed by researchers at the [Queensland Brain Institute](http://qbi.uq.edu.au/) at the University of Queensland, Australia for tracking honeybees and fruit flies during closed-loop tethered walking experiments, but it has since proved useful for tracking a wide range of animals with different movement speeds, tracking ball diameters and patterns, and visual stimuli.
 
-You'll find everything you need to [get started](get-started) with FicTrac in the sections below. You might also be interested in:
+You'll find everything you need to [get started](getting-started) with FicTrac in the sections below. You might also be interested in:
 * [Demo video](http://youtu.be/BeGYOEOdWjw) - What does FicTrac do?? This 30s video will show you.
 * [Homepage](http://fictrac.rjdmoore.net) - Contact details for the main author/developer, links, and further info.
 * [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for FicTrac users to share issues and advice. If you'd rather make a private enquiry, feel free to send me a message directly.
@@ -15,7 +15,7 @@ You'll find everything you need to [get started](get-started) with FicTrac in th
 
 Happy tracking!
 
-## [Getting started](#get-started)
+## Getting started
 
 If you 
 
