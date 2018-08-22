@@ -6,8 +6,9 @@
 
 FicTrac was originally developed by researchers at the [Queensland Brain Institute](http://qbi.uq.edu.au/) at the University of Queensland, Australia for tracking honeybees and fruit flies during closed-loop tethered walking experiments, but it has since proved useful for tracking a wide range of animals with different movement speeds, tracking ball diameters and patterns, and visual stimuli.
 
-You'll find everything you need to [get started](getting-started) with FicTrac in the sections below. You might also be interested in:
+You'll find everything you need to [get started](#getting-started) with FicTrac in the sections below. You might also be interested in:
 * [Demo video](http://youtu.be/BeGYOEOdWjw) - What does FicTrac do?? This 30s video will show you.
+* [Manual](http://link) - Usage, output data, parameters, recommendations, etc. If you have an issue, read this first. In fact read this anyway, then maybe you won't have any issues!
 * [Homepage](http://fictrac.rjdmoore.net) - Contact details for the main author/developer, links, and further info.
 * [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for FicTrac users to share issues and advice. If you'd rather make a private enquiry, feel free to send me a message directly.
 * [Mailing list](http://fictrac.rjdmoore.net/mail.html) - Subscribe to receive important announcements and keep up to date with all things FicTrac.
@@ -17,9 +18,11 @@ Happy tracking!
 
 ## Getting started
 
-If you 
+If you're just setting up your lab, and wondering whether FicTrac will be suitable, check the [section below](#experimental-setup) for requirements.
 
-### Required hardware
+If you already have an experimental enclosure with a camera, you can use FicTrac to either process those videos offline or to run live from the camera. Just follow the sections below to [install](#installation), [configure](#configuration), and [run FicTrac](#running-fictrac).
+
+### Experimental setup
 
 Blah ..
 
