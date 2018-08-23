@@ -49,19 +49,17 @@ The FicTrac source code can be built for both Windows and Linux operating system
     1. [Cmake build system](https://cmake.org/download/) (binary distribution)
     2. [OpenCV computer vision library](https://opencv.org/releases.html) (latest release Win pack)
     3. [NLopt optimisation library](https://nlopt.readthedocs.io/en/latest/NLopt_on_Windows/) (precompiled DLL)
-2. Clone or download the FicTrac repository.
-3. Navigate to the FicTrac folder and open a terminal.
-4. Create a new folder and change directory:
+2. Clone or download the FicTrac repository, then navigate to that folder and create a build directory:
 ```
 mkdir build
 cd build
 ```
-5. Next, we will configure and build the FicTrac project. FicTrac is written in C++, so you'll need a suitable compiler. In this example we will use MSVS Build Tools. If you don't already have Visual Studio, you will need to install the [build tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
-6. Run Cmake to prepare the necessary build files for FicTrac. Here we also need to provide the paths to where we installed OpenCV and NLopt (I have given example paths here, you will need to modify them for your installation).
+3. Next, we will configure and build the FicTrac project. FicTrac is written in C++, so you'll need a suitable compiler. In this example we will use MSVS Build Tools. If you don't already have Visual Studio, you will need to install the [build tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
+4. Run Cmake to prepare the necessary build files for FicTrac. Here we also need to provide the paths to where we installed OpenCV and NLopt (I have given example paths here, you will need to modify them for your installation):
 ```
-cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR=C:\path\to\opencv-3.4.2\build -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" ..
+cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\build" -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" ..
 ```
-7. Finally, build and install FicTrac:
+5. Finally, build and install FicTrac:
 ```
 cmake --build . --config Release --target ALL_BUILD
 ```
@@ -70,16 +68,25 @@ If everything went well, the executables for FicTrac and the configuration utili
 
 #### Ubuntu (Linux)
 
+1. Install the required dependencies:
+```
+sudo apt-get install gcc cmake libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libgtk-3-dev libdc1394-22-dev libopencv-dev libnlopt-dev
+```
+2. Clone or download the FicTrac repository, then navigate to that folder and create a build directory:
+```
+mkdir build
+cd build
+```
+3. Run Cmake to prepare the necessary build files for FicTrac:
+```
+cmake ..
+```
+5. Finally, build and install FicTrac:
+```
+make -j4
+```
 
-
-
-Blah ..
-
-* [Building FicTrac for Windows](http://link)
-* [Building FicTrac for Ubuntu](http://link)
-
-* [Ubuntu within VM on Windows OS](http://link)
-* [Pre-built binaries](http://link)
+If everything went well, the executables for FicTrac and the configuration utility will be placed in the `bin` directory under the FicTrac source folder.
 
 #### Ubuntu (Linux) virtual machine
 
