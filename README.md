@@ -88,11 +88,12 @@ make -j4
 
 If everything went well, the executables for FicTrac and the configuration utility will be placed in the `bin` directory under the FicTrac source folder.
 
-#### Ubuntu (Linux) virtual machine
-
-
-
 ### Configuration
+
+There are two neccessary steps to configure FicTrac prior to running the program:
+1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0).
+2. You must run the interactive configuration program (configGui), passing your config file (above) as an argument. This program will guide you through the configuration of the track ball region of inerest within your input images.
+
 
 Blah ..
 
