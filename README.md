@@ -9,11 +9,11 @@ FicTrac was originally developed by researchers at the [Queensland Brain Institu
 You'll find everything you need to [get started](#getting-started) with FicTrac in the sections below.
 
 You might also be interested in the following links:
-* [Demo video](http://youtu.be/BeGYOEOdWjw) - What does FicTrac do?? This 30s video will show you.
-* [Manual](http://link) - Usage, output data, parameters, recommendations, etc. If you have an issue, read this first. In fact read this anyway, then maybe you won't have any issues!
+* [Demo video](http://youtu.be/BeGYOEOdWjw) - Quick (30s) overview of what FicTrac does and how it works.
+* [FicTrac manual](http://link) - Detailed instructions, description of output data, parameters, recommendations, etc.
 * [Homepage](http://fictrac.rjdmoore.net) - Contact details for the main author/developer, links, and further info.
-* [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for FicTrac users to share issues and advice. If you'd rather make a private enquiry, feel free to send me a message directly.
-* [Mailing list](http://fictrac.rjdmoore.net/mail.html) - Subscribe to receive important announcements and keep up to date with all things FicTrac.
+* [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for FicTrac users to share issues and advice.
+* [Mailing list](http://fictrac.rjdmoore.net/mail.html) - Subscribe to receive important announcements and updates.
 * [Journal paper](http://doi.org/10.1016/j.jneumeth.2014.01.010) - Technical details, analysis, results, etc. You'll also find citation info and a copy of the preprint (pdf) further down this page.
 
 Happy tracking!
@@ -41,6 +41,38 @@ FicTrac imposes no requirements on the *italicised* items; how you design these 
 
 ### Installation
 
+The FicTrac source code can be built for both Windows and Linux operating systems. You can also build and run FicTrac from within a Ubuntu (Linux) virtual machine on any operating system.
+
+#### Windows
+
+1. Download and install required dependencies:
+    1. [Cmake build system](https://cmake.org/download/) (binary distribution)
+    2. [OpenCV computer vision library](https://opencv.org/releases.html) (latest release Win pack)
+    3. [NLopt optimisation library](https://nlopt.readthedocs.io/en/latest/NLopt_on_Windows/) (precompiled DLL)
+2. Clone or download the FicTrac repository.
+3. Navigate to the FicTrac folder and open a terminal.
+4. Create a new folder and change directory:
+```
+mkdir build
+cd build
+```
+5. Next, we will configure and build the FicTrac project. FicTrac is written in C++, so you'll need a suitable compiler. In this example we will use MSVS Build Tools. If you don't already have Visual Studio, you will need to install the [build tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
+6. Run Cmake to prepare the necessary build files for FicTrac. Here we also need to provide the paths to where we installed OpenCV and NLopt (I have given example paths here, you will need to modify them for your installation).
+```
+cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR=C:\path\to\opencv-3.4.2\build -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" ..
+```
+7. Finally, build and install FicTrac:
+```
+cmake --build . --config Release --target ALL_BUILD
+```
+
+If everything went well, the executables for FicTrac and the configuration utility will be placed in the `bin` directory under the FicTrac source folder.
+
+#### Ubuntu (Linux)
+
+
+
+
 Blah ..
 
 * [Building FicTrac for Windows](http://link)
@@ -48,6 +80,9 @@ Blah ..
 
 * [Ubuntu within VM on Windows OS](http://link)
 * [Pre-built binaries](http://link)
+
+#### Ubuntu (Linux) virtual machine
+
 
 
 ### Configuration
