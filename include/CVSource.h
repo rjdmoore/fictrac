@@ -20,6 +20,7 @@ public:
 	CVSource(std::string input);
 	virtual ~CVSource();
 
+    virtual double getFPS();
 	virtual bool setFPS(double fps);
 	virtual bool rewind();
 	virtual bool grab(cv::Mat& frame);

@@ -51,9 +51,13 @@ const int OPT_MAX_EVAL_DEFAULT = 50;
 const bool OPT_GLOBAL_SEARCH_DEFAULT = false;
 const int OPT_MAX_BAD_FRAMES_DEFAULT = -1;
 
+const double THRESH_RATIO_DEFAULT = 1.25;
+const double THRESH_WIN_PC_DEFAULT = 0.25;
+
 const uint8_t SPHERE_MAP_FIRST_HIT_BONUS = 64;
 
 const bool DO_DISPLAY_DEFAULT = true;
+const bool SAVE_DEBUG_DEFAULT = false;
 
 ///
 ///
@@ -101,6 +105,9 @@ Trackball::Trackball(string cfg_fn)
         LOG("Setting source fps = %.2f..", src_fps);
         source->setFPS(src_fps);
     }
+    else {
+        _cfg.add("src_fps", src_fps);
+    }
 
     /// Create base file name for output files.
     _base_fn = _cfg("output_fn");
@@ -126,6 +133,7 @@ Trackball::Trackball(string cfg_fn)
     int q_factor = Q_FACTOR_DEFAULT;
     if (!_cfg.getInt("q_factor", q_factor)) {
         LOG_WRN("Warning! Resolution parameter specified in the config file (q_factor) is invalid! Using default value (%d).", q_factor);
+        _cfg.add("q_factor", q_factor);
     }
     _roi_w = _roi_h = 10 * q_factor;
     _map_h = static_cast<int>(1.5 * _roi_h);
@@ -281,50 +289,60 @@ Trackball::Trackball(string cfg_fn)
         }
     }
 
-    /// Init optimiser.
+    /// Read config params.
     double tol = OPT_TOL_DEFAULT;
     if (!_cfg.getDbl("opt_tol", tol)) {
         LOG_WRN("Warning! Using default value for opt_tol (%f).", tol);
+        _cfg.add("opt_tol", tol);
     }
     double bound = OPT_BOUND_DEFAULT;
     if (!_cfg.getDbl("opt_bound", bound)) {
         LOG_WRN("Warning! Using default value for opt_bound (%f).", bound);
+        _cfg.add("opt_bound", bound);
     }
     int max_evals = OPT_MAX_EVAL_DEFAULT;
     if (!_cfg.getInt("opt_max_evals", max_evals)) {
         LOG_WRN("Warning! Using default value for opt_max_eval (%d).", max_evals);
+        _cfg.add("opt_max_evals", max_evals);
     }
     _global_search = OPT_GLOBAL_SEARCH_DEFAULT;
     if (!_cfg.getBool("opt_do_global", _global_search)) {
         LOG_WRN("Warning! Using default value for opt_do_global (%d).", _global_search);
+        _cfg.add("opt_do_global", _global_search);
     }
     _max_bad_frames = OPT_MAX_BAD_FRAMES_DEFAULT;
     if (!_cfg.getInt("max_bad_frames", _max_bad_frames)) {
         LOG_WRN("Warning! Using default value for max_bad_frames (%d).", _max_bad_frames);
+        _cfg.add("max_bad_frames", _max_bad_frames);
     }
     _error_thresh = -1;
     if (!_cfg.getDbl("opt_max_err", _error_thresh) || _error_thresh < 0) {
         LOG_WRN("Warning! No optimisation error threshold specified in config file (opt_max_err) - poor matches will not be dropped!");
+        _cfg.add("opt_max_err", _error_thresh);
     }
-    // local optimiser
+    double thresh_ratio = THRESH_RATIO_DEFAULT;
+    if (!_cfg.getDbl("thr_ratio", thresh_ratio)) {
+        LOG_WRN("Warning! Using default value for thr_ratio (%f).", thresh_ratio);
+        _cfg.add("thr_ratio", thresh_ratio);
+    }
+    double thresh_win_pc = THRESH_WIN_PC_DEFAULT;
+    if (!_cfg.getDbl("thr_win_pc", thresh_win_pc)) {
+        LOG_WRN("Warning! Using default value for thr_win_pc (%f).", thresh_win_pc);
+        _cfg.add("thr_win_pc", thresh_win_pc);
+    }
+
+    /// Init optimisers.
     _localOpt = unique_ptr<Localiser>(new Localiser(
         NLOPT_LN_BOBYQA, bound, tol, max_evals,
         _sphere_model, _sphere_map,
         _roi_mask, _p1s_lut));
 
-    // local optimiser
     _globalOpt = unique_ptr<Localiser>(new Localiser(
         NLOPT_GN_CRS2_LM, CM_PI, tol, 1e5,
         _sphere_model, _sphere_map,
         _roi_mask, _p1s_lut));
 
     /// Frame source.
-    double thresh_ratio, thresh_win_pc;
-    if (!_cfg.getDbl("thr_ratio", thresh_ratio) || !_cfg.getDbl("thr_win_pc", thresh_win_pc)) {
-        LOG_ERR("Error! Thresholding parameters specified in the config file (thr_ratio, thr_win_pc) are invalid!");
-        _active = false;
-        return;
-    }
     _frameGrabber = unique_ptr<FrameGrabber>(new FrameGrabber(
         source,
         remapper,
@@ -340,12 +358,34 @@ Trackball::Trackball(string cfg_fn)
     /// Display.
     _do_display = DO_DISPLAY_DEFAULT;
     if (!_cfg.getBool("do_display", _do_display)) {
-        LOG_WRN("Warning! Display parameter specified in the config file (do_display) is invalid! Using default value (%d).", _do_display);
+        LOG_WRN("Warning! Using default value for do_display (%d).", _do_display);
+        _cfg.add("do_display", _do_display);
+    }
+    _save_debug = SAVE_DEBUG_DEFAULT;
+    if (!_cfg.getBool("save_debug", _save_debug)) {
+        LOG_WRN("Warning! Using default value for save_debug (%d).", _save_debug);
+        _cfg.add("save_debug", _save_debug);
+    }
+    if (_save_debug & !_do_display) {
+        LOG("Forcing do_display = true becase save_debug == true.");
+        _do_display = true;
     }
     if (_do_display) {
         _sphere_view.create(_map_h, _map_w, CV_8UC1);
         _sphere_view.setTo(Scalar::all(128));
     }
+    if (_save_debug) {
+        string vid_fn = _base_fn + "-debug.mp4";
+        _vid_writer.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), source->getFPS(), cv::Size(4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM));
+        if (!_vid_writer.isOpened()) {
+            LOG_ERR("Error! Unable to open output video (%s).", vid_fn.c_str());
+            _active = false;
+            return;
+        }
+    }
+
+    /// Write all parameters back to config file.
+    _cfg.write();
 
     /// Data.
     _cnt = 0;
@@ -356,11 +396,12 @@ Trackball::Trackball(string cfg_fn)
     /// Thread stuff.
     _init = true;
     _active = true;
-    _thread = unique_ptr<std::thread>(new std::thread(&Trackball::process, this));
 
     if (_do_display) {
         _drawThread = unique_ptr<std::thread>(new std::thread(&Trackball::processDrawQ, this));
     }
+    // main processing thread
+    _thread = unique_ptr<std::thread>(new std::thread(&Trackball::process, this));
 }
 
 ///
@@ -986,7 +1027,7 @@ bool Trackball::updateCanvasAsync(shared_ptr<DrawData> data)
 ///
 void Trackball::processDrawQ()
 {
-    /// Set thread high priority (when run as SU).
+    /// Set thread higher priority (when run as SU).
     if (!SetThreadNormalPriority()) {
         LOG_ERR("Error! Unable to set thread priority!");
     }
@@ -1219,6 +1260,10 @@ void Trackball::drawCanvas(shared_ptr<DrawData> data)
     if (key == 0x1B) {  // esc
         LOG("Exiting..");
         _active = false;
+    }
+
+    if (_save_debug) {
+        _vid_writer.write(canvas);
     }
 }
 

@@ -36,7 +36,7 @@ if(NLOPT_LIB)
         message(STATUS "You might need to add ${NLOPT_DIR} to your PATH to be able to run the executable.")
     endif()
 else()
-    message(WARNING "Warning! Could not find NLOpt lib at ${NLOPT_DIR}")
+    message(FATAL_ERROR "Warning! Could not find NLOpt lib at ${NLOPT_DIR}!")
 endif()
 
 # add include dirs
@@ -96,4 +96,6 @@ else()  # gcc
 endif()
 
 target_link_libraries(configGui libfictrac)
+add_dependencies(configGui libfictrac)
 target_link_libraries(fictrac libfictrac)
+add_dependencies(fictrac libfictrac)

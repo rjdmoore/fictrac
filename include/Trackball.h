@@ -13,7 +13,11 @@
 #include "FrameGrabber.h"
 #include "ConfigParser.h"
 
-#include <opencv2/opencv.hpp>
+/// OpenCV individual includes required by gcc?
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>  
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/videoio.hpp>
 
 #include <memory>	// unique_ptr, shared_ptr
 #include <thread>
@@ -66,10 +70,11 @@ private:
     std::mutex _drawMutex;
     std::condition_variable _drawCond;
 
-    bool _do_display;
+    bool _do_display, _save_debug;
     cv::Mat _sphere_view;
     std::deque<cv::Mat> _R_roi_hist;
     std::deque<CmPoint64f> _pos_heading_hist;
+    cv::VideoWriter _vid_writer;
 
     std::unique_ptr<std::thread> _drawThread;
 

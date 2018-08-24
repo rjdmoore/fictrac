@@ -143,10 +143,9 @@ int ConfigParser::write(string fn)
 ///
 string ConfigParser::operator()(string key)
 {
-    string s;
-    if (getStr(key, s)) { return s; }
-    LOG_WRN("Key (%s) not found!", key.c_str());
-    return "";
+    string s = "";
+    getStr(key, s);
+    return s;
 }
 
 ///
@@ -176,7 +175,7 @@ bool ConfigParser::getStr(string key, string& val) {
         val = _data[key];
         return true;
     }
-    LOG_WRN("Key (%s) not found!", key.c_str());
+    LOG_WRN("Warning! Key (%s) not found.", key.c_str());
     return false;
 }
 

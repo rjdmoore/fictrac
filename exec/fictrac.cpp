@@ -8,6 +8,7 @@
 #include "Trackball.h"
 #include "timing.h"
 #include "misc.h"
+#include "fictrac_version.h"
 
 #include <string>
 
@@ -22,7 +23,7 @@ int main(int argc, char *argv[])
      PRINT("/// \tCONFIG_FN\tPath to input config file (defaults to config.txt).");
      PRINT("/// \tLOG_VERBOSITY\t[Optional] One of DBG, INF, WRN, ERR.");
      PRINT("///");
-     PRINT("/// Build date: %s", __DATE__);
+     PRINT("/// Version: %2d.%02d (build date: %s)", FICTRAC_VERSION_MAJOR, FICTRAC_VERSION_MINOR, __DATE__);
      PRINT("///\n");
 
 	/// Parse args.

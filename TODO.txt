@@ -1,14 +1,24 @@
-* SLAM-like map with elastic weights between pixels to enable distribution of error on loop closures?
-* weight view matching to lessen impact of bad pixels near horizon?
-* benchmark different ball patterns
+== Development ==
 * video recording
+* write win/linux socket clients
+* check version
+
+
+== Testing ==
+* benchmark different ball patterns
 * test with camera
 * test with diverse recordings
 * benchmark with noisy simulations
 * compare performance with FicTrac v1
 * compare performance between Win/Ubuntu(VM)
-* write win/linux socket clients
 * test sockets
-* write new manual
+
+
+== Misc ==
 * update website
-* check version
+* write new manual
+
+
+== Research ==
+* SLAM-like map with elastic weights between pixels to enable distribution of error on loop closures?
+* weight view matching to lessen impact of bad pixels near horizon?

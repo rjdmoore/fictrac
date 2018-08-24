@@ -70,16 +70,29 @@ CVSource::~CVSource()
 {}
 
 ///
+/// Get input source fps.
+///
+double CVSource::getFPS()
+{
+    double fps = -1;
+    if (_open) {
+        fps = _cap->get(cv::CAP_PROP_FPS);
+    }
+    return fps;
+}
+
+///
 /// Set input source fps.
 ///
 bool CVSource::setFPS(double fps)
 {
     bool ret = false;
-	if( _open && (fps > 0) ) {
+    if (_open && (fps > 0)) {
         _fps = fps;
         if (!_cap->set(cv::CAP_PROP_FPS, fps)) {
             LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%.2f).", fps);
-        } else { ret = true; }
+        }
+        else { ret = true; }
     }
     return ret;
 }

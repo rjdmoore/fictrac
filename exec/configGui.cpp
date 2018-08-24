@@ -9,8 +9,13 @@
 #include "Logger.h"
 #include "ConfigGui.h"
 #include "misc.h"
+#include "fictrac_version.h"
 
-#include <opencv2/opencv.hpp>
+/// OpenCV individual includes required by gcc?
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>  
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/videoio.hpp>
 
 #include <string>
 #include <exception>
@@ -22,12 +27,12 @@ using std::string;
 int main(int argc, char *argv[])
 {
 	PRINT("///");
-    PRINT("/// configGui:\tA GUI for configuring FicTrac.\n///\t\tThis program should be run once for each new input source (or if the camera is moved).\n///");
+    PRINT("/// configGui:\tA GUI for configuring FicTrac.\n///\t\tThis program must be run for each new input source,\n///\t\tor if the camera is moved.\n///");
     PRINT("/// Usage:\tconfigGui CONFIG_FN [-v LOG_VERBOSITY]\n///");
     PRINT("/// \tCONFIG_FN\tPath to input/output config file.");
     PRINT("/// \tLOG_VERBOSITY\t[Optional] One of DBG, INF, WRN, ERR.");
     PRINT("///");
-    PRINT("/// Build date: %s", __DATE__);
+    PRINT("/// Version: %2d.%02d (build date: %s)", FICTRAC_VERSION_MAJOR, FICTRAC_VERSION_MINOR, __DATE__);
     PRINT("///\n");
 
     /// Parse args.
@@ -59,6 +64,9 @@ int main(int argc, char *argv[])
         getchar_clean();
         return -1;
     }
+
+    /// Init OpenCV windows - only used by GTK backend?
+    cvStartWindowThread();
     
     /// Run configuration GUI.
     bool ret = cfg.run();
