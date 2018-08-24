@@ -69,6 +69,8 @@ cmake --build . --config Release --target ALL_BUILD
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed in the `bin` directory under the FicTrac source folder.
 
+**Note:** To save video, you must also have the [H264 library](https://github.com/cisco/openh264/releases). OpenCV 3.4.2 requires openh264-1.7.0-win64.dll; if you run FicTrac with the wrong H264 library version, OpenCV should print an error message to terminal. Simply copy the .dll to your system path, or to the same folder as `fictrac.exe`.
+
 #### Ubuntu (Linux)
 
 1. Install the required dependencies:
@@ -121,8 +123,9 @@ Once you have configured FicTrac for your setup, you may run FicTrac simply by o
 ```
 
 #### Ubuntu (Linux)
+We execute as super user so that we can set the FicTrac process to higher priority than other system processes.
 ```
-./bin/fictrac path/to/config.txt
+sudo ./bin/fictrac path/to/config.txt
 ```
 
 ## Research
