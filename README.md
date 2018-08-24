@@ -6,7 +6,11 @@
 
 FicTrac was originally developed by researchers at the [Queensland Brain Institute](http://qbi.uq.edu.au/) at the University of Queensland, Australia for tracking honeybees and fruit flies during closed-loop tethered walking experiments, but it has since proved useful for tracking a wide range of animals with different movement speeds, track ball diameters and patterns, and stimuli.
 
-You'll find everything you need to [get started](#getting-started) with FicTrac in the sections below.
+On this page you'll find information for:
+* [Getting started](#getting-started) - including [hardware requirements](#experimental-setup), and basic steps for [installing](#installation), [configuring](#configuration), and [running FicTrac](#running-fictrac).
+* [Research](#research) - including works to cite and links to the original FicTrac publication and preprint (pdf).
+* [Contributing](#contribution-guidelines) - how to go about making your fixes, additions, and customisations available for other users.
+* [Re-use](#license) - licensing information, if you plan on using FicTrac or the source code.
 
 You might also be interested in the following links:
 * [Demo video](http://youtu.be/BeGYOEOdWjw) - Quick (30s) overview of what FicTrac does and how it works.
@@ -14,7 +18,6 @@ You might also be interested in the following links:
 * [Homepage](http://fictrac.rjdmoore.net) - Contact details for the main author/developer, links, and further info.
 * [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for FicTrac users to share issues and advice.
 * [Mailing list](http://fictrac.rjdmoore.net/mail.html) - Subscribe to receive important announcements and updates.
-* [Journal paper](http://doi.org/10.1016/j.jneumeth.2014.01.010) - Technical details, analysis, results, etc. You'll also find citation info and a copy of the preprint (pdf) further down this page.
 
 Happy tracking!
 
@@ -81,7 +84,7 @@ cd build
 ```
 cmake ..
 ```
-5. Finally, build and install FicTrac:
+4. Finally, build and install FicTrac:
 ```
 make -j4
 ```
