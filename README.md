@@ -91,14 +91,10 @@ If everything went well, the executables for FicTrac and a configuration utility
 ### Configuration
 
 There are two neccessary steps to configure FicTrac prior to running the program:
-1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0). **The vertical field of view for your camera/lens must be specified accurately.** If `vfov` is incorrect, the surface map created by FicTrac will not wrap around the sphere correctly, and tracking will fail.
-2. You must run the interactive configuration program (configGui), passing the path to your config file (above) as an argument. This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference. **It is important that the camera is not moved after running the configuration utility. If the camera is moved, you must reconfigure.**
+1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0). **The vertical field of view for your camera/lens must be specified accurately.** If `vfov` is incorrect, the surface map created by FicTrac will not wrap around the sphere correctly, and tracking will fail. An example config file is provided in the `sample` directory under the FicTrac source folder; you can use this file as a template to write your own config file.
+2. You must run the interactive configuration program (configGui), passing the path to your config file (above) as an argument. This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference. **It is important that the camera is not moved after running the configuration utility. If the camera is moved, you must reconfigure.** After running the configuration utility, your config file will have some additional default parameters added automatically.
 
-An example config file is provided in the `sample` directory under the FicTrac source folder; you can use this file as a template to write your own config file.
-
-After running the configuration utility, your config file will have some additional parameters added automatically. A detailed explanation of what these parameters are, and a complete list of parameters that can be specified, is found in the [FicTrac manual]().
-
-A more detailed guide for configuring FicTrac for your setup can be found in the [FicTrac manual]().
+A more detailed guide for configuring FicTrac for your setup, as well as a complete list and explanation of parameters that can be specified, can be found in the [FicTrac manual]().
 
 The commands for running the configuration utility under Windows and Ubuntu (Linux) are almost identical. Simply open a terminal in the FicTrac source folder and type:
 
@@ -114,37 +110,31 @@ The commands for running the configuration utility under Windows and Ubuntu (Lin
 
 ### Running FicTrac
 
-Once you have configured 
-
-
-Blah ..
-
-* [More detailed user guide](http://link)
+Once you have configured FicTrac for your setup, you may run FicTrac simply by opening a terminal in the FicTrac source folder and typing:
 
 #### Windows
-
-```shell
-$ blah
+```
+.\bin\Release\fictrac.exe path\to\config.txt
 ```
 
-#### Ubuntu
-
-```shell
-$ blah
+#### Ubuntu (Linux)
+```
+./bin/fictrac path/to/config.txt
 ```
 
 ## Research
 
-citing ...
+If you use FicTrac as part of your research, please cite the original FicTrac publication:
+
+> RJD Moore, GJ Taylor, AC Paulk, T Pearson, B van Swinderen, MV Srinivasan (2014). *"FicTrac: a visual method for tracking spherical motion and generating fictive animal paths"*, Journal of Neuroscience Methods, Volume 225, 30th March 2014, Pages 106-119. [[J. Neuroscience Methods link]]() [[Preprint (pdf) link]]().
+
+This publication contains technical details on how FicTrac works, performance analysis, results, and other discussion.
 
 ## Contribution guidelines
 
-Policy ...
+If you have modified the FicTrac source code to fix issues, add functionality, or to better suit your setup - please consider making those additions available to other users!
 
-## For more information
-* [Link 1](https://link)
-* [Link 2](https://link)
-* Bugs, etc
+To do so, just follow the standard [Github fork and pull request workflow](https://gist.github.com/rjdmoore/ed014fba0ee2c7e75060ccd01b726cb8).
 
 ## License
 
