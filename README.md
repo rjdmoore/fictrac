@@ -41,7 +41,7 @@ FicTrac imposes no requirements on the *italicised* items; how you design these 
 
 ### Installation
 
-The FicTrac source code can be built for both Windows and Linux operating systems. You can also build and run FicTrac from within a Ubuntu (Linux) virtual machine on any operating system.
+The FicTrac source code can be built for both Windows and Ubuntu (Linux) operating systems. You can even build and run FicTrac from within a virtual machine on any operating system.
 
 #### Windows
 
@@ -49,7 +49,7 @@ The FicTrac source code can be built for both Windows and Linux operating system
     1. [Cmake build system](https://cmake.org/download/) (binary distribution)
     2. [OpenCV computer vision library](https://opencv.org/releases.html) (latest release Win pack)
     3. [NLopt optimisation library](https://nlopt.readthedocs.io/en/latest/NLopt_on_Windows/) (precompiled DLL)
-2. Clone or download the FicTrac repository, then navigate to that folder and create a build directory:
+2. Clone or download the FicTrac repository, then navigate to that folder, open a terminal, and create a build directory:
 ```
 mkdir build
 cd build
@@ -64,7 +64,7 @@ cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\bu
 cmake --build . --config Release --target ALL_BUILD
 ```
 
-If everything went well, the executables for FicTrac and the configuration utility will be placed in the `bin` directory under the FicTrac source folder.
+If everything went well, the executables for FicTrac and a configuration utility will be placed in the `bin` directory under the FicTrac source folder.
 
 #### Ubuntu (Linux)
 
@@ -77,7 +77,7 @@ sudo apt-get install gcc cmake libavcodec-dev libavformat-dev libswscale-dev lib
 mkdir build
 cd build
 ```
-3. Run Cmake to prepare the necessary build files for FicTrac:
+3. Run Cmake to prepare the necessary build files for FicTrac (if OpenCV and NLopt are not installed in the default location, you can help Cmake find them by defining OPENCV_DIR and NLOPT_DIR - see [Windows installation](#windows) for an example):
 ```
 cmake ..
 ```
@@ -86,20 +86,36 @@ cmake ..
 make -j4
 ```
 
-If everything went well, the executables for FicTrac and the configuration utility will be placed in the `bin` directory under the FicTrac source folder.
+If everything went well, the executables for FicTrac and a configuration utility will be placed in the `bin` directory under the FicTrac source folder.
 
 ### Configuration
 
 There are two neccessary steps to configure FicTrac prior to running the program:
-1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0).
-2. You must run the interactive configuration program (configGui), passing your config file (above) as an argument. This program will guide you through the configuration of the track ball region of inerest within your input images.
+1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0). **The vertical field of view for your camera/lens must be specified accurately.** If `vfov` is incorrect, the surface map created by FicTrac will not wrap around the sphere correctly, and tracking will fail.
+2. You must run the interactive configuration program (configGui), passing the path to your config file (above) as an argument. This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference. **It is important that the camera is not moved after running the configuration utility. If the camera is moved, you must reconfigure.**
 
+An example config file is provided in the `sample` directory under the FicTrac source folder; you can use this file as a template to write your own config file.
 
-Blah ..
+After running the configuration utility, your config file will have some additional parameters added automatically. A detailed explanation of what these parameters are, and a complete list of parameters that can be specified, is found in the [FicTrac manual]().
 
-* [Configuration guide](http://link)
+A more detailed guide for configuring FicTrac for your setup can be found in the [FicTrac manual]().
+
+The commands for running the configuration utility under Windows and Ubuntu (Linux) are almost identical. Simply open a terminal in the FicTrac source folder and type:
+
+#### Windows
+```
+.\bin\Release\configGui.exe path\to\config.txt
+```
+
+#### Ubuntu (Linux)
+```
+./bin/configGui path/to/config.txt
+```
 
 ### Running FicTrac
+
+Once you have configured 
+
 
 Blah ..
 
