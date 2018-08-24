@@ -121,8 +121,9 @@ Once you have configured FicTrac for your setup, you may run FicTrac simply by o
 ```
 
 #### Ubuntu (Linux)
+We execute as super user so that we can set the FicTrac process to higher priority than other system processes.
 ```
-./bin/fictrac path/to/config.txt
+sudo ./bin/fictrac path/to/config.txt
 ```
 
 ## Research
