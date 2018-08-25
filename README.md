@@ -7,7 +7,7 @@
 FicTrac was originally developed by researchers at the [Queensland Brain Institute](http://qbi.uq.edu.au/) at the University of Queensland, Australia for tracking honeybees and fruit flies during closed-loop tethered walking experiments, but it has since proved useful for tracking a wide range of animals with different movement speeds, track ball diameters and patterns, and stimuli.
 
 On this page you'll find information for:
-* [Getting started](#getting-started) - including [hardware requirements](#experimental-setup), and basic steps for [installing](#installation), [configuring](#configuration), and [running FicTrac](#running-fictrac).
+* [Getting started](#getting-started) - including [hardware requirements](#hardware-requirements), and basic steps for [installing](#installation), [configuring](#configuration), and [running FicTrac](#running-fictrac).
 * [Research](#research) - including works to cite and links to the original FicTrac publication and preprint (pdf).
 * [Contributing](#contribution-guidelines) - how to go about making your fixes, additions, and customisations available for other users.
 * [Re-use](#license) - licensing information, if you plan on using FicTrac or the source code.
@@ -23,11 +23,11 @@ Happy tracking!
 
 ## Getting started
 
-If you're just setting up your lab, or wondering whether FicTrac is suitable for your setup (spoiler: yes, probably), check the [section below](#experimental-setup) for the basic requirements.
+If you're just setting up your lab, or wondering whether FicTrac is suitable for your setup (spoiler: yes, probably), check the [section below](#hardware-requirements) for the basic requirements.
 
 If you already have an experimental enclosure with a camera, you can use FicTrac to either process those videos offline or to run live from the camera. Just follow the sections below to [install](#installation), [configure](#configuration), and [run FicTrac](#running-fictrac).
 
-### Experimental setup
+### Hardware requirements
 
 Very briefly, FicTrac imposes almost no special requirements on your experimental setup, other than that a pattern must be applied to the track ball. However, there are a number of tips that can help you get the best results from using FicTrac.
 
@@ -44,7 +44,7 @@ FicTrac imposes no requirements on the *italicised* items; how you design these 
 
 ### Installation
 
-The FicTrac source code can be built for both Windows and Ubuntu (Linux) operating systems. You can even build and run FicTrac from within a virtual machine on any operating system.
+The FicTrac source code can be built for both Windows and Ubuntu (Linux) operating systems. You can even build and run FicTrac from within a [virtual machine](https://www.virtualbox.org/) on any operating system.
 
 #### Windows
 
@@ -138,7 +138,7 @@ This publication contains technical details on how FicTrac works, performance an
 
 ## Contribution guidelines
 
-If you have modified the FicTrac source code to fix issues, add functionality, or to better suit your setup - please consider making those additions available to other users!
+If you have modified the FicTrac source code to fix issues, add functionality, or to better suit your setup, please consider making those additions available to other users!
 
 To do so, just follow the standard [Github fork and pull request workflow](https://gist.github.com/rjdmoore/ed014fba0ee2c7e75060ccd01b726cb8).
 
