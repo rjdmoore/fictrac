@@ -1,7 +1,5 @@
 == Development ==
-* video recording
 * write win/linux socket clients
-* check version
 
 
 == Testing ==

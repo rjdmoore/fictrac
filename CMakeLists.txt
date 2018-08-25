@@ -16,9 +16,9 @@ SET(OPENCV_DIR "." CACHE PATH "Path to OpenCV folder containing OpenCVConfig.cma
 SET(NLOPT_DIR "." CACHE PATH "Path to NLOpt folder containing libnlopt-0.lib")
 
 # output dirs
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
 # find dependencies
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPENCV_DIR} ${NLOPT_DIR})
@@ -85,6 +85,9 @@ if(MSVC)
     
     # copy nlopt dll
     list(APPEND TO_COPY "${NLOPT_DIR}/libnlopt-0.dll")
+    
+    # copy h264 dll
+    list(APPEND TO_COPY "${PROJECT_SOURCE_DIR}/dll/openh264-1.7.0-win64.dll")
     
     add_custom_command( TARGET fictrac POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E copy_if_different

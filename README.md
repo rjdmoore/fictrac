@@ -67,9 +67,9 @@ cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\bu
 cmake --build . --config Release --target ALL_BUILD
 ```
 
-If everything went well, the executables for FicTrac and a configuration utility will be placed in the `bin` directory under the FicTrac source folder.
+If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
 
-**Note:** To save video, you must also have the [H264 library](https://github.com/cisco/openh264/releases). OpenCV 3.4.2 requires openh264-1.7.0-win64.dll; if you run FicTrac with the wrong H264 library version, OpenCV should print an error message to terminal. Simply copy the .dll to your system path, or to the same folder as `fictrac.exe`.
+**Note:** To save video on Windows, you must also have the [H264 library](https://github.com/cisco/openh264/releases) in the system path. OpenCV 3.4.2 requires `openh264-1.7.0-win64.dll`, which should be downloaded and placed in the same directory as the generated `fictrac.exe`. If you have installed another version of OpenCV, and it requires another version of the H264 library, an error message should be printed to the terminal when you run FicTrac. You can obtain other H264 versions from the above link.
 
 #### Ubuntu (Linux)
 
@@ -91,17 +91,17 @@ cmake ..
 make -j4
 ```
 
-If everything went well, the executables for FicTrac and a configuration utility will be placed in the `bin` directory under the FicTrac source folder.
+If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
 
 ### Configuration
 
 There are two neccessary steps to configure FicTrac prior to running the program:
-1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0). **The vertical field of view for your camera/lens must be specified accurately.** If `vfov` is incorrect, the surface map created by FicTrac will not wrap around the sphere correctly, and tracking will fail. An example config file is provided in the `sample` directory under the FicTrac source folder; you can use this file as a template to write your own config file.
+1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0). **The vertical field of view for your camera/lens must be specified accurately.** If `vfov` is incorrect, the surface map created by FicTrac will not wrap around the sphere correctly, and tracking will fail. An example config file is provided in the `sample` directory under the FicTrac project folder; you can use this file as a template to write your own config file.
 2. You must run the interactive configuration program (configGui), passing the path to your config file (above) as an argument. This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference. **It is important that the camera is not moved after running the configuration utility. If the camera is moved, you must reconfigure.** After running the configuration utility, your config file will have some additional default parameters added automatically.
 
 A more detailed guide for configuring FicTrac for your setup, as well as a complete list and explanation of parameters that can be specified, can be found in the [FicTrac manual]().
 
-The commands for running the configuration utility under Windows and Ubuntu (Linux) are almost identical. Simply open a terminal in the FicTrac source folder and type:
+The commands for running the configuration utility under Windows and Ubuntu (Linux) are almost identical. Simply open a terminal in the FicTrac project folder and type:
 
 #### Windows
 ```
@@ -115,7 +115,7 @@ The commands for running the configuration utility under Windows and Ubuntu (Lin
 
 ### Running FicTrac
 
-Once you have configured FicTrac for your setup, you may run FicTrac simply by opening a terminal in the FicTrac source folder and typing:
+Once you have configured FicTrac for your setup, you may run FicTrac simply by opening a terminal in the FicTrac project folder and typing:
 
 #### Windows
 ```
