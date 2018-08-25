@@ -144,4 +144,4 @@ To do so, just follow the standard [Github fork and pull request workflow](https
 
 ## License
 
-[CC BY-NC-SA 3.0](LICENSE.txt)
+See the [LICENSE file](LICENSE.txt) for more info.
