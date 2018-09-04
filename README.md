@@ -46,7 +46,9 @@ FicTrac imposes no requirements on the *italicised* items; how you design these 
 
 The FicTrac source code can be built for both Windows and Ubuntu (Linux) operating systems. You can even build and run FicTrac from within a [virtual machine](https://www.virtualbox.org/) on any operating system.
 
-#### Windows
+**Note:** If you plan on using a USB3 camera, FicTrac may have issues using the OpenCV capture interface. The work around is to tell FicTrac to use the SDK provided with your camera instead of OpenCV to do the frame grabbing. See [USB3 camera installation](#usb3-camera-installation).
+
+#### Windows installation
 
 1. Download and install required dependencies:
     1. [Cmake build system](https://cmake.org/download/) (binary distribution)
@@ -71,7 +73,7 @@ If everything went well, the executables for FicTrac and a configuration utility
 
 **Note:** To save video on Windows, you must also have the [H264 library](https://github.com/cisco/openh264/releases) in the system path. OpenCV 3.4.2 requires `openh264-1.7.0-win64.dll`, which should be downloaded and placed in the same directory as the generated `fictrac.exe`. If you have installed another version of OpenCV, and it requires another version of the H264 library, an error message should be printed to the terminal when you run FicTrac. You can obtain other H264 versions from the above link.
 
-#### Ubuntu (Linux)
+#### Ubuntu (Linux) installation
 
 1. Install the required dependencies:
 ```
@@ -82,7 +84,7 @@ sudo apt-get install gcc cmake libavcodec-dev libavformat-dev libswscale-dev lib
 mkdir build
 cd build
 ```
-3. Run Cmake to prepare the necessary build files for FicTrac (if OpenCV and NLopt are not installed in the default location, you can help Cmake find them by defining OPENCV_DIR and NLOPT_DIR - see [Windows installation](#windows) for an example):
+3. Run Cmake to prepare the necessary build files for FicTrac (if OpenCV and NLopt are not installed in the default location, you can help Cmake find them by defining OPENCV_DIR and NLOPT_DIR - see [Windows installation](#windows-installation) for an example):
 ```
 cmake ..
 ```
@@ -92,6 +94,21 @@ make -j4
 ```
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
+
+#### USB3 camera installation
+
+If you are using a USB3 camera and are receiving error messages when FicTrac tries to connect to your camera, you may need to tell FicTrac to use the SDK provided with your camera, rather than the generic OpenCV interface. The instructions for switching to the camera's SDK are different for each manufacturer. Currently there is support for PGR (FLIR) USB3 cameras via the Spinnaker SDK.
+
+##### PGR (FLIR) Spinnaker SDK
+
+1. Download and install the Spinnaker SDK from [PGR downloads page](https://www.ptgrey.com/support/downloads). First select your camera model and operating system, and then download and install the latest Spinnaker SDK release.
+2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a [Windows installation](#windows-installation) you would replace step 4 with:
+```
+cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\build" -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
+```
+3. Follow the other build steps for either [Windows](#windows-installation) or [Ubuntu (Linux)](#ubuntu-linux-installation) as normal.
+
+Before running FicTrac, you may configure your camera (frame rate, resolution, etc) as desired using the SDK utilities.
 
 ### Configuration
 
