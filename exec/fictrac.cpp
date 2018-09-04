@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     // wait for tracking to finish
     while (tracker.isActive()) { sleep(500); }
 
-    tracker.printState();
+    //tracker.printState();
     tracker.writeTemplate();
 
     PRINT("\n\nHit ENTER to exit..");

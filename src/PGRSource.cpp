@@ -1,112 +1,133 @@
 /// FicTrac http://rjdmoore.net/fictrac/
 /// \file       PGRSource.cpp
-/// \brief      PGR (FlyCapture) sources.
+/// \brief      PGR USB3 sources (Spinnaker SDK).
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
-#ifdef PGR_CAMERA
+#ifdef PGR_USB3
 
-#include <PGRSource.h>
+#include "PGRSource.h"
 
+#include "Logger.h"
+
+using namespace Spinnaker;
 using cv::Mat;
-using namespace FlyCapture2;
 
 PGRSource::PGRSource(int index)
 {
-	printf("%s: looking for camera at index %d...\n", __func__, index);
+    try {
+        // Retrieve singleton reference to system object
+        _system = System::GetInstance();
 
-	BusManager busMgr;
-	PGRGuid guid;
-	Error error = busMgr.GetCameraFromIndex(index, &guid);
-	if( error != PGRERROR_OK ) {
-		fprintf(stderr, "%s: Error reading camera GUID!\n", __func__);
-		return;
-	}
+        // Print out current library version
+        const LibraryVersion spinnakerLibraryVersion = _system->GetLibraryVersion();
+        LOG("Opening PGR camera using Spinnaker SDK (version %d.%d.%d.%d)",
+            spinnakerLibraryVersion.major, spinnakerLibraryVersion.minor,
+            spinnakerLibraryVersion.type, spinnakerLibraryVersion.build);
 
-	_cap = boost::shared_ptr<Camera>(new Camera());
-	error = _cap->Connect(&guid);
-	if( error != PGRERROR_OK ) {
-		fprintf(stderr, "%s: Error connecting to camera!\n", __func__);
-		return;
-	}
+        // Retrieve list of cameras from the system
+        _camList = _system->GetCameras();
 
-	CameraInfo camInfo;
-	error = _cap->GetCameraInfo(&camInfo);
-	if( error != PGRERROR_OK ) {
-		fprintf(stderr, "%s: Error retrieving camera information!\n", __func__);
-		return;
-	} else {
-		printf("Connected to PGR camera (%s/%s max res: %s)\n", camInfo.modelName, camInfo.sensorInfo, camInfo.sensorResolution);
-	}
+        unsigned int numCameras = _camList.GetSize();
 
-	error = _cap->StartCapture();
-	if( error != PGRERROR_OK ) {
-		fprintf(stderr, "%s: Error starting video capture!\n", __func__);
-		return;
-	}
+        if (numCameras == 0) {
+            LOG_ERR("Error! Could not find any connected PGR cameras!");
+            return;
+        }
+        else {
+            LOG_DBG("Found %d PGR cameras.", numCameras);
+        }
 
-	Image::SetDefaultColorProcessing(ColorProcessingAlgorithm::NEAREST_NEIGHBOR);
+        // Select camera
+        _cam = _camList.GetByIndex(index);
 
-	// capture test image
-	Image testImg;
-	error = _cap->RetrieveBuffer(&testImg);
-	if( error != PGRERROR_OK ) {
-		fprintf(stderr, "%s: Error capturing image!\n", __func__);
-		return;
-	}
-	_width = testImg.GetCols();
-	_height = testImg.GetRows();
-	_open = true;
+        // Initialize camera
+        _cam->Init();
 
-    _live = true;
+        // Begin acquiring images
+        _cam->BeginAcquisition();
+
+        // Get some params
+        _width = _cam->Width();
+        _height = _cam->Height();
+        _fps = _cam->AcquisitionFrameRate();
+
+        LOG("PGR camera initialised (%dx%d @ %.3f fps)!", _width, _height, _fps);
+
+        _open = true;
+        _live = true;
+    }
+    catch (Spinnaker::Exception& e) {
+        LOG_ERR("Error opening capture device! Error was: %s", e.what());
+    }
+    catch (...) {
+        LOG_ERR("Error opening capture device!");
+    }
 }
 
-bool PGRSource::setFPS(int fps)
+double PGRSource::getFPS()
 {
-	// do nothing
+    // do nothing
+    return _fps;
+}
+
+bool PGRSource::setFPS(double fps)
+{
+    _fps = fps;
     return false;
 }
-
-bool PGRSource::rewind()
-{
-	// do nothing
-    return false;
-}
-
-//void PGRSource::skip(unsigned int frames)
-//{
-//	// do nothing
-//}
 
 bool PGRSource::grab(cv::Mat& frame)
 {
 	if( !_open ) { return NULL; }
 
-	Error error = _cap->RetrieveBuffer(&_frame_cap);
-	if( error != PGRERROR_OK ) {
-		fprintf(stderr, "%s: Error grabbing image frame!\n", __func__);
-		return false;
-	}
-	TimeStamp ts = _frame_cap.GetTimeStamp();
-	_timestamp = ts.seconds*(double)1e3+ts.microSeconds/(double)1e3;
+    ImagePtr pgr_image = NULL;
 
-	Image frame_bgr;
-	error = _frame_cap.Convert(PIXEL_FORMAT_BGR, &frame_bgr);
-	if( error != PGRERROR_OK ) {
-		fprintf(stderr, "%s: Error converting image format!\n", __func__);
-		return false;
-	}
-	Mat frame_cv(frame_bgr.GetRows(), frame_bgr.GetCols(), CV_8UC3, frame_bgr.GetData(), frame_bgr.GetStride());
-	frame_cv.copyTo(frame);
-	return true;
+    try {
+        // Retrieve next received image
+        long int timeout = _fps > 0 ? std::max(static_cast<long int>(1000), static_cast<long int>(1000. / _fps)) : 1000; // set capture timeout to at least 1000 ms
+        pgr_image = _cam->GetNextImage(timeout);
+        _timestamp = _cam->Timestamp();
+
+        // Ensure image completion
+        if (pgr_image->IsIncomplete()) {
+            // Retreive and print the image status description
+            LOG_ERR("Error! Image capture incomplete (%s).", Image::GetImageStatusDescription(pgr_image->GetImageStatus()));
+            pgr_image->Release();
+            return false;
+        }
+
+        // Convert image
+        ImagePtr bgr_image = pgr_image->Convert(PixelFormat_BGR8, NEAREST_NEIGHBOR);
+
+        // We have to release our original image to clear space on the buffer
+        pgr_image->Release();
+
+        Mat tmp(_height, _width, CV_8UC3, bgr_image->GetData(), bgr_image->GetStride());
+        tmp.copyTo(frame);
+
+        return true;
+    }
+    catch (Spinnaker::Exception& e) {
+        LOG_ERR("Error grabbing PGR frame! Error was: %s", e.what());
+        pgr_image->Release();
+        return false;
+    }
 }
 
 PGRSource::~PGRSource()
 {
 	if( _open ) {
-		_cap->StopCapture();
+        _cam->EndAcquisition();
+        _open = false;
 	}
-	_cap->Disconnect();
+    _cam = NULL;
+	
+    // Clear camera list before releasing system
+    _camList.Clear();
+
+    // Release system
+    _system->ReleaseInstance();
 }
 
-#endif
+#endif // PGR_USB3

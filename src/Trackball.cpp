@@ -14,8 +14,11 @@
 #include "timing.h"
 #include "CameraRemap.h"
 #include "BasicRemapper.h"
-#include "CVSource.h"
 #include "misc.h"
+#include "CVSource.h"
+#ifdef PGR_USB3
+#include "PGRSource.h"
+#endif // PGR_USB3
 
 /// OpenCV individual includes required by gcc?
 #include <opencv2/highgui.hpp>
@@ -25,6 +28,7 @@
 
 #include <sstream>
 #include <cmath>
+#include <exception>
 
 using std::string;
 using std::unique_ptr;
@@ -93,8 +97,20 @@ Trackball::Trackball(string cfg_fn)
 
     /// Open frame source and set fps.
     string src_fn = _cfg("src_fn");
-    //FIXME: support multiple frame sources
-    shared_ptr<CVSource> source = shared_ptr<CVSource>(new CVSource(src_fn));
+    shared_ptr<FrameSource> source;
+#ifdef PGR_USB3
+    try {
+        // first try reading input as camera id
+        int id = std::stoi(src_fn);
+        source = std::make_shared<PGRSource>(id);
+    }
+    catch (...) {
+        // then try loading as video file
+        source = std::make_shared<CVSource>(src_fn);
+    }
+#else // PGR_USB3
+    source = std::make_shared<CVSource>(src_fn);
+#endif // PGR_USB3
     if (!source->isOpen()) {
         LOG_ERR("Error! Could not open input frame source (%s)!", src_fn.c_str());
         _active = false;

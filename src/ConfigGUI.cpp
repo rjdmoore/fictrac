@@ -17,6 +17,10 @@
 #include "Logger.h"
 #include "timing.h"
 #include "misc.h"
+#include "CVSource.h"
+#ifdef PGR_USB3
+#include "PGRSource.h"
+#endif // PGR_USB3
 
 /// OpenCV individual includes required by gcc?
 #include <opencv2/highgui.hpp>
@@ -167,48 +171,28 @@ ConfigGui::ConfigGui(string config_fn)
     Mat input_frame;
     if (_open) {
         LOG_DBG("Source is: %s", input_fn.c_str());
+
+        std::shared_ptr<FrameSource> source;
+#ifdef PGR_USB3
         try {
-            // try loading as image file first
-            LOG_DBG("Trying to load input as image ..");
-            input_frame = cv::imread(input_fn, cv::IMREAD_GRAYSCALE);
-            if (input_frame.empty()) { throw 0; }
-            LOG("Input frame read from image file (%s).", input_fn.c_str());
-            if (_base_fn.empty()) {
-                _base_fn = input_fn.substr(0, input_fn.length() - 4);
-            }
+            // first try reading input as camera id
+            int id = std::stoi(input_fn);
+            source = std::make_shared<PGRSource>(id);
         }
         catch (...) {
-            try {
-                // then try loading as camera id
-                LOG_DBG("Trying to load input as camera id ..");
-                int id = stoi(input_fn);
-                cv::VideoCapture cap(id);
-                cap >> input_frame;
-                if (input_frame.empty()) { throw 0; }
-                LOG("Input frame read from camera (%d).", id);
-                if (_base_fn.empty()) {
-                    _base_fn = "fictrac";
-                }
-            }
-            catch (...) {
-                try {
-                    // then try loading as video file
-                    LOG_DBG("Trying to load input as video file ..");
-                    cv::VideoCapture cap(input_fn);
-                    cap >> input_frame;
-                    if (input_frame.empty()) { throw 0; }
-                    LOG("Input frame read from video file (%s).", input_fn.c_str());
-                    if (_base_fn.empty()) {
-                        _base_fn = input_fn.substr(0, input_fn.length() - 4);
-                    }
-                }
-                catch (...) {
-                    LOG_ERR("Could not read frame from input (%s)!", input_fn.c_str());
-                    _open = false;
-                }
-            }
+            // then try loading as video file
+            source = std::make_shared<CVSource>(input_fn);
         }
-        if (input_frame.empty()) {
+#else // PGR_USB3
+        source = std::make_shared<CVSource>(input_fn);
+#endif // PGR_USB3
+        if (!source->isOpen()) {
+            LOG_ERR("Error! Could not open input frame source (%s)!", input_fn.c_str());
+            _open = false;
+        } else if (!source->grab(input_frame)) {
+            LOG_ERR("Could not read frame from input (%s)!", input_fn.c_str());
+            _open = false;
+        } else if (input_frame.empty()) {
             _open = false;
         }
     }
@@ -232,9 +216,11 @@ bool ConfigGui::setFrame(Mat& frame)
 {
     /// Copy input frame.
     if (frame.channels() == 3) {
-        cv::cvtColor(frame, _frame, CV_BGR2GRAY);
-    } else if (frame.channels() == 1) {
+        //cv::cvtColor(frame, _frame, CV_BGR2GRAY);
         _frame = frame.clone();
+    } else if (frame.channels() == 1) {
+        //_frame = frame.clone();
+        cv::cvtColor(frame, _frame, CV_GRAY2BGR);
     } else {
         // uh oh, shouldn't get here
         LOG_ERR("Unexpected number of image channels (%d)!", frame.channels());
@@ -242,7 +228,7 @@ bool ConfigGui::setFrame(Mat& frame)
     }
     
     /// Stretch contrast for display
-    histStretch(_frame);
+    //histStretch(_frame);
     _w = _frame.cols;
     _h = _frame.rows;
     
@@ -431,15 +417,16 @@ bool ConfigGui::run()
     const char exit_key = 0x1b;
 #ifdef WIN32
     const char enter_key = 0x0d;
-#else
+#else // WIN32
     const char enter_key = 0x0a;
-#endif
+#endif // WIN32
     const int click_rad = std::max(int(_w/150+0.5), 5);
-    Mat disp_frame, zoom_frame(ZOOM_DIM, ZOOM_DIM, CV_8UC1);
+    Mat disp_frame, zoom_frame(ZOOM_DIM, ZOOM_DIM, CV_8UC3);
     const int scaled_zoom_dim = static_cast<int>(ZOOM_DIM * ZOOM_SCL + 0.5);
     while (_open && (key != exit_key)) {
         /// Create frame for drawing.
-        cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
+        //cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
+        disp_frame = _frame.clone();
         
         int in;
         string str;
@@ -1096,7 +1083,8 @@ bool ConfigGui::run()
 	cv::destroyAllWindows();
 
 	/// Save config image
-	cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
+	//cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
+    disp_frame = _frame.clone();
 
 	// draw fitted circumference
 	if (r > 0) {

@@ -11,7 +11,6 @@
 #ifdef __linux__ 
 // linux inludes
 #elif _WIN32
-#define NOMINMAX    // stop min/max macros being defined in windows.h
 #include <windows.h>
 #endif
 

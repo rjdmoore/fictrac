@@ -15,8 +15,11 @@ public:
 	FrameSource() : _open(false), _bayerType(BAYER_NONE), _width(-1), _height(-1), _timestamp(-1), _fps(-1), _live(true) {}
 	virtual ~FrameSource() {}
 
-    virtual double getFPS()=0;
-	virtual bool setFPS(double fps)=0;
+    virtual double getFPS() { return _fps; }
+    virtual bool setFPS(double fps) {
+        _fps = fps;
+        return false;   // we haven't actually done anything
+    }
 	virtual bool rewind()=0;
 	virtual bool grab(cv::Mat& frame)=0;
 

@@ -74,11 +74,10 @@ CVSource::~CVSource()
 ///
 double CVSource::getFPS()
 {
-    double fps = -1;
     if (_open) {
-        fps = _cap->get(cv::CAP_PROP_FPS);
+        _fps = _cap->get(cv::CAP_PROP_FPS);
     }
-    return fps;
+    return _fps;
 }
 
 ///
@@ -89,8 +88,8 @@ bool CVSource::setFPS(double fps)
     bool ret = false;
     if (_open && (fps > 0)) {
         _fps = fps;
-        if (!_cap->set(cv::CAP_PROP_FPS, fps)) {
-            LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%.2f).", fps);
+        if (!_cap->set(cv::CAP_PROP_FPS, _fps)) {
+            LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%.2f).", _fps);
         }
         else { ret = true; }
     }
@@ -148,7 +147,7 @@ bool CVSource::grab(cv::Mat& frame)
 				break;
 		}
 	} else {
-		_frame_cap.copyTo(frame);
+        _frame_cap.copyTo(frame);
 	}
 
     /// Correct average frame rate when reading from file.

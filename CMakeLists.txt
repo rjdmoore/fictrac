@@ -12,22 +12,38 @@ configure_file (
 )
 
 # dependency search dirs
-SET(OPENCV_DIR "." CACHE PATH "Path to OpenCV folder containing OpenCVConfig.cmake")
-SET(NLOPT_DIR "." CACHE PATH "Path to NLOpt folder containing libnlopt-0.lib")
+set(OPENCV_DIR "." CACHE PATH "Path to OpenCV folder containing OpenCVConfig.cmake")
+set(NLOPT_DIR "." CACHE PATH "Path to NLOpt folder containing libnlopt-0.lib")
 
 # output dirs
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
+# optional build config
+option(PGR_USB3 "Use Spinnaker SDK to capture from PGR USB3 cameras" OFF) # Disabled by default
+if(PGR_USB3)
+    set(PGR_DIR "." CACHE PATH "Path to PGR Spinnaker SDK folder")
+endif()
+
 # find dependencies
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPENCV_DIR} ${NLOPT_DIR})
 if(MSVC)
     find_package(opencv)
     find_library(NLOPT_LIB libnlopt-0.lib)
+    
+    if(PGR_USB3)
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR}/lib64/vs2015)
+        find_library(PGR_LIB Spinnaker_v140.lib)
+    endif()
 else()  # gcc
     find_package(OpenCV)
     find_library(NLOPT_LIB libnlopt.a)
+    
+    if(PGR_USB3)
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR}/lib64) # fixme!
+        find_library(PGR_LIB libspinnaker.a) # fixme!
+    endif()
 endif()
 get_filename_component(NLOPT_DIR ${NLOPT_LIB} DIRECTORY)
 if(NLOPT_LIB)
@@ -36,11 +52,21 @@ if(NLOPT_LIB)
         message(STATUS "You might need to add ${NLOPT_DIR} to your PATH to be able to run the executable.")
     endif()
 else()
-    message(FATAL_ERROR "Warning! Could not find NLOpt lib at ${NLOPT_DIR}!")
+    message(FATAL_ERROR "Error! Could not find NLOpt lib at ${NLOPT_DIR}!")
+endif()
+if(PGR_USB3)
+    if(PGR_LIB)
+        message(STATUS "Found PGR Spinnaker lib ${PGR_LIB}")
+    else()
+        message(FATAL_ERROR "Error! Could not find PGR Spinnaker lib at ${PGR_DIR}!")
+    endif()
 endif()
 
 # add include dirs
 include_directories(${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${NLOPT_DIR})
+if(PGR_USB3)
+    include_directories(${PGR_DIR}/include)
+endif()
 
 # find sources to build
 file(GLOB LIBFICTRAC_SRCS ${PROJECT_SOURCE_DIR}/src/*.cpp)
@@ -52,7 +78,10 @@ add_executable(fictrac ${PROJECT_SOURCE_DIR}/exec/fictrac.cpp)
 
 # add preprocessor definitions
 # public means defs will be inherited by linked executables
-target_compile_definitions(libfictrac PUBLIC _CRT_SECURE_NO_WARNINGS)
+target_compile_definitions(libfictrac PUBLIC _CRT_SECURE_NO_WARNINGS NOMINMAX)
+if(PGR_USB3)
+    target_compile_definitions(libfictrac PUBLIC PGR_USB3)
+endif()
 
 # add compile options
 if(MSVC)
@@ -63,6 +92,9 @@ endif()
 
 # linking and post-build
 target_link_libraries(libfictrac PUBLIC ${OpenCV_LIBS} ${NLOPT_LIB})
+if(PGR_USB3)
+    target_link_libraries(libfictrac PUBLIC ${PGR_LIB})
+endif()
 if(MSVC)
     # win-specific libraries
     target_link_libraries(libfictrac PUBLIC Ws2_32)
