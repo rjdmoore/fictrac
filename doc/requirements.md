@@ -33,7 +33,7 @@ The surface pattern should ideally have the following characteristics:
 
 ### Video camera
 
-FicTrac should support almost any USB1/2 camera out of the box, using the OpenCV interface. However, as of version `3.4.2`, OpenCV does not support all USB3 cameras. In order to use FicTrac with a USB3 camera, you may find it necessary to build FicTrac with explicit support for that camera's SDK (see [USB3 camera installation](..\README.md#usb3-camera-installation) for more information).
+FicTrac should support almost any USB1/2 camera out of the box, using the OpenCV interface. However, as of version `3.4.2`, OpenCV does not support all USB3 cameras. In order to use FicTrac with a USB3 camera, you may find it necessary to build FicTrac with explicit support for that camera's SDK (see [USB3 camera installation](../README.md#usb3-camera-installation) for more information).
 
 Camera resolution is not important, as the tracking resolution is only `60 x 60 pixels` at the default quality setting, `q_factor : 6`.
 
