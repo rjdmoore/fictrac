@@ -4,11 +4,9 @@
 
 == Testing ==
 * benchmark different ball patterns
-* test with camera
 * test with diverse recordings
 * benchmark with noisy simulations
 * compare performance with FicTrac v1
-* compare performance between Win/Ubuntu(VM)
 * test sockets
 
 
