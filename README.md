@@ -145,6 +145,30 @@ We execute as super user so that we can set the FicTrac process to higher priori
 sudo ./bin/fictrac path/to/config.txt
 ```
 
+### Process sample data
+
+After you have build FicTrac, you can process the sample data set to make sure everything is running fine. Simply open a terminal in the FicTrac project folder and type:
+
+#### Windows
+```
+cd sample
+..\bin\Release\configGui.exe config.txt
+```
+The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok. Then, in the same terminal window, type:
+```
+..\bin\Release\fictrac.exe config.txt
+```
+
+#### Ubuntu (Linux)
+```
+cd sample
+../bin/configGui config.txt
+```
+The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok. Then, in the same terminal window, type:
+```
+sudo ../bin/Release/fictrac.exe config.txt
+```
+
 ## Research
 
 If you use FicTrac as part of your research, please cite the original FicTrac publication:
