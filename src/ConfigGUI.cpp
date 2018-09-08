@@ -164,15 +164,10 @@ ConfigGui::ConfigGui(string config_fn)
         }
     }
 
-    /// Create base file name for output files.
-    _base_fn = _cfg("output_fn");
-
     /// Load an image to use for annotation.
     Mat input_frame;
+    std::shared_ptr<FrameSource> source;
     if (_open) {
-        LOG_DBG("Source is: %s", input_fn.c_str());
-
-        std::shared_ptr<FrameSource> source;
 #ifdef PGR_USB3
         try {
             // first try reading input as camera id
@@ -194,6 +189,16 @@ ConfigGui::ConfigGui(string config_fn)
             _open = false;
         } else if (input_frame.empty()) {
             _open = false;
+        }
+    }
+
+    /// Create base file name for output files.
+    _base_fn = _cfg("output_fn");
+    if (_base_fn.empty()) {
+        if (_open && !source->isLive()) {
+            _base_fn = input_fn.substr(0, input_fn.length() - 4);
+        } else {
+            _base_fn = "fictrac";
         }
     }
 
