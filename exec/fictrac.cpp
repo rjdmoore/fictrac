@@ -70,4 +70,5 @@ int main(int argc, char *argv[])
 
     PRINT("\n\nHit ENTER to exit..");
     getchar_clean();
+    return 0;
 }
