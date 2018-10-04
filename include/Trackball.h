@@ -70,11 +70,11 @@ private:
     std::mutex _drawMutex;
     std::condition_variable _drawCond;
 
-    bool _do_display, _save_debug;
+    bool _do_display, _save_raw, _save_debug;
     cv::Mat _sphere_view;
     std::deque<cv::Mat> _R_roi_hist;
     std::deque<CmPoint64f> _pos_heading_hist;
-    cv::VideoWriter _vid_writer;
+    cv::VideoWriter _debug_vid, _raw_vid;
 
     std::unique_ptr<std::thread> _drawThread;
 

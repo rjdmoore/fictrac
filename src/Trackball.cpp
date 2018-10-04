@@ -61,6 +61,7 @@ const double THRESH_WIN_PC_DEFAULT = 0.25;
 const uint8_t SPHERE_MAP_FIRST_HIT_BONUS = 64;
 
 const bool DO_DISPLAY_DEFAULT = true;
+const bool SAVE_RAW_DEFAULT = false;
 const bool SAVE_DEBUG_DEFAULT = false;
 
 ///
@@ -377,6 +378,11 @@ Trackball::Trackball(string cfg_fn)
         LOG_WRN("Warning! Using default value for do_display (%d).", _do_display);
         _cfg.add("do_display", _do_display);
     }
+    _save_raw = SAVE_RAW_DEFAULT;
+    if (!source->isLive() || !_cfg.getBool("save_raw", _save_raw)) {
+        LOG_WRN("Warning! Using default value for save_raw (%d).", _save_raw);
+        _cfg.add("save_raw", _save_raw);
+    }
     _save_debug = SAVE_DEBUG_DEFAULT;
     if (!_cfg.getBool("save_debug", _save_debug)) {
         LOG_WRN("Warning! Using default value for save_debug (%d).", _save_debug);
@@ -390,11 +396,20 @@ Trackball::Trackball(string cfg_fn)
         _sphere_view.create(_map_h, _map_w, CV_8UC1);
         _sphere_view.setTo(Scalar::all(128));
     }
+    if (_save_raw) {
+        string vid_fn = _base_fn + "-raw.mp4";
+        _raw_vid.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), source->getFPS(), cv::Size(source->getWidth(), source->getHeight()));
+        if (!_raw_vid.isOpened()) {
+            LOG_ERR("Error! Unable to open raw output video (%s).", vid_fn.c_str());
+            _active = false;
+            return;
+        }
+    }
     if (_save_debug) {
         string vid_fn = _base_fn + "-debug.mp4";
-        _vid_writer.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), source->getFPS(), cv::Size(4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM));
-        if (!_vid_writer.isOpened()) {
-            LOG_ERR("Error! Unable to open output video (%s).", vid_fn.c_str());
+        _debug_vid.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), source->getFPS(), cv::Size(4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM));
+        if (!_debug_vid.isOpened()) {
+            LOG_ERR("Error! Unable to open debug output video (%s).", vid_fn.c_str());
             _active = false;
             return;
         }
@@ -1279,8 +1294,11 @@ void Trackball::drawCanvas(shared_ptr<DrawData> data)
         _active = false;
     }
 
+    if (_save_raw) {
+        _raw_vid.write(src_frame);
+    }
     if (_save_debug) {
-        _vid_writer.write(canvas);
+        _debug_vid.write(canvas);
     }
 }
 
