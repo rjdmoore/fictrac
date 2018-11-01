@@ -31,7 +31,7 @@ set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPENCV_DIR} ${NLOPT_DIR})
 if(MSVC)
     find_package(opencv)
     find_library(NLOPT_LIB libnlopt-0.lib)
-    
+	
     if(PGR_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR}/lib64/vs2015)
         find_library(PGR_LIB Spinnaker_v140.lib)
@@ -61,6 +61,9 @@ if(PGR_USB3)
         message(FATAL_ERROR "Error! Could not find PGR Spinnaker lib at ${PGR_DIR}!")
     endif()
 endif()
+
+# ZeroMQ dependencies
+find_package(cppzmq)
 
 # add include dirs
 include_directories(${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${NLOPT_DIR})
@@ -92,7 +95,7 @@ else()  # gcc
 endif()
 
 # linking and post-build
-target_link_libraries(libfictrac PUBLIC ${OpenCV_LIBS} ${NLOPT_LIB})
+target_link_libraries(libfictrac PUBLIC ${OpenCV_LIBS} ${NLOPT_LIB} cppzmq)
 if(PGR_USB3)
     target_link_libraries(libfictrac PUBLIC ${PGR_LIB})
 endif()

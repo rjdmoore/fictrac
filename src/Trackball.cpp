@@ -372,6 +372,19 @@ Trackball::Trackball(string cfg_fn)
     string data_fn = _base_fn + "-" + execTime() + ".dat";
     _log = unique_ptr<Recorder>(new Recorder(RecorderInterface::RecordType::FILE, data_fn));
 
+    /// Open socket recorder if enabled
+    _do_socket = false;
+    if(_cfg.getBool("do_socket", _do_socket))
+    {
+        if(!_cfg.getInt("socket_port", _socket_port)) {
+            _socket_port = DEFAULT_SOCKET_PORT;
+            _cfg.add("socket_port", DEFAULT_SOCKET_PORT);    
+        }
+
+        _socket = unique_ptr<Recorder>(new Recorder(RecorderInterface::RecordType::SOCK, std::to_string(_socket_port)));
+        LOG("Publishing data on localhost:" + std::to_string(_socket_port));
+    }
+
     /// Display.
     _do_display = DO_DISPLAY_DEFAULT;
     if (!_cfg.getBool("do_display", _do_display)) {
@@ -885,6 +898,9 @@ bool Trackball::logData()
     ss << _intx << ", " << _inty << ", ";
     // timestamp | sequence number
     ss << _ts << ", " << _seq << std::endl;
+
+    if(_do_socket)
+        _socket->addMsg(ss.str());
 
     // async i/o
     return _log->addMsg(ss.str());

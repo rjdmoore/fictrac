@@ -78,6 +78,12 @@ private:
 
     std::unique_ptr<std::thread> _drawThread;
 
+    // Socket recorder params
+    const int DEFAULT_SOCKET_PORT = 5555;
+    int _socket_port;
+    bool _do_socket;
+    std::unique_ptr<Recorder> _socket;
+
 private:
 
     ConfigParser _cfg;
