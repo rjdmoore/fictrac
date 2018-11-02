@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 	/// Parse args.
 	string log_level = "info";
 	string config_fn = "config.txt";
+    bool should_exit_when_done = false;
 	for (int i = 1; i < argc; ++i) {
 		if ((string(argv[i]) == "--verbosity") || (string(argv[i]) == "-v")) {
 			if (++i < argc) {
@@ -39,6 +40,9 @@ int main(int argc, char *argv[])
 				return -1;
 			}
 		}
+        else if((string(argv[i]) == "--exit_when_done") || (string(argv[i]) == "-e")) {
+            should_exit_when_done = true;
+        }
 		else {
             config_fn = argv[i];
 		}
@@ -68,7 +72,10 @@ int main(int argc, char *argv[])
     //tracker.printState();
     tracker.writeTemplate();
 
-    PRINT("\n\nHit ENTER to exit..");
-    getchar_clean();
+    if(!should_exit_when_done) {
+        PRINT("\n\nHit ENTER to exit..");
+        getchar_clean();
+    }
+    
     return 0;
 }
