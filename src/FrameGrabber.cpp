@@ -102,6 +102,8 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
         // mutex unlocked in unique_lock dstr
         return false;
     }
+    
+    // must be frame_q.size() > 0 to get here (can be !_active)
 
     if ((n != _remap_q.size()) || (n != _ts_q.size())) {
         LOG_ERR("Error! Input processed frame queues are misaligned!");
@@ -338,10 +340,10 @@ void FrameGrabber::process()
         _remap_q.push_back(remap_grey);
         _ts_q.push_back(timestamp);
         _qCond.notify_all();
-
-        LOG_DBG("Processed frame added to input queue (l = %d).", _frame_q.size());
-
+        int q_size = _frame_q.size();
         l.unlock();
+        
+        LOG_DBG("Processed frame added to input queue (l = %d).", q_size);
     }
 
     LOG_DBG("Stopping frame grabbing loop!");

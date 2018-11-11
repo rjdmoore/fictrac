@@ -178,7 +178,7 @@ ConfigGui::ConfigGui(string config_fn)
             // then try loading as video file
             source = std::make_shared<CVSource>(input_fn);
         }
-#else // PGR_USB3
+#else // !PGR_USB3
         source = std::make_shared<CVSource>(input_fn);
 #endif // PGR_USB3
         if (!source->isOpen()) {

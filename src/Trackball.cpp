@@ -31,8 +31,8 @@
 #include <exception>
 
 using std::string;
-using std::unique_ptr;
-using std::shared_ptr;
+using std::make_unique;
+using std::make_shared;
 using std::unique_lock;
 using std::lock_guard;
 using std::mutex;
@@ -98,16 +98,16 @@ Trackball::Trackball(string cfg_fn)
 
     /// Open frame source and set fps.
     string src_fn = _cfg("src_fn");
-    shared_ptr<FrameSource> source;
+    std::shared_ptr<FrameSource> source;
 #ifdef PGR_USB3
     try {
         // first try reading input as camera id
         int id = std::stoi(src_fn);
-        source = std::make_shared<PGRSource>(id);
+        source = make_shared<PGRSource>(id);
     }
     catch (...) {
         // then try loading as video file
-        source = std::make_shared<CVSource>(src_fn);
+        source = make_shared<CVSource>(src_fn);
     }
 #else // PGR_USB3
     source = std::make_shared<CVSource>(src_fn);
@@ -186,7 +186,7 @@ Trackball::Trackball(string cfg_fn)
             _r_d_ratio = sin(_sphere_rad);
 
             /// Allow sphere region in mask.
-            shared_ptr<vector<Point2i>> int_circ = projCircleInt(_src_model, _sphere_c, _sphere_rad);
+            auto int_circ = projCircleInt(_src_model, _sphere_c, _sphere_rad);
             cv::fillConvexPoly(src_mask, *int_circ, CV_RGB(255, 255, 255));
 
             /// Mask out ignore regions.
@@ -349,28 +349,19 @@ Trackball::Trackball(string cfg_fn)
     }
 
     /// Init optimisers.
-    _localOpt = unique_ptr<Localiser>(new Localiser(
+    _localOpt = make_unique<Localiser>(
         NLOPT_LN_BOBYQA, bound, tol, max_evals,
         _sphere_model, _sphere_map,
-        _roi_mask, _p1s_lut));
+        _roi_mask, _p1s_lut);
 
-    _globalOpt = unique_ptr<Localiser>(new Localiser(
+    _globalOpt = make_unique<Localiser>(
         NLOPT_GN_CRS2_LM, CM_PI, tol, 1e5,
         _sphere_model, _sphere_map,
-        _roi_mask, _p1s_lut));
-
-    /// Frame source.
-    _frameGrabber = unique_ptr<FrameGrabber>(new FrameGrabber(
-        source,
-        remapper,
-        _roi_mask,
-        thresh_ratio,
-        thresh_win_pc
-    ));
+        _roi_mask, _p1s_lut);
 
     /// Output.
     string data_fn = _base_fn + "-" + execTime() + ".dat";
-    _log = unique_ptr<Recorder>(new Recorder(RecorderInterface::RecordType::FILE, data_fn));
+    _log = make_unique<Recorder>(RecorderInterface::RecordType::FILE, data_fn);
 
     /// Display.
     _do_display = DO_DISPLAY_DEFAULT;
@@ -415,6 +406,15 @@ Trackball::Trackball(string cfg_fn)
         }
     }
 
+    /// Frame source.
+    _frameGrabber = std::make_unique<FrameGrabber>(
+        source,
+        remapper,
+        _roi_mask,
+        thresh_ratio,
+        thresh_win_pc
+    );
+
     /// Write all parameters back to config file.
     _cfg.write();
 
@@ -429,10 +429,10 @@ Trackball::Trackball(string cfg_fn)
     _active = true;
 
     if (_do_display) {
-        _drawThread = unique_ptr<std::thread>(new std::thread(&Trackball::processDrawQ, this));
+        _drawThread = make_unique<std::thread>(&Trackball::processDrawQ, this);
     }
     // main processing thread
-    _thread = unique_ptr<std::thread>(new std::thread(&Trackball::process, this));
+    _thread = make_unique<std::thread>(&Trackball::process, this);
 }
 
 ///
@@ -550,7 +550,7 @@ void Trackball::process()
         }
 
         if (_do_display) {
-            shared_ptr<DrawData> data = shared_ptr<DrawData>(new DrawData());
+            auto data = make_shared<DrawData>();
             data->src_frame = _src_frame.clone();
             data->roi_frame = _roi_frame.clone();
             data->sphere_map = _sphere_map.clone();
@@ -1042,7 +1042,7 @@ void makeSphereRotMaps(
 ///
 ///
 ///
-bool Trackball::updateCanvasAsync(shared_ptr<DrawData> data)
+bool Trackball::updateCanvasAsync(std::shared_ptr<DrawData> data)
 {
     bool ret = false;
     lock_guard<mutex> l(_drawMutex);
@@ -1077,7 +1077,7 @@ void Trackball::processDrawQ()
         if (!_active) { break; }
 
         /// Retrieve data.
-        shared_ptr<DrawData> data = _drawQ.back();
+        auto data = _drawQ.back();
 
         /// Clear all other frames (only draw latest available).
         if (_drawQ.size() > 1) {
@@ -1100,7 +1100,7 @@ void Trackball::processDrawQ()
 ///
 ///
 ///
-void Trackball::drawCanvas(shared_ptr<DrawData> data)
+void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
 {
     static Mat canvas(3 * DRAW_CELL_DIM, 4 * DRAW_CELL_DIM, CV_8UC3);
     canvas.setTo(Scalar::all(0));
