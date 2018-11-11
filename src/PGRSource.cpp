@@ -10,6 +10,8 @@
 
 #include "Logger.h"
 
+#include "SpinGenApi/SpinnakerGenApi.h"
+
 using namespace Spinnaker;
 using cv::Mat;
 
@@ -35,7 +37,7 @@ PGRSource::PGRSource(int index)
             return;
         }
         else {
-            LOG_DBG("Found %d PGR cameras.", numCameras);
+            LOG_DBG("Found %d PGR cameras. Connecting to camera %d..", numCameras, index);
         }
 
         // Select camera
@@ -43,6 +45,34 @@ PGRSource::PGRSource(int index)
 
         // Initialize camera
         _cam->Init();
+
+        // set acquisition mode - needed?
+        {
+            // Retrieve GenICam nodemap
+            Spinnaker::GenApi::INodeMap& nodeMap = _cam->GetNodeMap();
+
+            // Retrieve enumeration node from nodemap
+            Spinnaker::GenApi::CEnumerationPtr ptrAcquisitionMode = nodeMap.GetNode("AcquisitionMode");
+            if (!IsAvailable(ptrAcquisitionMode) || !IsWritable(ptrAcquisitionMode)) {
+                LOG_ERR("Unable to set acquisition mode to continuous (enum retrieval)!");
+                return;
+            }
+
+            // Retrieve entry node from enumeration node
+            Spinnaker::GenApi::CEnumEntryPtr ptrAcquisitionModeContinuous = ptrAcquisitionMode->GetEntryByName("Continuous");
+            if (!IsAvailable(ptrAcquisitionModeContinuous) || !IsReadable(ptrAcquisitionModeContinuous)) {
+                LOG_ERR("Unable to set acquisition mode to continuous (entry retrieval)!");
+                return;
+            }
+
+            // Retrieve integer value from entry node
+            int64_t acquisitionModeContinuous = ptrAcquisitionModeContinuous->GetValue();
+
+            // Set integer value from entry node as new value of enumeration node
+            ptrAcquisitionMode->SetIntValue(acquisitionModeContinuous);
+
+            LOG_DBG("Acquisition mode set to continuous.");
+        }
 
         // Begin acquiring images
         _cam->BeginAcquisition();
@@ -63,6 +93,21 @@ PGRSource::PGRSource(int index)
     catch (...) {
         LOG_ERR("Error opening capture device!");
     }
+}
+
+PGRSource::~PGRSource()
+{
+    if (_open) {
+        _cam->EndAcquisition();
+        _open = false;
+    }
+    _cam = NULL;
+
+    // Clear camera list before releasing system
+    _camList.Clear();
+
+    // Release system
+    _system->ReleaseInstance();
 }
 
 double PGRSource::getFPS()
@@ -96,38 +141,30 @@ bool PGRSource::grab(cv::Mat& frame)
             pgr_image->Release();
             return false;
         }
-
-        // Convert image
-        ImagePtr bgr_image = pgr_image->Convert(PixelFormat_BGR8, NEAREST_NEIGHBOR);
-
-        // We have to release our original image to clear space on the buffer
-        pgr_image->Release();
-
-        Mat tmp(_height, _width, CV_8UC3, bgr_image->GetData(), bgr_image->GetStride());
-        tmp.copyTo(frame);
-
-        return true;
     }
     catch (Spinnaker::Exception& e) {
         LOG_ERR("Error grabbing PGR frame! Error was: %s", e.what());
         pgr_image->Release();
         return false;
     }
-}
 
-PGRSource::~PGRSource()
-{
-	if( _open ) {
-        _cam->EndAcquisition();
-        _open = false;
-	}
-    _cam = NULL;
-	
-    // Clear camera list before releasing system
-    _camList.Clear();
+    try {
+        // Convert image
+        ImagePtr bgr_image = pgr_image->Convert(PixelFormat_BGR8, NEAREST_NEIGHBOR);
 
-    // Release system
-    _system->ReleaseInstance();
+        Mat tmp(_height, _width, CV_8UC3, bgr_image->GetData(), bgr_image->GetStride());
+        tmp.copyTo(frame);
+
+        // We have to release our original image to clear space on the buffer
+        pgr_image->Release();
+
+        return true;
+    }
+    catch (Spinnaker::Exception& e) {
+        LOG_ERR("Error converting PGR frame! Error was: %s", e.what());
+        pgr_image->Release();
+        return false;
+    }
 }
 
 #endif // PGR_USB3
