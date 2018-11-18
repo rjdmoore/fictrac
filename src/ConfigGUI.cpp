@@ -422,7 +422,7 @@ bool ConfigGui::run()
     const char exit_key = 0x1b;
 #ifdef WIN32
     const char enter_key = 0x0d;
-#else // WIN32
+#else // !WIN32
     const char enter_key = 0x0a;
 #endif // WIN32
     const int click_rad = std::max(int(_w/150+0.5), 5);
@@ -470,7 +470,7 @@ bool ConfigGui::run()
                 /// Draw fitted circumference.
                 if (r > 0) {
                     drawCircle_camModel(disp_frame, _cam_model, c, r, Scalar(255,0,0), false);
-                            
+        
                     /// Display.
                     cv::imshow("configGUI", disp_frame);
                     cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
@@ -480,7 +480,7 @@ bool ConfigGui::run()
                     // input loop
                     while (true) {
                         cv::waitKey(100);   //FIXME: dirty hack - sometimes image doesn't draw, at least with this line we can just mash keys until it does
-                        printf("\n  Would you like to keep the existing spherer ROI configuration ([y]/n)? ");
+                        printf("\n  Would you like to keep the existing sphere ROI configuration ([y]/n)? ");
                         in = getchar();
                         switch (in)
                         {
