@@ -61,22 +61,21 @@ void Logger::mprintf(LogLevel lvl, string func, string format, ...)
     // not re-entrant
     lock_guard<mutex> l1(log._pMutex);
 
+    // expand args
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buf, buf_size, format.c_str(), args);
+    va_end(args);
+
     // print and log
     if ((int)lvl >= (int)verbosity()) {
-        
-        // expand args
-        va_list args;
-        va_start(args, format);
-        vsnprintf(buf, buf_size, format.c_str(), args);
-        va_end(args);
-
         // async printing to console
         log._cout->addMsg(string(buf) + "\n");
+    }
 
-        // don't log display text to file
-        if (lvl != PRT) {
-            // async logging to file (with additional info)
-            log._log->addMsg(to_string(elapsed_secs()) + " " + func + " [" + log.LogLevelStrings[lvl] + "] " + buf + "\n");
-        }
+    // don't log display text to file (but log everything else)
+    if (lvl != PRT) {
+        // async logging to file (with additional info)
+        log._log->addMsg(to_string(elapsed_secs()) + " " + func + " [" + log.LogLevelStrings[lvl] + "] " + buf + "\n");
     }
 }
