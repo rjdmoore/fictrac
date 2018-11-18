@@ -71,20 +71,20 @@ int ConfigParser::read(string fn)
         }
 
         /// Tokenise
-        const string whitespace = ", \t\n\r";
+        const string whitespace = ", \t\n";
         std::size_t delim = line.find(":");
         if (delim >= line.size()) { continue; } // skip blank lines
         string key = line.substr(0, line.find_last_not_of(whitespace, delim - 1) + 1), val = "";
         try {
             val = line.substr(line.find_first_not_of(whitespace, delim + 1));
-            //val.erase(std::remove(val.begin(), val.end(), '\r'), val.end());    // remove /r under linux
+            val.erase(std::remove(val.begin(), val.end(), '\r'), val.end());    // remove /r under linux
         }
         catch (...) {}  // add blank values
 
         /// Add to map
         _data[key] = val;
 
-        LOG_DBG("Extracted key: %s  val: %s", key.c_str(), val.c_str());
+        LOG_DBG("Extracted key: |%s|  val: |%s|", key.c_str(), val.c_str());
     }
 
     /// Clean up
@@ -124,9 +124,11 @@ int ConfigParser::write(string fn)
     }
 
     /// Write comments
-    f << std::endl;
-    for (auto c : _comments) {
-        f << c << std::endl;
+    if (_comments.size() > 0) {
+        f << std::endl;
+        for (auto c : _comments) {
+            f << c << std::endl;
+        }
     }
 
     /// Clean up
