@@ -16,16 +16,16 @@ You might also be interested in the following links:
 * [Demo video](http://youtu.be/BeGYOEOdWjw) - Quick (30s) overview of what FicTrac does and how it works.
 * [FicTrac manual](http://link) - Detailed instructions, description of output data, parameters, recommendations, etc.
 * [Homepage](http://fictrac.rjdmoore.net) - Contact details for the main author/developer, links, and further info.
-* [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for FicTrac users to share issues and advice.
+* [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for faqs, support, advice, discussions, etc.
 * [Mailing list](http://fictrac.rjdmoore.net/mail.html) - Subscribe to receive important announcements and updates.
 
 Happy tracking!
 
 ## Getting started
 
-If you're just setting up your lab, or wondering whether FicTrac is suitable for your setup (spoiler: yes, probably), check the [section below](#hardware-requirements) for the basic requirements.
+If you're just setting up your lab, or wondering whether FicTrac is suitable for your setup (spoiler: yes, probably), check the [hardware requirements section below](#hardware-requirements) for the basic requirements.
 
-If you already have an experimental enclosure with a camera, you can use FicTrac to either process those videos offline or to run live from the camera. Just follow the sections below to [install](#installation), [configure](#configuration), and [run FicTrac](#running-fictrac).
+If you already have an experimental enclosure with a camera, you can use FicTrac to either process recorded videos offline or to run live from the camera. Skip ahead to [install](#installation), [configure](#configuration), and [run FicTrac](#running-fictrac).
 
 ### Hardware requirements
 
@@ -66,7 +66,7 @@ cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\bu
 ```
 5. Finally, build and install FicTrac:
 ```
-cmake --build . --config Release --target ALL_BUILD
+cmake --build . --config Release -j 4
 ```
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
@@ -90,7 +90,7 @@ cmake ..
 ```
 4. Finally, build and install FicTrac:
 ```
-make -j4
+cmake --build . --config Release -- -j 4
 ```
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
