@@ -37,6 +37,7 @@ public:
     ~Trackball();
 
     bool isActive() { return _active; }
+    void terminate() { _kill = true; }
     void printState();
     bool writeTemplate(std::string fn = "");
 
@@ -129,6 +130,6 @@ private:
     std::unique_ptr<Recorder> _log;
 
     /// Thread stuff.
-    std::atomic_bool _active;
+    std::atomic_bool _active, _kill;
     std::unique_ptr<std::thread> _thread;
 };

@@ -11,8 +11,13 @@
 #include "fictrac_version.h"
 
 #include <string>
+#include <csignal>
 
 using std::string;
+
+/// Ctrl-c handling
+bool _active = true;
+void ctrlcHandler(int /*signum*/) { _active = false; }
 
 
 int main(int argc, char *argv[])
@@ -47,8 +52,8 @@ int main(int argc, char *argv[])
     /// Set logging level.
     Logger::setVerbosity(log_level);
 
-	//// Catch cntl-c
-	//signal(SIGINT, TERMINATE);
+	// Catch cntl-c
+    signal(SIGINT, ctrlcHandler);
 
 	/// Set high priority (when run as SU).
     if (!SetProcessHighPriority()) {
@@ -63,12 +68,17 @@ int main(int argc, char *argv[])
     SetThreadNormalPriority();
 
     // wait for tracking to finish
-    while (tracker.isActive()) { sleep(500); }
+    while (tracker.isActive()) {
+        if (!_active) {
+            tracker.terminate();
+        }
+        sleep(250);
+    }
 
     //tracker.printState();
     tracker.writeTemplate();
 
-    PRINT("\n\nHit ENTER to exit..");
-    getchar_clean();
+    //PRINT("\n\nHit ENTER to exit..");
+    //getchar_clean();
     return 0;
 }

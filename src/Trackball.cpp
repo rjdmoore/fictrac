@@ -87,7 +87,7 @@ bool intersectSphere(const double camVec[3], double sphereVec[3], const double r
 /// 
 ///
 Trackball::Trackball(string cfg_fn)
-    : _init(false), _reset(true), _clean_map(true), _active(true)
+    : _init(false), _reset(true), _clean_map(true), _active(true), _kill(false)
 {
     /// Load and parse config file.
     if (_cfg.read(cfg_fn) <= 0) {
@@ -109,7 +109,7 @@ Trackball::Trackball(string cfg_fn)
         // then try loading as video file
         source = make_shared<CVSource>(src_fn);
     }
-#else // PGR_USB3
+#else // !PGR_USB3
     source = std::make_shared<CVSource>(src_fn);
 #endif // PGR_USB3
     if (!source->isOpen()) {
@@ -511,7 +511,7 @@ void Trackball::process()
     double t1, t2, t3, t4, t5, t6;
     double t1avg = 0, t2avg = 0, t3avg = 0, t4avg = 0, t5avg = 0, t6avg = 0;
     double tfirst = -1, tlast = 0;
-    while (_active && _frameGrabber->getNextFrameSet(_src_frame, _roi_frame, _ts)) {
+    while (!_kill && _active && _frameGrabber->getNextFrameSet(_src_frame, _roi_frame, _ts)) {
         t1 = ts_ms();
 
         PRINT("");
@@ -519,11 +519,8 @@ void Trackball::process()
 
         /// Localise current view of sphere.
         if (!doSearch(_global_search)) {
-            t2 = ts_ms();
-            t3 = ts_ms();
-            t4 = ts_ms();
-            t5 = ts_ms();
-            LOG_ERR("Error! Could not match current sphere orientation to within error threshold (%f).\nNo data will be output for this frame!", _error_thresh);
+            t2 = t3 = t4 = t5 = ts_ms();
+            LOG_WRN("Warning! Could not match current sphere orientation to within error threshold (%f).\nNo data will be output for this frame!", _error_thresh);
             nbad++;
         }
         else {
@@ -584,7 +581,7 @@ void Trackball::process()
         fps_avg += 0.25 * (fps_out - fps_avg);
         static double prev_ts = _ts;
         double fps_in = (_ts - prev_ts) > 0 ? 1000 / (_ts - prev_ts) : 0;
-        LOG("Average frame rate [curr input / output]: %.1f [%.1f / %.1f] fps", fps_avg, fps_in, fps_out);
+        LOG("Average frame rate [in/out]: %.1f [%.1f / %.1f] fps", fps_avg, fps_in, fps_out);
         prev_t6 = t6;
         prev_ts = _ts;
 
@@ -601,15 +598,16 @@ void Trackball::process()
     _frameGrabber->terminate();     // make sure we've stopped grabbing frames as well
 
     if (_cnt > 1) {
-        PRINT("");
-        LOG("Trackball timing");
+        PRINT("\n----------------------------------------------------------------------------");
+        LOG("Trackball timing:");
         LOG("Average grab/opt/map/plot/log/disp time: %.1f / %.1f / %.1f / %.1f / %.1f / %.1f ms",
             t1avg / (_cnt - 1), t2avg / (_cnt - 1), t3avg / (_cnt - 1), t4avg / (_cnt - 1), t5avg / (_cnt - 1), t6avg / (_cnt - 1));
         LOG("Average fps: %.2f", 1000. * (_cnt - 1) / (tlast - tfirst));
 
         PRINT("");
-        LOG("Optimiser test data.");
+        LOG("Optimiser test data:");
         LOG("Average number evals / frame: %.1f", _evals_avg / (_cnt - 1));
+        PRINT("----------------------------------------------------------------------------");
     }
 
     _active = false;
@@ -1291,7 +1289,7 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
     uint16_t key = cv::waitKey(1);
     if (key == 0x1B) {  // esc
         LOG("Exiting..");
-        _active = false;
+        terminate();
     }
 
     if (_save_raw) {
