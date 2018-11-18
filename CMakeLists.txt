@@ -13,7 +13,7 @@ configure_file (
 
 # dependency search dirs
 set(OPENCV_DIR "." CACHE PATH "Path to OpenCV folder containing OpenCVConfig.cmake")
-set(NLOPT_DIR "." CACHE PATH "Path to NLOpt folder containing libnlopt-0.lib")
+set(NLOPT_DIR "." CACHE PATH "Path to NLopt folder containing libnlopt-0.lib")
 
 # output dirs
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -47,14 +47,19 @@ else()  # gcc
 endif()
 get_filename_component(NLOPT_DIR ${NLOPT_LIB} DIRECTORY)
 if(NLOPT_LIB)
-    message(STATUS "Found NLOpt lib ${NLOPT_LIB}")
+    message(STATUS "Found NLopt lib ${NLOPT_LIB}")
     if(MSVC)
         message(STATUS "You might need to add ${NLOPT_DIR} to your PATH to be able to run the executable.")
     endif()
 else()
-    message(FATAL_ERROR "Error! Could not find NLOpt lib at ${NLOPT_DIR}!")
+    message(FATAL_ERROR "Error! Could not find NLopt lib at ${NLOPT_DIR}!")
 endif()
 if(PGR_USB3)
+    get_filename_component(PGR_DIR ${PGR_LIB} DIRECTORY)
+    get_filename_component(PGR_DIR ${PGR_DIR} DIRECTORY)    # step up 1 level
+    if(MSVC)
+        get_filename_component(PGR_DIR ${PGR_DIR} DIRECTORY)    # step up 1 level
+    endif()
     if(PGR_LIB)
         message(STATUS "Found PGR Spinnaker lib ${PGR_LIB}")
     else()
@@ -65,8 +70,11 @@ endif()
 # add include dirs
 include_directories(${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${NLOPT_DIR})
 if(PGR_USB3)
-    include_directories(${PGR_DIR}/include)
-    include_directories(${PGR_DIR}/include/spinnaker)
+    if(MSVC)
+        include_directories(${PGR_DIR}/include)
+    else()
+        include_directories(${PGR_DIR}/include/spinnaker)   # for ubuntu default install dir
+    endif()
 endif()
 
 # find sources to build
