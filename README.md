@@ -101,8 +101,8 @@ If you are using a USB3 camera and are receiving error messages when FicTrac tri
 
 ##### PGR (FLIR) Spinnaker SDK
 
-1. Download and install the Spinnaker SDK from [PGR downloads page](https://www.ptgrey.com/support/downloads). First select your camera model and operating system, and then download and install the latest Spinnaker SDK release.
-2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a [Windows installation](#windows-installation) you would replace step 4 with:
+1. Download and install the Spinnaker SDK from [PGR downloads page](https://www.ptgrey.com/support/downloads).
+2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a [Windows installation](#windows-installation) you would replace step 4 with (replace \path\to with your correct local path):
 ```
 cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\build" -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
 ```
@@ -113,60 +113,24 @@ Before running FicTrac, you may configure your camera (frame rate, resolution, e
 ### Configuration
 
 There are two neccessary steps to configure FicTrac prior to running the program:
-1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0). **The vertical field of view for your camera/lens must be specified accurately.** If `vfov` is incorrect, the surface map created by FicTrac will not wrap around the sphere correctly, and tracking will fail. An example config file is provided in the `sample` directory under the FicTrac project folder; you can use this file as a template to write your own config file.
-2. You must run the interactive configuration program (configGui), passing the path to your config file (above) as an argument. This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference. **It is important that the camera is not moved after running the configuration utility. If the camera is moved, you must reconfigure.** After running the configuration utility, your config file will have some additional default parameters added automatically.
+1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0). You will find an example config file in the `sample` directory.
+2. You must run the interactive configuration program (configGui). This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference.
 
 A more detailed guide for configuring FicTrac for your setup, as well as a complete list and explanation of parameters that can be specified, can be found in the [FicTrac manual]().
 
-The commands for running the configuration utility under Windows and Ubuntu (Linux) are almost identical. Simply open a terminal in the FicTrac project folder and type:
-
-#### Windows
-```
-.\bin\Release\configGui.exe path\to\config.txt
-```
-
-#### Ubuntu (Linux)
-```
-./bin/configGui path/to/config.txt
-```
-
 ### Running FicTrac
 
-Once you have configured FicTrac for your setup, you may run FicTrac simply by opening a terminal in the FicTrac project folder and typing:
+To run FicTrac on the provided sample data, simply open a terminal in the FicTrac project folder and type:
 
-#### Windows
-```
-.\bin\Release\fictrac.exe path\to\config.txt
-```
-
-#### Ubuntu (Linux)
-We execute as super user so that we can set the FicTrac process to higher priority than other system processes.
-```
-sudo ./bin/fictrac path/to/config.txt
-```
-
-### Process sample data
-
-After you have build FicTrac, you can process the sample data set to make sure everything is running fine. Simply open a terminal in the FicTrac project folder and type:
-
-#### Windows
 ```
 cd sample
-..\bin\Release\configGui.exe config.txt
+[Windows] ..\bin\Release\configGui.exe config.txt
+[Linux] ../bin/configGui config.txt
 ```
 The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok. Then, in the same terminal window, type:
 ```
-..\bin\Release\fictrac.exe config.txt
-```
-
-#### Ubuntu (Linux)
-```
-cd sample
-../bin/configGui config.txt
-```
-The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok. Then, in the same terminal window, type:
-```
-sudo ../bin/Release/fictrac.exe config.txt
+[Windows] ..\bin\Release\fictrac.exe config.txt
+[Linux] sudo ../bin/fictrac config.txt
 ```
 
 ## Research
