@@ -102,7 +102,7 @@ If you are using a USB3 camera and are receiving error messages when FicTrac tri
 ##### PGR (FLIR) Spinnaker SDK
 
 1. Download and install the Spinnaker SDK from [PGR downloads page](https://www.ptgrey.com/support/downloads).
-2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a [Windows installation](#windows-installation) you would replace step 4 with (replace \path\to with your correct local path):
+2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a [Windows installation](#windows-installation) you would replace step 4 with:
 ```
 cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\build" -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
 ```
@@ -112,7 +112,7 @@ Before running FicTrac, you may configure your camera (frame rate, resolution, e
 
 ### Configuration
 
-There are two neccessary steps to configure FicTrac prior to running the program:
+There are two necessary steps to configure FicTrac prior to running the program:
 1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0). You will find an example config file in the `sample` directory.
 2. You must run the interactive configuration program (configGui). This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference.
 
