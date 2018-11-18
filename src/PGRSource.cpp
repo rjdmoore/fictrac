@@ -9,6 +9,7 @@
 #include "PGRSource.h"
 
 #include "Logger.h"
+#include "timing.h"
 
 #include "SpinGenApi/SpinnakerGenApi.h"
 
@@ -80,7 +81,7 @@ PGRSource::PGRSource(int index)
         // Get some params
         _width = _cam->Width();
         _height = _cam->Height();
-        _fps = _cam->AcquisitionFrameRate();
+        _fps = getFPS();
 
         LOG("PGR camera initialised (%dx%d @ %.3f fps)!", _width, _height, _fps);
 
@@ -112,14 +113,24 @@ PGRSource::~PGRSource()
 
 double PGRSource::getFPS()
 {
-    // do nothing
-    return _fps;
+    double fps = _fps;
+    if (_open) {
+        fps = _cam->AcquisitionResultingFrameRate();
+    }
+    return fps;
 }
 
 bool PGRSource::setFPS(double fps)
 {
-    _fps = fps;
-    return false;
+    bool ret = false;
+    if (_open && (fps > 0)) {
+        _cam->AcquisitionFrameRateEnable.SetValue(true);
+        _cam->AcquisitionFrameRate.SetValue(fps);
+        _fps = getFPS();
+        LOG("Device frame rate is now %.2f", _fps);
+        ret = true;
+    }
+    return ret;
 }
 
 bool PGRSource::grab(cv::Mat& frame)
@@ -132,7 +143,11 @@ bool PGRSource::grab(cv::Mat& frame)
         // Retrieve next received image
         long int timeout = _fps > 0 ? std::max(static_cast<long int>(1000), static_cast<long int>(1000. / _fps)) : 1000; // set capture timeout to at least 1000 ms
         pgr_image = _cam->GetNextImage(timeout);
+        double ts = static_cast<double>(ts_ms());    // backup, in case the device timestamp is junk
         _timestamp = _cam->Timestamp();
+        if (_timestamp <= 0) {
+            _timestamp = ts;
+        }
 
         // Ensure image completion
         if (pgr_image->IsIncomplete()) {

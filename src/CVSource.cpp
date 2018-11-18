@@ -74,10 +74,11 @@ CVSource::~CVSource()
 ///
 double CVSource::getFPS()
 {
+    double fps = _fps;
     if (_open) {
-        _fps = _cap->get(cv::CAP_PROP_FPS);
+        fps = _cap->get(cv::CAP_PROP_FPS);
     }
-    return _fps;
+    return fps;
 }
 
 ///
@@ -87,11 +88,11 @@ bool CVSource::setFPS(double fps)
 {
     bool ret = false;
     if (_open && (fps > 0)) {
-        _fps = fps;
-        if (!_cap->set(cv::CAP_PROP_FPS, _fps)) {
-            LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%.2f).", _fps);
+        if (!_cap->set(cv::CAP_PROP_FPS, fps)) {
+            LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%.2f).", fps);
         }
-        else { ret = true; }
+        _fps = getFPS();
+        LOG("Device frame rate is now %.2f", _fps);
     }
     return ret;
 }
