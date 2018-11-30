@@ -5,7 +5,7 @@ c2a_src          : c2a_cnrs_xy
 c2a_t            : { -0.674395, 0.389373, 2.889647 }
 do_display       : y
 max_bad_frames   : -1
-opt_bound        : 0.25
+opt_bound        : 0.35
 opt_do_global    : n
 opt_max_err      : -1.000000
 opt_max_evals    : 50
@@ -16,6 +16,7 @@ roi_circ         : { 63, 171, 81, 145, 106, 135, 150, 160 }
 roi_ignr         : { { 96, 156, 113, 147, 106, 128, 82, 130, 81, 150 }, { 71, 213, 90, 219, 114, 218, 135, 211, 154, 196, 150, 217, 121, 228, 99, 234, 75, 225 } }
 roi_r            : 0.124815
 save_debug       : n
+save_raw         : n
 src_fn           : sample.mp4
 src_fps          : -1.000000
 thr_ratio        : 1.25

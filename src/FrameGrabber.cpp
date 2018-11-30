@@ -43,7 +43,7 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
     _rh = _remapper->getDstH();
 
     /// Thresholding.
-    if (thresh_ratio < 0) {
+    if (thresh_ratio <= 0) {
         LOG_WRN("Invalid thresh_ratio parameter (%f)! Defaulting to 1.0", thresh_ratio);
         thresh_ratio = 1.0;
     }

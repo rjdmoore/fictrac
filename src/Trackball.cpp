@@ -50,7 +50,7 @@ const int DRAW_FICTIVE_PATH_LENGTH = 1000;
 
 const int Q_FACTOR_DEFAULT = 6;
 const double OPT_TOL_DEFAULT = 1e-3;
-const double OPT_BOUND_DEFAULT = 0.25;
+const double OPT_BOUND_DEFAULT = 0.35;
 const int OPT_MAX_EVAL_DEFAULT = 50;
 const bool OPT_GLOBAL_SEARCH_DEFAULT = false;
 const int OPT_MAX_BAD_FRAMES_DEFAULT = -1;
@@ -118,7 +118,7 @@ Trackball::Trackball(string cfg_fn)
         return;
     }
     double src_fps = -1;
-    if (_cfg.getDbl("src_fps", src_fps) && (src_fps >= 0)) {
+    if (_cfg.getDbl("src_fps", src_fps) && (src_fps > 0)) {
         LOG("Setting source fps = %.2f..", src_fps);
         source->setFPS(src_fps);
     }
@@ -138,7 +138,7 @@ Trackball::Trackball(string cfg_fn)
 
     /// Source camera model.
     double vfov = -1;
-    if (!_cfg.getDbl("vfov", vfov) || vfov <= 0) {
+    if (!_cfg.getDbl("vfov", vfov) || (vfov <= 0)) {
         LOG_ERR("Error! Camera vertical FoV parameter specified in the config file (vfov) is invalid!");
         _active = false;
         return;
@@ -148,11 +148,11 @@ Trackball::Trackball(string cfg_fn)
 
     /// Dimensions - quality defaults to 6 (remap_dim 60x60, sphere_dim 180x90).
     int q_factor = Q_FACTOR_DEFAULT;
-    if (!_cfg.getInt("q_factor", q_factor)) {
+    if (!_cfg.getInt("q_factor", q_factor) || (q_factor <= 0)) {
         LOG_WRN("Warning! Resolution parameter specified in the config file (q_factor) is invalid! Using default value (%d).", q_factor);
         _cfg.add("q_factor", q_factor);
     }
-    _roi_w = _roi_h = 10 * q_factor;
+    _roi_w = _roi_h = std::min(10 * q_factor,source->getWidth());
     _map_h = static_cast<int>(1.5 * _roi_h);
     _map_w = 2 * _map_h;
 
@@ -308,17 +308,17 @@ Trackball::Trackball(string cfg_fn)
 
     /// Read config params.
     double tol = OPT_TOL_DEFAULT;
-    if (!_cfg.getDbl("opt_tol", tol)) {
+    if (!_cfg.getDbl("opt_tol", tol) || (tol <= 0)) {
         LOG_WRN("Warning! Using default value for opt_tol (%f).", tol);
         _cfg.add("opt_tol", tol);
     }
     double bound = OPT_BOUND_DEFAULT;
-    if (!_cfg.getDbl("opt_bound", bound)) {
+    if (!_cfg.getDbl("opt_bound", bound) || (bound <= 0)) {
         LOG_WRN("Warning! Using default value for opt_bound (%f).", bound);
         _cfg.add("opt_bound", bound);
     }
     int max_evals = OPT_MAX_EVAL_DEFAULT;
-    if (!_cfg.getInt("opt_max_evals", max_evals)) {
+    if (!_cfg.getInt("opt_max_evals", max_evals) || (max_evals <= 0)) {
         LOG_WRN("Warning! Using default value for opt_max_eval (%d).", max_evals);
         _cfg.add("opt_max_evals", max_evals);
     }
@@ -333,7 +333,7 @@ Trackball::Trackball(string cfg_fn)
         _cfg.add("max_bad_frames", _max_bad_frames);
     }
     _error_thresh = -1;
-    if (!_cfg.getDbl("opt_max_err", _error_thresh) || _error_thresh < 0) {
+    if (!_cfg.getDbl("opt_max_err", _error_thresh) || (_error_thresh < 0)) {
         LOG_WRN("Warning! No optimisation error threshold specified in config file (opt_max_err) - poor matches will not be dropped!");
         _cfg.add("opt_max_err", _error_thresh);
     }
