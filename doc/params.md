@@ -23,13 +23,13 @@ In the table below, the various possible parameters are listed. If nothing is li
 | opt_bound  | float      | 0.35          | (0,inf)     | Probably not       | Specifies the optimisation search range in radians. Larger values will facilitate more track ball rotation per frame, but result in slower tracking and also possibly lead to false matches. |
 | opt_tol    | float      | 0.001         | (0,inf)     | Probably not       | Specifies the minimisation termination criteria for absolute change in input parameters (delta rotation vector). |
 |            |            |               |             |                    |             |
-| c2a_cnrs_xy | vector\<int> |             |             | Set by ConfigGui   | Specifies the corners {X1,Y1,X2,Y2,...} of a square shape aligned with the animal's XY axes. Set interactively in ConfigGUI. |
-| c2a_cnrs_yz | vector\<int> |             |             | Set by ConfigGui   | Specifies the corners {X1,Y1,X2,Y2,...} of a square shape aligned with the animal's YZ axes. Set interactively in ConfigGUI. |
-| c2a_cnrs_xz | vector\<int> |             |             | Set by ConfigGui   | Specifies the corners {X1,Y1,X2,Y2,...} of a square shape aligned with the animal's XZ axes. Set interactively in ConfigGUI. |
+| c2a_cnrs_xy | vec\<int> |             |             | Set by ConfigGui   | Specifies the corners {X1,Y1,X2,Y2,...} of a square shape aligned with the animal's XY axes. Set interactively in ConfigGUI. |
+| c2a_cnrs_yz | vec\<int> |             |             | Set by ConfigGui   | Specifies the corners {X1,Y1,X2,Y2,...} of a square shape aligned with the animal's YZ axes. Set interactively in ConfigGUI. |
+| c2a_cnrs_xz | vec\<int> |             |             | Set by ConfigGui   | Specifies the corners {X1,Y1,X2,Y2,...} of a square shape aligned with the animal's XZ axes. Set interactively in ConfigGUI. |
 | c2a_src    | string     |               |             | Set by ConfigGui   | Specifies which of the above corner sets is used to compute the camera-animal transform. Set interactively in ConfigGUI. |
-| c2a_r      | vector\<float> |            |             | Set by ConfigGui   | Rotational component of the camera-animal transform. Computed automatically by ConfigGUI. |
-| c2a_t      | vector\<float> |            |             | Set by ConfigGui   | Translational component of the camera-animal transform. Computed automatically by ConfigGUI. |
-| roi_circ   | vector\<int> |              |             | Set by ConfigGui   | Specifies points {X1,Y1,X2,Y2,...} around the circumference of the trackball in the input image. Set interactively in ConfigGUI. |
-| roi_c      | vector\<float> |            |             | Set by ConfigGui   | Camera-frame vector describing the centre point of the trackball in the input image. Computed automatically by ConfigGUI. |
+| c2a_r      | vec\<float> |            |             | Set by ConfigGui   | Rotational component of the camera-animal transform. Computed automatically by ConfigGUI. |
+| c2a_t      | vec\<float> |            |             | Set by ConfigGui   | Translational component of the camera-animal transform. Computed automatically by ConfigGUI. |
+| roi_circ   | vec\<int> |              |             | Set by ConfigGui   | Specifies points {X1,Y1,X2,Y2,...} around the circumference of the trackball in the input image. Set interactively in ConfigGUI. |
+| roi_c      | vec\<float> |            |             | Set by ConfigGui   | Camera-frame vector describing the centre point of the trackball in the input image. Computed automatically by ConfigGUI. |
 | roi_r      | float       |              |             | Set by ConfigGui   | Half-angle describing the radius of the trackball in the input image. Computed automatically by ConfigGUI. |
-| roi_ignr   | vector<vector\<int>> |      |             | Set by ConfigGui   | Specifies possibly several polygon regions {{X11,Y11,X12,Y12,...},{X21,Y21,X22,Y22,...},...} that should be ignored during matching (e.g. where the animal obscures the trackball). Set interactively in ConfigGUI. |
+| roi_ignr   | vec<vec\<int>> |      |             | Set by ConfigGui   | Specifies possibly several polygon regions {{X11,Y11,X12,Y12,...},{X21,Y21,X22,Y22,...},...} that should be ignored during matching (e.g. where the animal obscures the trackball). Set interactively in ConfigGUI. |
