@@ -14,7 +14,7 @@ On this page you'll find information for:
 
 You might also be interested in the following links:
 * [Demo video](http://youtu.be/BeGYOEOdWjw) - Quick (30s) overview of what FicTrac does and how it works.
-* [FicTrac manual](http://link) - Detailed instructions, description of output data, parameters, recommendations, etc.
+* [FicTrac manual](doc/requirements.md) - Detailed instructions, description of output data, parameters, recommendations, etc.
 * [Homepage](http://fictrac.rjdmoore.net) - Contact details for the main author/developer, links, and further info.
 * [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for faqs, support, advice, discussions, etc.
 * [Mailing list](http://fictrac.rjdmoore.net/mail.html) - Subscribe to receive important announcements and updates.
