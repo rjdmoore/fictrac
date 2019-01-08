@@ -120,18 +120,25 @@ A more [detailed guide](doc/requirements.md) on how to configure FicTrac for you
 
 ### Running FicTrac
 
-To run FicTrac on the provided sample data, simply open a terminal in the FicTrac project folder and type:
-
+To configure FicTrac for the provided sample data, simply open a terminal in the FicTrac project folder and type:
 ```
 cd sample
 [Windows] ..\bin\Release\configGui.exe config.txt
 [Linux] ../bin/configGui config.txt
 ```
-The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok. Then, in the same terminal window, type:
+The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok.
+
+Then, to run FicTrac, type:
 ```
 [Windows] ..\bin\Release\fictrac.exe config.txt
 [Linux] sudo ../bin/fictrac config.txt
 ```
+
+FicTrac will usually generate two output files:
+1. Log file (*.log) - containing debugging information about FicTrac's execution.
+2. Data file (*.dat) - containing output data. See [data_header](doc/data_header.txt) for information about output data.
+
+The output data file can be used for offline processing. To use FicTrac within a closed-loop setup (to provide real-time feedback for stimuli), you should configure FicTrac to output data via a socket (IP address/port) in real-time. To do this, just set `out_port` to a valid port number in the config file. There is an example Python script for receiving data via sockets in the `scripts` directory.
 
 ## Research
 

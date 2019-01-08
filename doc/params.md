@@ -10,6 +10,7 @@ In the table below, the various possible parameters are listed. If nothing is li
 | do_display | bool       | y             | y/n         | If you want to     | Display debug screen during tracking. Slows execution very slightly. |
 | save_debug | bool       | n             | y/n         | If you want to     | Record the debug screen to video file. Note that if the source frame rate is higher than FicTrac's processing frame rate, frames may be dropped from the video file. |
 | save_raw   | bool       | n             | y/n         | If you want to     | Record the input image stream to video file. Note that if the source frame rate is higher than FicTrac's processing frame rate, frames may be dropped from the video file. |
+| out_port   | int        | -1            | (0,inf)     | If you want to     | Socket port over which to transmit FicTrac data. If unset or < 0, FicTrac will not transmit data over sockets. |
 |            |            |               |             |                    |             |
 | q_factor   | int        | 6             | (0,inf)     | Only if you need to | Adjusts the resolution of the tracking window. Smaller values correspond to coarser but quicker tracking and vice-versa. Normally in the range [3,10]. |
 | src_fps    | float      | -1            | (0,inf)     | Only if you need to | If set, FicTrac will attempt to set the frame rate for the image source (video file or camera). |
