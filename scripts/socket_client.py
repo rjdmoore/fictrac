@@ -2,8 +2,8 @@
 
 import socket
 
-HOST = '127.0.0.1'   # The server's hostname or IP address
-PORT = 508              # The port used by the server
+HOST = '127.0.0.1'  # The server's hostname or IP address
+PORT = ????         # The port used by the server
 
 # Open the connection (FicTrac must be waiting for socket connection)
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -22,6 +22,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         line = line[:endline]
         toks = line.split(", ")
         
+        # Fixme: sometimes we read more than one line at a time,
+        # should handle that rather than just dropping extra data...
         if ((len(toks) < 24) | (toks[0] != "FT")):
             print('Bad read')
             continue

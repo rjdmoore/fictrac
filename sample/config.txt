@@ -19,7 +19,7 @@ roi_r            : 0.124815
 save_debug       : n
 save_raw         : n
 src_fn           : sample.mp4
-src_fps          : -1.000000
+src_fps          : -1
 thr_ratio        : 1.25
 thr_win_pc       : 0.25
 vfov             : 45

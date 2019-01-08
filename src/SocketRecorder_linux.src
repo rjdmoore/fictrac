@@ -6,6 +6,8 @@
 
 #include "SocketRecorder_linux.h"
 
+#include "Logger.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,7 +46,7 @@ bool SocketRecorder::openRecord(std::string port)
 	// Create socket
 	_listenSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (_listenSocket < 0) {
-		std::cerr << "Error! Could not create valid socket on port " << port  << "!" << std::endl;
+        LOG_ERR("Error! Could not create valid socket on port %s.", port.c_str());
 		return false;
 	}
 
@@ -55,28 +57,29 @@ bool SocketRecorder::openRecord(std::string port)
 		portno = atoi(port.c_str());
 	}
 	catch (...) {
-		std::cerr << "Error! Invalid socket port number (" << port << ")!" << std::endl;
+        LOG_ERR("Error! Invalid socket port number (%s).", port.c_str());
 		return false;
 	}
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(portno);
 	if (bind(_listenSocket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		std::cerr << "Error! Failed to bind socket on port " << port << "!" << std::endl;
+		LOG_ERR("Error! Failed to bind socket on port %s.", port.c_str());
 		return false;
 	}
 
 	// Listen on our socket
 	if (listen(_listenSocket,5) < 0) {
-		std::cerr << "Error! Failed to listen to socket on port " << port << "!" << std::endl;
+		LOG_ERR("Error! Failed to listen to socket on port %s.", port.c_str());
         return false;
 	}
 
 	// Wait for client connection...
 	socklen_t clilen = sizeof(cli_addr);
+    PRINT("\nWaiting for client connection to socket: %s ...\n", port.c_str());
 	_clientSocket = accept(_listenSocket, (struct sockaddr *) &cli_addr, &clilen);		// blocking
 	if (_clientSocket < 0) {
-		std::cerr << "Error! Failed to accept socket connection on port " << port << "!" << std::endl;
+		LOG_ERR("Error! Failed to accept socket connection on port %s.", port.c_str());
         return false;
 	}
 
@@ -91,7 +94,7 @@ bool SocketRecorder::writeRecord(std::string s)
     if (_open) {
 		int n = write(_clientSocket,s.c_str(),s.size());
 		if (n < 0) {
-			std::cerr << "Error! Send failed!" << std::endl;
+			LOG_ERR("Error! Send failed.");
             _open = false;  // should this be a terminal error?
 		}
     }

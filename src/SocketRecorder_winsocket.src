@@ -67,7 +67,7 @@ bool SocketRecorder::openRecord(std::string port)
     // Setup the TCP listening socket
     iResult = bind(_listenSocket, result->ai_addr, (int)result->ai_addrlen);
     if (iResult == SOCKET_ERROR) {
-        LOG_ERR("Error! Failed to bind socket on port %s (err = %d)", port.c_str(), WSAGetLastError());
+        LOG_ERR("Error! Failed to bind socket on port %s (err = %d).", port.c_str(), WSAGetLastError());
         freeaddrinfo(result);
         return false;
     }
