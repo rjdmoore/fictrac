@@ -120,13 +120,15 @@ A more [detailed guide](doc/requirements.md) on how to configure FicTrac for you
 
 ### Running FicTrac
 
-To run FicTrac on the provided sample data, simply open a terminal in the FicTrac project folder and type:
+To configure FicTrac for the provided sample data, simply open a terminal in the FicTrac project folder and type:
 ```
 cd sample
 [Windows] ..\bin\Release\configGui.exe config.txt
 [Linux] ../bin/configGui config.txt
 ```
-The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok. Then, in the same terminal window, type:
+The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok.
+
+Then, to run FicTrac, type:
 ```
 [Windows] ..\bin\Release\fictrac.exe config.txt
 [Linux] sudo ../bin/fictrac config.txt
