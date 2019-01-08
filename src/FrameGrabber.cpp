@@ -63,7 +63,7 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
 
     /// Thread stuff.
     _active = true;
-    _thread = std::unique_ptr<std::thread>(new std::thread(&FrameGrabber::process, this));
+    _thread = std::make_unique<std::thread>(&FrameGrabber::process, this);
 }
 
 ///
@@ -182,8 +182,8 @@ void FrameGrabber::process()
     Mat thresh_max(_rh, _rw, CV_8UC1);
     thresh_max.setTo(cv::Scalar::all(0));
 
-    std::unique_ptr<uint8_t[]> win_max_hist = std::unique_ptr<uint8_t[]>(new uint8_t[_thresh_win]);
-    std::unique_ptr<uint8_t[]> win_min_hist = std::unique_ptr<uint8_t[]>(new uint8_t[_thresh_win]);
+    auto win_max_hist = std::make_unique<uint8_t[]>(_thresh_win);
+    auto win_min_hist = std::make_unique<uint8_t[]>(_thresh_win);
 
     /// Rewind to video start.
     _source->rewind();

@@ -18,8 +18,8 @@ Logger::Logger()
 {
     // create log writer
     string fn = string("fictrac-") + execTime() + ".log";
-    _log = unique_ptr<Recorder>(new Recorder(RecorderInterface::RecordType::FILE, fn));
-    _cout = unique_ptr<Recorder>(new Recorder(RecorderInterface::RecordType::TERM));
+    _log = make_unique<Recorder>(RecorderInterface::RecordType::FILE, fn);
+    _cout = make_unique<Recorder>(RecorderInterface::RecordType::TERM);
     if (_log->is_active() && _cout->is_active()) {
         cout << "Initialised logging to " << fn << endl;
     } else {
