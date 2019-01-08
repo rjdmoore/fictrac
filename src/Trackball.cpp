@@ -60,6 +60,8 @@ const double THRESH_WIN_PC_DEFAULT = 0.25;
 
 const uint8_t SPHERE_MAP_FIRST_HIT_BONUS = 64;
 
+const int OUT_PORT_DEFAULT = -1;
+
 const bool DO_DISPLAY_DEFAULT = true;
 const bool SAVE_RAW_DEFAULT = false;
 const bool SAVE_DEBUG_DEFAULT = false;
@@ -361,7 +363,27 @@ Trackball::Trackball(string cfg_fn)
 
     /// Output.
     string data_fn = _base_fn + "-" + execTime() + ".dat";
-    _log = make_unique<Recorder>(RecorderInterface::RecordType::FILE, data_fn);
+    _data_log = make_unique<Recorder>(RecorderInterface::RecordType::FILE, data_fn);
+    if (!_data_log->is_active()) {
+        LOG_ERR("Error! Unable to open output data log file (%s).", data_fn.c_str());
+        _active = false;
+        return;
+    }
+
+    int out_port = OUT_PORT_DEFAULT;
+    _do_sock_output = false;
+    if (_cfg.getInt("out_port", out_port) && (out_port > 0)) {
+        _data_sock = make_unique<Recorder>(RecorderInterface::RecordType::SOCK, std::to_string(out_port));
+        if (!_data_sock->is_active()) {
+            LOG_ERR("Error! Unable to open output data socket (%d).", out_port);
+            _active = false;
+            return;
+        }
+        _do_sock_output = true;
+    } else {
+        LOG_WRN("Warning! Using default value for out_port (%d).", out_port);
+        _cfg.add("out_port", out_port);
+    }
 
     /// Display.
     _do_display = DO_DISPLAY_DEFAULT;
@@ -885,7 +907,12 @@ bool Trackball::logData()
     ss << _ts << ", " << _seq << std::endl;
 
     // async i/o
-    return _log->addMsg(ss.str());
+    bool ret = true;
+    if (_do_sock_output) {
+        ret &= _data_sock->addMsg("FT, " + ss.str());
+    }
+    ret &= _data_log->addMsg(ss.str());
+    return ret;
 }
 
 ///
