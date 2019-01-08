@@ -90,9 +90,13 @@ bool CVSource::setFPS(double fps)
     if (_open && (fps > 0)) {
         if (!_cap->set(cv::CAP_PROP_FPS, fps)) {
             LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%.2f).", fps);
+            _fps = fps; // just set fps anyway for playback
+            LOG("Playback frame rate is now %.2f", _fps);
         }
-        _fps = getFPS();
-        LOG("Device frame rate is now %.2f", _fps);
+        else {
+            _fps = getFPS();
+            LOG("Device frame rate is now %.2f", _fps);
+        }
     }
     return ret;
 }
@@ -153,9 +157,9 @@ bool CVSource::grab(cv::Mat& frame)
 
     /// Correct average frame rate when reading from file.
     if (!_live && (_fps > 0)) {
-        static double prev_ts = ts - 25; // initially 40 Hz
-        static double av_fps = 40;      // initially 40 Hz
-        static double sleep_ms = 25;
+        static double prev_ts = ts - (1000/_fps);
+        static double av_fps = _fps;      // initially 40 Hz
+        static double sleep_ms = 1000/_fps;
         av_fps = 0.15 * av_fps + 0.85 * (1000 / (ts - prev_ts));
         sleep_ms *= 0.25 * (av_fps / _fps) + 0.75;
         sleep(static_cast<long>(round(sleep_ms)));
