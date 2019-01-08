@@ -3,7 +3,7 @@ c2a_cnrs_xy      : { 191, 171, 128, 272, 20, 212, 99, 132 }
 c2a_r            : { -0.722443, 0.131317, 0.460878 }
 c2a_src          : c2a_cnrs_xy
 c2a_t            : { -0.674395, 0.389373, 2.889647 }
-do_display       : n
+do_display       : y
 max_bad_frames   : -1
 opt_bound        : 0.35
 opt_do_global    : n
