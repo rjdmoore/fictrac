@@ -402,7 +402,7 @@ Trackball::Trackball(string cfg_fn)
         _cfg.add("save_debug", _save_debug);
     }
     if (_save_debug & !_do_display) {
-        LOG("Forcing do_display = true becase save_debug == true.");
+        LOG("Forcing do_display = true, becase save_debug == true.");
         _do_display = true;
     }
     if (_do_display) {
@@ -411,7 +411,10 @@ Trackball::Trackball(string cfg_fn)
     }
     if (_save_raw) {
         string vid_fn = _base_fn + "-raw.mp4";
-        _raw_vid.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), source->getFPS(), cv::Size(source->getWidth(), source->getHeight()));
+        double fps = source->getFPS();
+        if (fps <= 0) { fps = 25; }
+        LOG_DBG("Opening %s for video writing (%dx%d @ %f FPS)", vid_fn.c_str(), source->getWidth(), source->getHeight(), fps);
+        _raw_vid.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), fps, cv::Size(source->getWidth(), source->getHeight()));
         if (!_raw_vid.isOpened()) {
             LOG_ERR("Error! Unable to open raw output video (%s).", vid_fn.c_str());
             _active = false;
@@ -420,7 +423,10 @@ Trackball::Trackball(string cfg_fn)
     }
     if (_save_debug) {
         string vid_fn = _base_fn + "-debug.mp4";
-        _debug_vid.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), source->getFPS(), cv::Size(4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM));
+        double fps = source->getFPS();
+        if (fps <= 0) { fps = 25; }
+        LOG_DBG("Opening %s for video writing (%dx%d @ %f FPS)", vid_fn.c_str(), 4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM, fps);
+        _debug_vid.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), fps, cv::Size(4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM));
         if (!_debug_vid.isOpened()) {
             LOG_ERR("Error! Unable to open debug output video (%s).", vid_fn.c_str());
             _active = false;

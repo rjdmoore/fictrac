@@ -60,6 +60,14 @@ CVSource::CVSource(std::string input)
 	if( _open ) {
 		_width = static_cast<int>(_cap->get(cv::CAP_PROP_FRAME_WIDTH));
 		_height = static_cast<int>(_cap->get(cv::CAP_PROP_FRAME_HEIGHT));
+        if (_live) {
+            _fps = getFPS();    // don't init fps for video files - we might want to play them back as fast as possible
+
+            LOG("OpenCV camera initialised (%dx%d @ %.3f fps)!", _width, _height, _fps);
+        }
+        else {
+            LOG("OpenCV video initialised (%dx%d)!", _width, _height);
+        }
 	}
 }
 
