@@ -128,7 +128,8 @@ if(MSVC)
     list(APPEND TO_COPY "${NLOPT_DIR}/libnlopt-0.dll")
     
     # copy h264 dll
-    list(APPEND TO_COPY "${PROJECT_SOURCE_DIR}/dll/openh264-1.7.0-win64.dll")
+    file(GLOB DLLS ${PROJECT_SOURCE_DIR}/dll/*.dll)
+    list(APPEND TO_COPY "${DLLS}")
     
     add_custom_command( TARGET fictrac POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E copy_if_different
