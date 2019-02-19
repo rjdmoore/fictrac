@@ -52,7 +52,7 @@ The FicTrac source code can be built for both Windows and Ubuntu (Linux) operati
 
 1. Download and install required dependencies:
     1. [Cmake build system](https://cmake.org/download/) (binary distribution)
-    2. [OpenCV computer vision library](https://opencv.org/releases.html) (version 3.4.2 Win pack)
+    2. [OpenCV computer vision library](https://opencv.org/releases.html) (version 4.0.1 Win pack)
     3. [NLopt optimisation library](https://nlopt.readthedocs.io/en/latest/NLopt_on_Windows/) (precompiled DLL)
 2. Clone or download the FicTrac repository, then navigate to that folder, open a terminal, and create a build directory:
 ```
@@ -62,7 +62,7 @@ cd build
 3. Next, we will configure and build the FicTrac project. FicTrac is written in C++, so you'll need a suitable compiler. In this example we will use MSVS Build Tools. If you don't already have Visual Studio, you will need to install the [build tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
 4. Run Cmake to prepare the necessary build files for FicTrac. Here we also need to provide the paths to where we installed OpenCV and NLopt (I have given example paths here, you will need to modify them for your installation):
 ```
-cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\build" -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" ..
+cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-4.0.1\build" -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" ..
 ```
 5. Finally, build and install FicTrac:
 ```
@@ -70,8 +70,6 @@ cmake --build . --config Release -j 4
 ```
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
-
-**Note:** To save video on Windows, you must also have the [H264 library](https://github.com/cisco/openh264/releases) in the system path. OpenCV 3.4.2 requires `openh264-1.7.0-win64.dll`, which should be downloaded and placed in the same directory as the generated `fictrac.exe`. If you have installed another version of OpenCV, and it requires another version of the H264 library, an error message should be printed to the terminal when you run FicTrac. You can obtain other H264 versions from the above link.
 
 #### Ubuntu (Linux) installation
 
@@ -139,6 +137,8 @@ FicTrac will usually generate two output files:
 2. Data file (*.dat) - containing output data. See [data_header](doc/data_header.txt) for information about output data.
 
 The output data file can be used for offline processing. To use FicTrac within a closed-loop setup (to provide real-time feedback for stimuli), you should configure FicTrac to output data via a socket (IP address/port) in real-time. To do this, just set `out_port` to a valid port number in the config file. There is an example Python script for receiving data via sockets in the `scripts` directory.
+
+**Note:** If you receive an error when running FicTrac about a missing [H264 library](https://github.com/cisco/openh264/releases), you can download the necessary library (i.e. OpenCV 3.4.2 requires `openh264-1.7.0-win64.dll`) from the above link and place it in the `dll` folder under the FicTrac main directory. You will then need to re-run the appropriate `cmake --build` command for your installation.
 
 ## Research
 
