@@ -235,7 +235,7 @@ void FrameGrabber::process()
         memset(win_min_hist.get(), 0, _thresh_win);
 
         /// Create grey ROI frame.
-        cv::cvtColor(frame_bgr, frame_grey, CV_BGR2GRAY);
+        cv::cvtColor(frame_bgr, frame_grey, cv::COLOR_BGR2GRAY);
         _remapper->apply(frame_grey, remap_grey);
 
         /// Blur image before calculating region min/max values.

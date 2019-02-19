@@ -225,7 +225,7 @@ bool ConfigGui::setFrame(Mat& frame)
         _frame = frame.clone();
     } else if (frame.channels() == 1) {
         //_frame = frame.clone();
-        cv::cvtColor(frame, _frame, CV_GRAY2BGR);
+        cv::cvtColor(frame, _frame, cv::COLOR_GRAY2BGR);
     } else {
         // uh oh, shouldn't get here
         LOG_ERR("Unexpected number of image channels (%d)!", frame.channels());
@@ -527,7 +527,7 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.circPts) {
-                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, cv::LINE_AA);
                 }
                 
                 /// Draw fitted circumference.
@@ -604,9 +604,9 @@ bool ConfigGui::run()
                     for (unsigned int i = 0; i < _input_data.ignrPts.size(); i++) {
                         for (unsigned int j = 0; j < _input_data.ignrPts[i].size(); j++) {
                             if (i == _input_data.ignrPts.size()-1) {
-                                cv::circle(disp_frame, _input_data.ignrPts[i][j], click_rad, COLOURS[i%NCOLOURS], 1, CV_AA);
+                                cv::circle(disp_frame, _input_data.ignrPts[i][j], click_rad, COLOURS[i%NCOLOURS], 1, cv::LINE_AA);
                             }
-                            cv::line(disp_frame, _input_data.ignrPts[i][j], _input_data.ignrPts[i][(j+1)%_input_data.ignrPts[i].size()], COLOURS[i%NCOLOURS], 1, CV_AA);
+                            cv::line(disp_frame, _input_data.ignrPts[i][j], _input_data.ignrPts[i][(j+1)%_input_data.ignrPts[i].size()], COLOURS[i%NCOLOURS], 1, cv::LINE_AA);
                         }
                     }
                     
@@ -657,9 +657,9 @@ bool ConfigGui::run()
                 for (unsigned int i = 0; i < _input_data.ignrPts.size(); i++) {
                     for (unsigned int j = 0; j < _input_data.ignrPts[i].size(); j++) {
                         if (i == _input_data.ignrPts.size()-1) {
-                            cv::circle(disp_frame, _input_data.ignrPts[i][j], click_rad, COLOURS[i%NCOLOURS], 1, CV_AA);
+                            cv::circle(disp_frame, _input_data.ignrPts[i][j], click_rad, COLOURS[i%NCOLOURS], 1, cv::LINE_AA);
                         }
-                        cv::line(disp_frame, _input_data.ignrPts[i][j], _input_data.ignrPts[i][(j+1)%_input_data.ignrPts[i].size()], COLOURS[i%NCOLOURS], 1, CV_AA);
+                        cv::line(disp_frame, _input_data.ignrPts[i][j], _input_data.ignrPts[i][(j+1)%_input_data.ignrPts[i].size()], COLOURS[i%NCOLOURS], 1, cv::LINE_AA);
                     }
                 }
                 
@@ -759,7 +759,7 @@ bool ConfigGui::run()
 
                         /// Draw previous clicks.
                         for (auto click : _input_data.sqrPts) {
-                            cv::circle(disp_frame, click, click_rad, Scalar(255, 255, 0), 1, CV_AA);
+                            cv::circle(disp_frame, click, click_rad, Scalar(255, 255, 0), 1, cv::LINE_AA);
                         }
 
                         /// Draw reference corners.
@@ -887,7 +887,7 @@ bool ConfigGui::run()
             
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrPts) {
-                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, cv::LINE_AA);
                 }
                 
                 /// Draw axes.
@@ -937,7 +937,7 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrPts) {
-                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, cv::LINE_AA);
                 }
                 
                 /// Draw axes.
@@ -987,7 +987,7 @@ bool ConfigGui::run()
                 
                 /// Draw previous clicks.
                 for (auto click : _input_data.sqrPts) {
-                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, CV_AA);
+                    cv::circle(disp_frame, click, click_rad, Scalar(255,255,0), 1, cv::LINE_AA);
                 }
                 
                 /// Draw axes.
@@ -1100,9 +1100,9 @@ bool ConfigGui::run()
 	for (unsigned int i = 0; i < _input_data.ignrPts.size(); i++) {
 		for (unsigned int j = 0; j < _input_data.ignrPts[i].size(); j++) {
 			if (i == _input_data.ignrPts.size() - 1) {
-				cv::circle(disp_frame, _input_data.ignrPts[i][j], click_rad, COLOURS[i%NCOLOURS], 1, CV_AA);
+				cv::circle(disp_frame, _input_data.ignrPts[i][j], click_rad, COLOURS[i%NCOLOURS], 1, cv::LINE_AA);
 			}
-			cv::line(disp_frame, _input_data.ignrPts[i][j], _input_data.ignrPts[i][(j + 1) % _input_data.ignrPts[i].size()], COLOURS[i%NCOLOURS], 1, CV_AA);
+			cv::line(disp_frame, _input_data.ignrPts[i][j], _input_data.ignrPts[i][(j + 1) % _input_data.ignrPts[i].size()], COLOURS[i%NCOLOURS], 1, cv::LINE_AA);
 		}
 	}
 

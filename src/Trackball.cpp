@@ -1178,25 +1178,25 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
     static Mat resize_roi(DRAW_CELL_DIM, DRAW_CELL_DIM, CV_8UC1);
     cv::resize(roi_frame, resize_roi, resize_roi.size());
     Mat draw_roi = canvas(Rect(2 * DRAW_CELL_DIM, 0, DRAW_CELL_DIM, DRAW_CELL_DIM));
-    cv::cvtColor(resize_roi, draw_roi, CV_GRAY2BGR);
+    cv::cvtColor(resize_roi, draw_roi, cv::COLOR_GRAY2BGR);
 
     /// Draw warped diff ROI.
     static Mat resize_diff(DRAW_CELL_DIM, DRAW_CELL_DIM, CV_8UC1);
     cv::resize(diff_roi, resize_diff, resize_diff.size());
     Mat draw_diff = canvas(Rect(3 * DRAW_CELL_DIM, 0, DRAW_CELL_DIM, DRAW_CELL_DIM));
-    cv::cvtColor(resize_diff, draw_diff, CV_GRAY2BGR);
+    cv::cvtColor(resize_diff, draw_diff, cv::COLOR_GRAY2BGR);
 
     /// Draw current sphere view.
     static Mat resize_view(DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, CV_8UC1);
     cv::resize(sphere_view, resize_view, resize_view.size());
     Mat draw_view = canvas(Rect(2 * DRAW_CELL_DIM, 1 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, DRAW_CELL_DIM));
-    cv::cvtColor(resize_view, draw_view, CV_GRAY2BGR);
+    cv::cvtColor(resize_view, draw_view, cv::COLOR_GRAY2BGR);
 
     /// Draw current sphere map.
     static Mat resize_map(DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, CV_8UC1);
     cv::resize(sphere_map, resize_map, resize_map.size());
     Mat draw_map = canvas(Rect(2 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, DRAW_CELL_DIM));
-    cv::cvtColor(resize_map, draw_map, CV_GRAY2BGR);
+    cv::cvtColor(resize_map, draw_map, cv::COLOR_GRAY2BGR);
 
     /// Draw fictive path.
     //FIXME: add heading arrow to fictive path
@@ -1229,7 +1229,7 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
             cv::line(draw_path,
                 cv::Point(static_cast<int>(round(ppx * 16)), static_cast<int>(round(ppy * 16))),
                 cv::Point(static_cast<int>(round(px * 16)), static_cast<int>(round(py * 16))),
-                CV_RGB(255, 255, 255), 1, CV_AA, 4);
+                CV_RGB(255, 255, 255), 1, cv::LINE_AA, 4);
             ppx = px;
             ppy = py;
         }
@@ -1265,7 +1265,7 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
                     cv::line(draw_input,
                         cv::Point(static_cast<int>(round(px * 16)), static_cast<int>(round(py * 16))),
                         cv::Point(static_cast<int>(round(ppx * 16)), static_cast<int>(round(ppy * 16))),
-                        CV_RGB(r, g, b), 1, CV_AA, 4);
+                        CV_RGB(r, g, b), 1, cv::LINE_AA, 4);
                 }
             }
             ppx = px;
@@ -1277,19 +1277,19 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
     cv::line(canvas,
         cv::Point(2 * DRAW_CELL_DIM, 0 * DRAW_CELL_DIM) * 16,
         cv::Point(2 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM) * 16,
-        CV_RGB(255, 255, 255), 2, CV_AA, 4);
+        CV_RGB(255, 255, 255), 2, cv::LINE_AA, 4);
     cv::line(canvas,
         cv::Point(0 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM) * 16,
         cv::Point(4 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM) * 16,
-        CV_RGB(255, 255, 255), 2, CV_AA, 4);
+        CV_RGB(255, 255, 255), 2, cv::LINE_AA, 4);
     cv::line(canvas,
         cv::Point(3 * DRAW_CELL_DIM, 0 * DRAW_CELL_DIM) * 16,
         cv::Point(3 * DRAW_CELL_DIM, 1 * DRAW_CELL_DIM) * 16,
-        CV_RGB(255, 255, 255), 2, CV_AA, 4);
+        CV_RGB(255, 255, 255), 2, cv::LINE_AA, 4);
     cv::line(canvas,
         cv::Point(2 * DRAW_CELL_DIM, 1 * DRAW_CELL_DIM) * 16,
         cv::Point(4 * DRAW_CELL_DIM, 1 * DRAW_CELL_DIM) * 16,
-        CV_RGB(255, 255, 255), 2, CV_AA, 4);
+        CV_RGB(255, 255, 255), 2, cv::LINE_AA, 4);
 
     /// Draw text (with shadow).
     shadowText(canvas, string("Processed ") + dateString(),

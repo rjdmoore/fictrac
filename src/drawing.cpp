@@ -71,7 +71,7 @@ void drawCircle(cv::Mat& img, shared_ptr<vector<cv::Point2d>> circ_pts, const cv
     for (int i = 1; i < circ_pts->size(); i++) {
         /// Draw dashed/solid.
         p2 = (*circ_pts)[i];
-        if (solid || (i % 2)) { cv::line(img, 4 * p1, 4 * p2, colour, 2, CV_AA, 2); }
+        if (solid || (i % 2)) { cv::line(img, 4 * p1, 4 * p2, colour, 2, cv::LINE_AA, 2); }
         p1 = p2;
     }
 }
@@ -128,10 +128,10 @@ void drawCursor(Mat& rgb, const Point2d& pt, cv::Scalar colour)
     const int inner_rad = std::max(int(rgb.cols/500+0.5), 2);
     const int outer_rad = std::max(int(rgb.cols/150+0.5), 5);
 
-    cv::line(rgb, pt-Point2d(outer_rad,outer_rad), pt-Point2d(inner_rad,inner_rad), colour, 1, CV_AA);
-    cv::line(rgb, pt+Point2d(inner_rad,inner_rad), pt+Point2d(outer_rad,outer_rad), colour, 1, CV_AA);
-    cv::line(rgb, pt-Point2d(-outer_rad,outer_rad), pt-Point2d(-inner_rad,inner_rad), colour, 1, CV_AA);
-    cv::line(rgb, pt+Point2d(-inner_rad,inner_rad), pt+Point2d(-outer_rad,outer_rad), colour, 1, CV_AA);
+    cv::line(rgb, pt-Point2d(outer_rad,outer_rad), pt-Point2d(inner_rad,inner_rad), colour, 1, cv::LINE_AA);
+    cv::line(rgb, pt+Point2d(inner_rad,inner_rad), pt+Point2d(outer_rad,outer_rad), colour, 1, cv::LINE_AA);
+    cv::line(rgb, pt-Point2d(-outer_rad,outer_rad), pt-Point2d(-inner_rad,inner_rad), colour, 1, cv::LINE_AA);
+    cv::line(rgb, pt+Point2d(-inner_rad,inner_rad), pt+Point2d(-outer_rad,outer_rad), colour, 1, cv::LINE_AA);
 }
 
 ///
@@ -159,15 +159,15 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
         vec[2] = sx.at<double>(2, 0);
         cam_model->vectorToPixel(vec, pt.x, pt.y);
 
-        cv::line(rgb, 4 * pt0, 4 * pt, colour, 2, CV_AA, 2);
-        cv::putText(rgb, "x", pt + Point2d(10, 0), cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
+        cv::line(rgb, 4 * pt0, 4 * pt, colour, 2, cv::LINE_AA, 2);
+        cv::putText(rgb, "x", pt + Point2d(10, 0), cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, cv::LINE_AA);
         // indicate in to or out of the page
         if (vec[2] < t.at<double>(2, 0)) {
-            cv::circle(rgb, 4 * pt, 4 * 4, colour, 2, CV_AA, 2);
+            cv::circle(rgb, 4 * pt, 4 * 4, colour, 2, cv::LINE_AA, 2);
         }
         else {
-            cv::line(rgb, 4 * (pt + Point2d(-4, -4)), 4 * (pt + Point2d(4, 4)), colour, 2, CV_AA, 2);
-            cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, CV_AA, 2);
+            cv::line(rgb, 4 * (pt + Point2d(-4, -4)), 4 * (pt + Point2d(4, 4)), colour, 2, cv::LINE_AA, 2);
+            cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, cv::LINE_AA, 2);
         }
     }
     
@@ -178,15 +178,15 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
         vec[2] = sy.at<double>(2, 0);
         cam_model->vectorToPixel(vec, pt.x, pt.y);
 
-        cv::line(rgb, 4 * pt0, 4 * pt, colour, 2, CV_AA, 2);
-        cv::putText(rgb, "y", pt + Point2d(10, 0), cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
+        cv::line(rgb, 4 * pt0, 4 * pt, colour, 2, cv::LINE_AA, 2);
+        cv::putText(rgb, "y", pt + Point2d(10, 0), cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, cv::LINE_AA);
         // indicate in to or out of the page
         if (vec[2] < t.at<double>(2, 0)) {
-            cv::circle(rgb, 4 * pt, 4 * 4, colour, 2, CV_AA, 2);
+            cv::circle(rgb, 4 * pt, 4 * 4, colour, 2, cv::LINE_AA, 2);
         }
         else {
-            cv::line(rgb, 4 * (pt + Point2d(-4, -4)), 4 * (pt + Point2d(4, 4)), colour, 2, CV_AA, 2);
-            cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, CV_AA, 2);
+            cv::line(rgb, 4 * (pt + Point2d(-4, -4)), 4 * (pt + Point2d(4, 4)), colour, 2, cv::LINE_AA, 2);
+            cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, cv::LINE_AA, 2);
         }
     }
     
@@ -197,15 +197,15 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
         vec[2] = sz.at<double>(2, 0);
         cam_model->vectorToPixel(vec, pt.x, pt.y);
 
-        cv::line(rgb, 4 * pt0, 4 * pt, colour, 2, CV_AA, 2);
-        cv::putText(rgb, "z", pt + Point2d(10, 0), cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, CV_AA);
+        cv::line(rgb, 4 * pt0, 4 * pt, colour, 2, cv::LINE_AA, 2);
+        cv::putText(rgb, "z", pt + Point2d(10, 0), cv::FONT_HERSHEY_SIMPLEX, 1.0, colour, 1, cv::LINE_AA);
         // indicate in to or out of the page
         if (vec[2] < t.at<double>(2, 0)) {
-            cv::circle(rgb, 4 * pt, 4 * 4, colour, 2, CV_AA, 2);
+            cv::circle(rgb, 4 * pt, 4 * 4, colour, 2, cv::LINE_AA, 2);
         }
         else {
-            cv::line(rgb, 4 * (pt + Point2d(-4, -4)), 4 * (pt + Point2d(4, 4)), colour, 2, CV_AA, 2);
-            cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, CV_AA, 2);
+            cv::line(rgb, 4 * (pt + Point2d(-4, -4)), 4 * (pt + Point2d(4, 4)), colour, 2, cv::LINE_AA, 2);
+            cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, cv::LINE_AA, 2);
         }
     }
 }
@@ -235,6 +235,6 @@ void drawRectCorners(Mat& rgb, const CameraModelPtr cam_model, Mat& cnrs, const 
 ///
 void shadowText(Mat& img, std::string text, int px, int py, int r, int g, int b)
 {
-    cv::putText(img, text, cv::Point(px + 1, py + 1), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(0, 0, 0));
-    cv::putText(img, text, cv::Point(px, py), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(r, g, b));
+    cv::putText(img, text, cv::Point(px + 1, py + 1), cv::FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(0, 0, 0));
+    cv::putText(img, text, cv::Point(px, py), cv::FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(r, g, b));
 }

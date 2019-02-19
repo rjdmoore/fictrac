@@ -143,20 +143,20 @@ bool CVSource::grab(cv::Mat& frame)
 	if( _frame_cap.channels() == 1 ) {
 		switch( _bayerType ) {
 			case BAYER_BGGR:
-				cv::cvtColor(_frame_cap, frame, CV_BayerBG2BGR);
+				cv::cvtColor(_frame_cap, frame, cv::COLOR_BayerBG2BGR);
 				break;
 			case BAYER_GBRG:
-				cv::cvtColor(_frame_cap, frame, CV_BayerGB2BGR);
+				cv::cvtColor(_frame_cap, frame, cv::COLOR_BayerGB2BGR);
 				break;
 			case BAYER_GRBG:
-				cv::cvtColor(_frame_cap, frame, CV_BayerGR2BGR);
+				cv::cvtColor(_frame_cap, frame, cv::COLOR_BayerGR2BGR);
 				break;
 			case BAYER_RGGB:
-				cv::cvtColor(_frame_cap, frame, CV_BayerRG2BGR);
+				cv::cvtColor(_frame_cap, frame, cv::COLOR_BayerRG2BGR);
 				break;
 			case BAYER_NONE:
 			default:
-				cv::cvtColor(_frame_cap, frame, CV_GRAY2BGR);
+				cv::cvtColor(_frame_cap, frame, cv::COLOR_GRAY2BGR);
 				break;
 		}
 	} else {
