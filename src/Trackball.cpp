@@ -43,6 +43,8 @@ using cv::Scalar;
 using cv::Rect;
 using cv::Point2d;
 using cv::Point2i;
+using cv::VideoWriter;
+
 
 const int DRAW_SPHERE_HIST_LENGTH = 250;
 const int DRAW_CELL_DIM = 160;
@@ -65,6 +67,15 @@ const int OUT_PORT_DEFAULT = -1;
 const bool DO_DISPLAY_DEFAULT = true;
 const bool SAVE_RAW_DEFAULT = false;
 const bool SAVE_DEBUG_DEFAULT = false;
+
+/// OpenCV codecs for video writing
+const vector<vector<string>> CODECS = {
+    {"h264", "H264", "avi"},
+    {"xvid", "XVID", "avi"},
+    {"mpg4", "MP4V", "mp4"},
+    {"mjpg", "MJPG", "avi"},
+    {"raw",  "",     "avi"}
+};
 
 ///
 ///
@@ -409,28 +420,55 @@ Trackball::Trackball(string cfg_fn)
         _sphere_view.create(_map_h, _map_w, CV_8UC1);
         _sphere_view.setTo(Scalar::all(128));
     }
-    if (_save_raw) {
-        string vid_fn = _base_fn + "-raw.mp4";
-        double fps = source->getFPS();
-        if (fps <= 0) { fps = 25; }
-        LOG_DBG("Opening %s for video writing (%dx%d @ %f FPS)", vid_fn.c_str(), source->getWidth(), source->getHeight(), fps);
-        _raw_vid.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), fps, cv::Size(source->getWidth(), source->getHeight()));
-        if (!_raw_vid.isOpened()) {
-            LOG_ERR("Error! Unable to open raw output video (%s).", vid_fn.c_str());
-            _active = false;
-            return;
+
+    // do video stuff
+    if (_save_raw || _save_debug) {
+        // find codec
+        int fourcc = 0;
+        string cstr = _cfg("vid_codec"), fext;
+        for (auto codec : CODECS) {
+            if (cstr == codec[0]) {
+                fourcc = VideoWriter::fourcc(codec[1][0], codec[1][1], codec[1][2], codec[1][3]);
+                fext = codec[2];
+            }
         }
-    }
-    if (_save_debug) {
-        string vid_fn = _base_fn + "-debug.mp4";
-        double fps = source->getFPS();
-        if (fps <= 0) { fps = 25; }
-        LOG_DBG("Opening %s for video writing (%dx%d @ %f FPS)", vid_fn.c_str(), 4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM, fps);
-        _debug_vid.open(vid_fn, cv::VideoWriter::fourcc('H', '2', '6', '4'), fps, cv::Size(4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM));
-        if (!_debug_vid.isOpened()) {
-            LOG_ERR("Error! Unable to open debug output video (%s).", vid_fn.c_str());
-            _active = false;
-            return;
+        if (fext.empty()) {
+            // codec not found - use default
+            auto codec = CODECS[0];
+            cstr = codec[0];
+            fourcc = VideoWriter::fourcc(codec[1][0], codec[1][1], codec[1][2], codec[1][3]);
+            fext = codec[2];
+            LOG_WRN("Warning! Using default value for vid_codec (%s).", cstr.c_str());
+            _cfg.add("vid_codec", cstr);
+        }
+        else
+
+        // raw input video
+        if (_save_raw) {
+            string vid_fn = _base_fn + "-raw." + fext;
+            double fps = source->getFPS();
+            if (fps <= 0) { fps = 25; }
+            LOG_DBG("Opening %s for video writing (%s %dx%d @ %f FPS)", vid_fn.c_str(), cstr.c_str(), source->getWidth(), source->getHeight(), fps);
+            _raw_vid.open(vid_fn, fourcc, fps, cv::Size(source->getWidth(), source->getHeight()));
+            if (!_raw_vid.isOpened()) {
+                LOG_ERR("Error! Unable to open raw output video (%s).", vid_fn.c_str());
+                _active = false;
+                return;
+            }
+        }
+
+        // debug output video
+        if (_save_debug) {
+            string vid_fn = _base_fn + "-debug." + fext;
+            double fps = source->getFPS();
+            if (fps <= 0) { fps = 25; }
+            LOG_DBG("Opening %s for video writing (%s %dx%d @ %f FPS)", vid_fn.c_str(), cstr.c_str(), 4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM, fps);
+            _debug_vid.open(vid_fn, fourcc, fps, cv::Size(4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM));
+            if (!_debug_vid.isOpened()) {
+                LOG_ERR("Error! Unable to open debug output video (%s).", vid_fn.c_str());
+                _active = false;
+                return;
+            }
         }
     }
 
