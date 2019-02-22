@@ -99,7 +99,7 @@ If you are using a USB3 camera and are receiving error messages when FicTrac tri
 
 ##### PGR (FLIR) Spinnaker SDK
 
-1. Download and install the Spinnaker SDK from [PGR downloads page](https://www.ptgrey.com/support/downloads).
+1. Download and install the latest Spinnaker (full) SDK from [PGR downloads page](https://www.ptgrey.com/support/downloads).
 2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a [Windows installation](#windows-installation) you would replace step 4 with:
 ```
 cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\build" -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
