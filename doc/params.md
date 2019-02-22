@@ -23,6 +23,7 @@ In the table below, the various possible parameters are listed. If nothing is li
 | opt_max_evals | int     | 50            | (0,inf)     | Probably not       | Specifies the maximum number of minimisation iterations to perform each frame. Smaller values may improve tracking frame rate at the risk of finding sub-optimal matches. Number of optimisation iterations is printed to screen during tracking (its=...). |
 | opt_bound  | float      | 0.35          | (0,inf)     | Probably not       | Specifies the optimisation search range in radians. Larger values will facilitate more track ball rotation per frame, but result in slower tracking and also possibly lead to false matches. |
 | opt_tol    | float      | 0.001         | (0,inf)     | Probably not       | Specifies the minimisation termination criteria for absolute change in input parameters (delta rotation vector). |
+| vid_codec  | string     | h264          | [h264,xvid,mpg4,mjpg,raw] | Probably not | Specifies the video codec to use when writing output videos (see `save_raw` and `save_debug`). |
 |            |            |               |             |                    |             |
 | c2a_cnrs_xy | vec\<int> |             |             | Set by ConfigGui   | Specifies the corners {X1,Y1,X2,Y2,...} of a square shape aligned with the animal's XY axes. Set interactively in ConfigGUI. |
 | c2a_cnrs_yz | vec\<int> |             |             | Set by ConfigGui   | Specifies the corners {X1,Y1,X2,Y2,...} of a square shape aligned with the animal's YZ axes. Set interactively in ConfigGUI. |
