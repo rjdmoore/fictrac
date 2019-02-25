@@ -31,7 +31,7 @@ In the table below, the various possible parameters are listed. If nothing is li
 | c2a_src    | string     |               |             | Set by ConfigGui    | Specifies which of the above corner sets is used to compute the camera-animal transform. Set interactively in ConfigGUI. |
 | c2a_r      | vec\<float> |              |             | Set by ConfigGui    | Rotational component of the camera-animal transform. Computed automatically by ConfigGUI. |
 | c2a_t      | vec\<float> |              |             | Set by ConfigGui    | Translational component of the camera-animal transform. Computed automatically by ConfigGUI. |
-| roi_circ   | vec\<int> |                |             | Set by ConfigGui    | Specifies points {X1,Y1,X2,Y2,...} around the circumference of the trackball in the input image. Set interactively in ConfigGUI. |
+| roi_circ   | vec\<int>  |               |             | Set by ConfigGui    | Specifies points {X1,Y1,X2,Y2,...} around the circumference of the trackball in the input image. Set interactively in ConfigGUI. |
 | roi_c      | vec\<float> |              |             | Set by ConfigGui    | Camera-frame vector describing the centre point of the trackball in the input image. Computed automatically by ConfigGUI. |
-| roi_r      | float       |              |             | Set by ConfigGui    | Half-angle describing the radius of the trackball in the input image. Computed automatically by ConfigGUI. |
+| roi_r      | float      |               |             | Set by ConfigGui    | Half-angle describing the radius of the trackball in the input image. Computed automatically by ConfigGUI. |
 | roi_ignr   | vec<vec\<int>> |           |             | Set by ConfigGui    | Specifies possibly several polygon regions {{X11,Y11,X12,Y12,...},{X21,Y21,X22,Y22,...},...} that should be ignored during matching (e.g. where the animal obscures the trackball). Set interactively in ConfigGUI. |
