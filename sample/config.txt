@@ -1,4 +1,4 @@
-## FicTrac config file (build Feb 22 2019)
+## FicTrac config file (build Feb 27 2019)
 c2a_cnrs_xy      : { 191, 171, 128, 272, 20, 212, 99, 132 }
 c2a_r            : { -0.722443, 0.131317, 0.460878 }
 c2a_src          : c2a_cnrs_xy
@@ -23,3 +23,4 @@ src_fps          : -1
 thr_ratio        : 1.25
 thr_win_pc       : 0.25
 vfov             : 45
+vid_codec        : h264
