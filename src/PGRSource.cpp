@@ -99,7 +99,15 @@ PGRSource::PGRSource(int index)
 PGRSource::~PGRSource()
 {
     if (_open) {
-        _cam->EndAcquisition();
+        try {
+            _cam->EndAcquisition();
+        }
+        catch (Spinnaker::Exception& e) {
+            LOG_ERR("Error ending acquisition! Error was: %s", e.what());
+        }
+        catch (...) {
+            LOG_ERR("Error ending acquisition!");
+        }
         _open = false;
     }
     _cam = NULL;
@@ -115,7 +123,15 @@ double PGRSource::getFPS()
 {
     double fps = _fps;
     if (_open) {
-        fps = _cam->AcquisitionResultingFrameRate();
+        try {
+            fps = _cam->AcquisitionResultingFrameRate();
+        }
+        catch (Spinnaker::Exception& e) {
+            LOG_ERR("Error retrieving camera frame rate! Error was: %s", e.what());
+        }
+        catch (...) {
+            LOG_ERR("Error retrieving camera frame rate!");
+        }
     }
     return fps;
 }
@@ -124,8 +140,16 @@ bool PGRSource::setFPS(double fps)
 {
     bool ret = false;
     if (_open && (fps > 0)) {
-        _cam->AcquisitionFrameRateEnable.SetValue(true);
-        _cam->AcquisitionFrameRate.SetValue(fps);
+        try {
+            _cam->AcquisitionFrameRateEnable.SetValue(true);
+            _cam->AcquisitionFrameRate.SetValue(fps);
+        }
+        catch (Spinnaker::Exception& e) {
+            LOG_ERR("Error setting frame rate! Error was: %s", e.what());
+        }
+        catch (...) {
+            LOG_ERR("Error setting frame rate!");
+        }
         _fps = getFPS();
         LOG("Device frame rate is now %.2f", _fps);
         ret = true;
@@ -162,6 +186,11 @@ bool PGRSource::grab(cv::Mat& frame)
         pgr_image->Release();
         return false;
     }
+    catch (...) {
+        LOG_ERR("Error grabbing PGR frame!");
+        pgr_image->Release();
+        return false;
+    }
 
     try {
         // Convert image
@@ -177,6 +206,11 @@ bool PGRSource::grab(cv::Mat& frame)
     }
     catch (Spinnaker::Exception& e) {
         LOG_ERR("Error converting PGR frame! Error was: %s", e.what());
+        pgr_image->Release();
+        return false;
+    }
+    catch (...) {
+        LOG_ERR("Error converting PGR frame!");
         pgr_image->Release();
         return false;
     }
