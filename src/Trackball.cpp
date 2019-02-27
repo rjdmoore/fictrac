@@ -69,7 +69,7 @@ const bool SAVE_RAW_DEFAULT = false;
 const bool SAVE_DEBUG_DEFAULT = false;
 
 /// OpenCV codecs for video writing
-const vector<vector<string>> CODECS = {
+const vector<vector<std::string>> CODECS = {
     {"h264", "H264", "avi"},
     {"xvid", "XVID", "avi"},
     {"mpg4", "MP4V", "mp4"},
@@ -427,8 +427,10 @@ Trackball::Trackball(string cfg_fn)
         int fourcc = 0;
         string cstr = _cfg("vid_codec"), fext;
         for (auto codec : CODECS) {
-            if (cstr == codec[0]) {
-                fourcc = VideoWriter::fourcc(codec[1][0], codec[1][1], codec[1][2], codec[1][3]);
+            if (cstr.compare(codec[0]) == 0) {  // found the codec
+                if (cstr.compare("raw") != 0) { // codec isn't RAW
+                    fourcc = VideoWriter::fourcc(codec[1][0], codec[1][1], codec[1][2], codec[1][3]);
+                }
                 fext = codec[2];
             }
         }
@@ -436,12 +438,13 @@ Trackball::Trackball(string cfg_fn)
             // codec not found - use default
             auto codec = CODECS[0];
             cstr = codec[0];
-            fourcc = VideoWriter::fourcc(codec[1][0], codec[1][1], codec[1][2], codec[1][3]);
+            if (cstr.compare("raw") != 0) { // codec isn't RAW
+                fourcc = VideoWriter::fourcc(codec[1][0], codec[1][1], codec[1][2], codec[1][3]);
+            }
             fext = codec[2];
             LOG_WRN("Warning! Using default value for vid_codec (%s).", cstr.c_str());
             _cfg.add("vid_codec", cstr);
         }
-        else
 
         // raw input video
         if (_save_raw) {
