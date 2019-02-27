@@ -100,7 +100,7 @@ bool intersectSphere(const double camVec[3], double sphereVec[3], const double r
 /// 
 ///
 Trackball::Trackball(string cfg_fn)
-    : _init(false), _reset(true), _clean_map(true), _active(true), _kill(false)
+    : _init(false), _reset(true), _clean_map(true), _active(true), _kill(false), _do_reset(false)
 {
     /// Load and parse config file.
     if (_cfg.read(cfg_fn) <= 0) {
@@ -555,6 +555,8 @@ void Trackball::reset()
         _R_roi_hist.clear();
         _pos_heading_hist.clear();
     }
+
+    _do_reset = false;
 }
 
 ///
@@ -583,6 +585,12 @@ void Trackball::process()
         PRINT("");
         LOG("Frame %d", _cnt);
 
+        /// Handle reset request
+        if (_do_reset) {
+            nbad = 0;
+            reset();
+        }
+
         /// Localise current view of sphere.
         if (!doSearch(_global_search)) {
             t2 = t3 = t4 = t5 = ts_ms();
@@ -605,7 +613,6 @@ void Trackball::process()
 
         /// Handle failed localisation.
         if ((_max_bad_frames >= 0) && (nbad > _max_bad_frames)) {
-            _seq = 0;
             nbad = 0;
             reset();
         } else {
@@ -1361,6 +1368,10 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
     if (key == 0x1B) {  // esc
         LOG("Exiting..");
         terminate();
+    }
+    else if (key == 0x52) { // shift+R
+        LOG("Resetting map!");
+        _do_reset = true;
     }
 
     if (_save_raw) {
