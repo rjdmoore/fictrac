@@ -202,7 +202,7 @@ void FrameGrabber::process()
     while (_active) {
         /// Wait until we need to capture a new frame.
         unique_lock<mutex> l(_qMutex);
-        while (_active && (_max_buf_len >= 0) && (_frame_q.size() >= _max_buf_len)) {
+        while (_active && (_max_buf_len > 0) && (_frame_q.size() >= _max_buf_len)) {
             _qCond.wait(l);
         }
         l.unlock();

@@ -30,7 +30,7 @@ public:
                     const cv::Mat&                  remap_mask,
                     double                          thresh_ratio,
                     double                          thresh_win_pc,
-                    int                             max_buf_len = 10,
+                    int                             max_buf_len = 1,
                     int                             max_frame_cnt = -1
     );
     ~FrameGrabber();
