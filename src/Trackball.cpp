@@ -1250,36 +1250,38 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
     //FIXME: add heading arrow to fictive path
     {
         int npts = pos_heading_hist.size();
-        double minx = 0, maxx = 0, miny = 0, maxy = 0;
-        for (int i = 0; i < npts; i++) {
-            double x = pos_heading_hist[i].x, y = pos_heading_hist[i].y;
-            if (x < minx)
-                minx = x;
-            if (x > maxx)
-                maxx = x;
-            if (y < miny)
-                miny = y;
-            if (y > maxy)
-                maxy = y;
-        }
-        double scl = 1;
-        if (npts > 1) {
-            double sclx = double(DRAW_CELL_DIM - 8) / (2.0 * std::max(fabs(minx), fabs(maxx)));
-            double scly = double(DRAW_CELL_DIM - 4) / std::max(fabs(miny), fabs(maxy));
-            scl = std::min(sclx, scly);
-        }
+        if (npts > 0) {
+            double minx = DBL_MAX, maxx = -DBL_MAX, miny = DBL_MAX, maxy = -DBL_MAX;
+            for (auto p : pos_heading_hist) {
+                double x = p.x, y = p.y;
+                if (x < minx)
+                    minx = x;
+                if (x > maxx)
+                    maxx = x;
+                if (y < miny)
+                    miny = y;
+                if (y > maxy)
+                    maxy = y;
+            }
+            double scl = 1;
+            if (npts > 1) {
+                double sclx = (minx != maxx) ? double(DRAW_CELL_DIM - 8) / (maxx - minx) : 1;
+                double scly = (miny != maxy) ? double(2 * DRAW_CELL_DIM - 4) / (maxy - miny) : 1;
+                scl = std::min(sclx, scly);
+            }
 
-        Mat draw_path = canvas(Rect(0, 2 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, DRAW_CELL_DIM));
-        double cx = DRAW_CELL_DIM, cy = 0.5 * DRAW_CELL_DIM;
-        double ppx = cx, ppy = cy;
-        for (int i = 0; i < npts; i++) {
-            double px = cx + scl * pos_heading_hist[i].y, py = cy - scl * pos_heading_hist[i].x;
-            cv::line(draw_path,
-                cv::Point(static_cast<int>(round(ppx * 16)), static_cast<int>(round(ppy * 16))),
-                cv::Point(static_cast<int>(round(px * 16)), static_cast<int>(round(py * 16))),
-                CV_RGB(255, 255, 255), 1, cv::LINE_AA, 4);
-            ppx = px;
-            ppy = py;
+            Mat draw_path = canvas(Rect(0, 2 * DRAW_CELL_DIM, 2 * DRAW_CELL_DIM, DRAW_CELL_DIM));
+            double my = (2 * DRAW_CELL_DIM - scl * (maxy - miny)) / 2, mx = DRAW_CELL_DIM - (DRAW_CELL_DIM - scl * (maxx - minx)) / 2;  // zeroth pixel for y/x data axes
+            double ppx = mx - scl * (pos_heading_hist[0].x - minx), ppy = my + scl * (pos_heading_hist[0].y - miny);
+            for (int i = 1; i < npts; i++) {
+                double px = mx - scl * (pos_heading_hist[i].x - minx), py = my + scl * (pos_heading_hist[i].y - miny);
+                cv::line(draw_path,
+                    cv::Point(static_cast<int>(round(ppy * 16)), static_cast<int>(round(ppx * 16))),
+                    cv::Point(static_cast<int>(round(py * 16)), static_cast<int>(round(px * 16))),
+                    CV_RGB(255, 255, 255), 1, cv::LINE_AA, 4);
+                ppx = px;
+                ppy = py;
+            }
         }
     }
 
