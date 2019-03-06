@@ -170,6 +170,8 @@ Trackball::Trackball(string cfg_fn)
     _map_w = 2 * _map_h;
 
     /// Load sphere config and mask.
+    bool reconfig = false;
+    _cfg.getBool("reconfig", reconfig); // ignore saved roi_c, roi_r, c2a_r, and c2a_t values and recompute from pixel coords - dangerous!!
     Mat src_mask(source->getHeight(), source->getWidth(), CV_8UC1);
     src_mask.setTo(Scalar::all(0));
     {
@@ -177,9 +179,9 @@ Trackball::Trackball(string cfg_fn)
         _sphere_rad = -1;
         vector<int> circ_pxs;
         vector<double> sphere_c;
-        if (_cfg.getVecDbl("roi_c", sphere_c) && _cfg.getDbl("roi_r", _sphere_rad)) {
+        if (!reconfig && _cfg.getVecDbl("roi_c", sphere_c) && _cfg.getDbl("roi_r", _sphere_rad)) {
             _sphere_c.copy(sphere_c.data());
-            LOG("Found sphere ROI centred at [%f %f %f], with radius %f rad.", _sphere_c[0], _sphere_c[1], _sphere_c[2], _sphere_rad);
+            LOG_DBG("Found sphere ROI centred at [%f %f %f], with radius %f rad.", _sphere_c[0], _sphere_c[1], _sphere_c[2], _sphere_rad);
         }
         else if (_cfg.getVecInt("roi_circ", circ_pxs)) {
             vector<Point2d> circ_pts;
@@ -189,7 +191,7 @@ Trackball::Trackball(string cfg_fn)
 
             // fit circular fov
             if ((circ_pts.size() >= 3) && circleFit_camModel(circ_pts, _src_model, _sphere_c, _sphere_rad)) {
-                LOG("Computed sphere ROI centred at [%f %f %f], with radius %f rad from %d roi_circ points.",
+                LOG_WRN("Warning! Re-computed sphere ROI centred at [%f %f %f], with radius %f rad from %d roi_circ points.",
                     _sphere_c[0], _sphere_c[1], _sphere_c[2], _sphere_rad, circ_pts.size());
             }
         }
@@ -241,7 +243,7 @@ Trackball::Trackball(string cfg_fn)
     */
 
     /// Create coordinate frame transformation matrices.
-    CmPoint64f roi_to_cam_r, cam_to_lab_r;
+    CmPoint64f roi_to_cam_r;
     {
         // ROI to cam transformation from sphere centre ray.
         CmPoint64f z(0, 0, 1);      // forward in camera coords
@@ -252,11 +254,30 @@ Trackball::Trackball(string cfg_fn)
 
         // Cam to lab transformation from configuration.
         vector<double> c2a_r;
-        if (_cfg.getVecDbl("c2a_r", c2a_r) && (c2a_r.size() == 3)) {
-            cam_to_lab_r = CmPoint64f(c2a_r[0], c2a_r[1], c2a_r[2]);
+        string c2a_src;
+        vector<int> c2a_pts;
+        if (!reconfig && _cfg.getVecDbl("c2a_r", c2a_r) && (c2a_r.size() == 3)) {
+            CmPoint64f cam_to_lab_r = CmPoint64f(c2a_r[0], c2a_r[1], c2a_r[2]);
             _cam_to_lab_R = CmPoint64f::omegaToMatrix(cam_to_lab_r);
+            LOG_DBG("Found C2A rotational transform: [%f %f %f].", cam_to_lab_r[0], cam_to_lab_r[1], cam_to_lab_r[2]);
         }
-        else {
+        else if (_cfg.getStr("c2a_src", c2a_src) && _cfg.getVecInt(c2a_src, c2a_pts)) {
+            // c2a source and pixel coords present - recompute transform
+            vector<Point2d> cnrs;
+            for (unsigned int i = 1; i < c2a_pts.size(); i += 2) {
+                cnrs.push_back(cv::Point2d(c2a_pts[i - 1], c2a_pts[i]));
+            }
+            Mat t;
+            if (computeRtFromSquare(_src_model, c2a_src.substr(c2a_src.size() - 2), cnrs, _cam_to_lab_R, t)) {
+                CmPoint64f cam_to_lab_r = CmPoint64f::matrixToOmega(_cam_to_lab_R);
+                LOG_WRN("Warning! Re-computed C2A rotational transform [%f %f %f] using %s.", cam_to_lab_r[0], cam_to_lab_r[1], cam_to_lab_r[2], c2a_src.c_str());
+            }
+            else {
+                LOG_ERR("Error! Camera-to-lab coordinate tranformation specified in config file (c2a_r) is invalid!");
+                _active = false;
+                return;
+            }
+        } else {
             LOG_ERR("Error! Camera-to-lab coordinate tranformation specified in config file (c2a_r) is invalid!");
             _active = false;
             return;

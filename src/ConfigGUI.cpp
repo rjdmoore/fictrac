@@ -407,6 +407,10 @@ bool ConfigGui::run()
     /// Interactive window.
     cv::namedWindow("configGUI", cv::WINDOW_AUTOSIZE);
     cv::setMouseCallback("configGUI", onMouseEvent, &_input_data);
+
+    /// If reconfiguring, then delete pre-computed values.
+    bool reconfig = false;
+    _cfg.getBool("reconfig", reconfig);
     
     /// Display/input loop.
 	Mat R, t;
@@ -442,10 +446,10 @@ bool ConfigGui::run()
             
                 // test read
                 cfg_pts.clear();
-                if (_cfg.getVecDbl("roi_c", cfg_vec) && _cfg.getDbl("roi_r", r)) {
+                if (!reconfig && _cfg.getVecDbl("roi_c", cfg_vec) && _cfg.getDbl("roi_r", r)) {
                     c.copy(cfg_vec.data());
                     LOG_DBG("Found roi_c = [%f %f %f] and roi_r = %f rad.", c[0], c[1], c[2], r);
-                    LOG_WRN("Warning! When roi_c and roi_r are specified in the config file, roi_circ will be ignored.\nTo re-compute roi_c and roi_r, please delete these values from the config file and reconfigure.");
+                    LOG_WRN("Warning! When roi_c and roi_r are specified in the config file, roi_circ will be ignored.\nTo re-compute roi_c and roi_r, please delete these values or set reconfig : y in the config file and reconfigure.");
                 } 
                 else if (_cfg.getVecInt("roi_circ", cfg_pts)) {
 
@@ -722,7 +726,7 @@ bool ConfigGui::run()
             case R_INIT:
                 /// Load R+t transform from config file.
                 cfg_vec.clear();
-                if (_cfg.getVecDbl("c2a_r", cfg_vec)) {
+                if (!reconfig && _cfg.getVecDbl("c2a_r", cfg_vec)) {
                     LOG_DBG("Read c2a_r = [%f %f %f]", cfg_vec[0], cfg_vec[1], cfg_vec[2]);
                     R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2]));
                 }
@@ -733,7 +737,7 @@ bool ConfigGui::run()
                 }
 
                 cfg_vec.clear();
-                if (_cfg.getVecDbl("c2a_t", cfg_vec)) {
+                if (!reconfig && _cfg.getVecDbl("c2a_t", cfg_vec)) {
                     LOG_DBG("Read c2a_t = [%f %f %f]", cfg_vec[0], cfg_vec[1], cfg_vec[2]);
                     t = (cv::Mat_<double>(3, 1) << cfg_vec[0], cfg_vec[1], cfg_vec[2]);
                 }
@@ -743,7 +747,7 @@ bool ConfigGui::run()
                     break;
                 }
 
-                LOG_WRN("Warning! When c2a_r and c2a_t are specified in the config file, c2a_src and associated corners points will be ignored.\nTo re-compute c2a_r and c2a_t, please delete these values from the config file and reconfigure.");
+                LOG_WRN("Warning! When c2a_r and c2a_t are specified in the config file, c2a_src and associated corners points will be ignored.\nTo re-compute c2a_r and c2a_t, please delete these values or set reconfig : y in the config file and reconfigure.");
 
                 /// Check also if corners specified (unnecessary).
                 if (_cfg.getStr("c2a_src", cfg_r_src)) {

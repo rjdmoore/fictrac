@@ -178,3 +178,21 @@ bool computeRtFromSquare_XZ(const CameraModelPtr cam_model, const vector<Point2d
 {
     return computeRtFromSquare(cam_model, XZ_CNRS, cnrs, R, t);
 }
+
+///
+/// Wrapper for computing camera-animal R+t transform.
+///
+bool computeRtFromSquare(const CameraModelPtr cam_model, const string ref_str, const vector<Point2d>& cnrs, Mat& R, Mat& t)
+{
+    bool ret = false;
+    if (ref_str == "xy") {
+        ret = computeRtFromSquare_XY(cam_model, cnrs, R, t);
+    }
+    else if (ref_str == "yz") {
+        ret = computeRtFromSquare_YZ(cam_model, cnrs, R, t);
+    }
+    else if (ref_str == "xz") {
+        ret = computeRtFromSquare_XZ(cam_model, cnrs, R, t);
+    }
+    return ret;
+}

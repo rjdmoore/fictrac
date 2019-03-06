@@ -72,6 +72,11 @@ public:
         str = str.substr(0, std::max(static_cast<int>(str.size()-2),2)) + " }";   // drop last comma
         _data[key] = str;
     }
+
+    // erase element/s
+    void erase(std::string key) {
+        _data.erase(key);
+    }
     
     /// Debugging
     void printAll();
