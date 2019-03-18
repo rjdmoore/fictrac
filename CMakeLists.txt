@@ -22,8 +22,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
 # optional build config
 option(PGR_USB3 "Use Spinnaker SDK to capture from PGR USB3 cameras" OFF) # Disabled by default
+option(PGR_USB2 "Use FlyCapture SDK to capture from PGR USB2 cameras" OFF) # Disabled by default
 if(PGR_USB3)
     set(PGR_DIR "." CACHE PATH "Path to PGR Spinnaker SDK folder")
+elseif(PGR_USB2)
+    set(PGR_DIR "." CACHE PATH "Path to PGR FlyCapture SDK folder")
 endif()
 
 # find dependencies
@@ -35,6 +38,9 @@ if(MSVC)
     if(PGR_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR}/lib64/vs2015)
         find_library(PGR_LIB Spinnaker_v140.lib)
+    elseif(PGR_USB2)
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR}/lib64/vs2015)
+        find_library(PGR_LIB FlyCapture2_v140.lib)
     endif()
 else()  # gcc
     find_package(OpenCV)
@@ -43,6 +49,9 @@ else()  # gcc
     if(PGR_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR})
         find_library(PGR_LIB libSpinnaker.so)
+    elseif(PGR_USB2)
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR})
+        find_library(PGR_LIB libflycapture.so)
     endif()
 endif()
 get_filename_component(NLOPT_DIR ${NLOPT_LIB} DIRECTORY)
@@ -54,26 +63,30 @@ if(NLOPT_LIB)
 else()
     message(FATAL_ERROR "Error! Could not find NLopt lib at ${NLOPT_DIR}!")
 endif()
-if(PGR_USB3)
+if(PGR_USB2 OR PGR_USB3)
     get_filename_component(PGR_DIR ${PGR_LIB} DIRECTORY)
     get_filename_component(PGR_DIR ${PGR_DIR} DIRECTORY)    # step up 1 level
     if(MSVC)
         get_filename_component(PGR_DIR ${PGR_DIR} DIRECTORY)    # step up 1 level
     endif()
     if(PGR_LIB)
-        message(STATUS "Found PGR Spinnaker lib ${PGR_LIB}")
+        message(STATUS "Found PGR FlyCapture/Spinnaker lib ${PGR_LIB}")
     else()
-        message(FATAL_ERROR "Error! Could not find PGR Spinnaker lib at ${PGR_DIR}!")
+        message(FATAL_ERROR "Error! Could not find PGR FlyCapture/Spinnaker lib at ${PGR_DIR}!")
     endif()
 endif()
 
 # add include dirs
 include_directories(${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${NLOPT_DIR})
-if(PGR_USB3)
+if(PGR_USB2 OR PGR_USB3)
     if(MSVC)
         include_directories(${PGR_DIR}/include)
     else()
-        include_directories(${PGR_DIR}/include/spinnaker)   # for ubuntu default install dir
+        if(PGR_USB2)
+            include_directories(${PGR_DIR}/include/flycapture)   # for ubuntu default install dir
+        elseif(PGR_USB3)
+            include_directories(${PGR_DIR}/include/spinnaker)   # for ubuntu default install dir
+        endif()
     endif()
 endif()
 
@@ -88,7 +101,9 @@ add_executable(fictrac ${PROJECT_SOURCE_DIR}/exec/fictrac.cpp)
 # add preprocessor definitions
 # public means defs will be inherited by linked executables
 target_compile_definitions(libfictrac PUBLIC _CRT_SECURE_NO_WARNINGS NOMINMAX)
-if(PGR_USB3)
+if(PGR_USB2)
+    target_compile_definitions(libfictrac PUBLIC PGR_USB2)
+elseif(PGR_USB3)
     target_compile_definitions(libfictrac PUBLIC PGR_USB3)
 endif()
 
@@ -101,7 +116,7 @@ endif()
 
 # linking and post-build
 target_link_libraries(libfictrac PUBLIC ${OpenCV_LIBS} ${NLOPT_LIB})
-if(PGR_USB3)
+if(PGR_USB2 OR PGR_USB3)
     target_link_libraries(libfictrac PUBLIC ${PGR_LIB})
 endif()
 if(MSVC)
