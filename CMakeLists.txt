@@ -3,7 +3,7 @@ project (FicTrac)
 
 # The version number.
 set (FICTRAC_VERSION_MAJOR 2)
-set (FICTRAC_VERSION_MINOR 0)
+set (FICTRAC_VERSION_MINOR 1)
  
 # output version info to be included by project
 configure_file (
