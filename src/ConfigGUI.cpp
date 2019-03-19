@@ -18,9 +18,9 @@
 #include "timing.h"
 #include "misc.h"
 #include "CVSource.h"
-#ifdef PGR_USB3
+#if defined(PGR_USB2) || defined(PGR_USB3)
 #include "PGRSource.h"
-#endif // PGR_USB3
+#endif // PGR_USB2/3
 
 /// OpenCV individual includes required by gcc?
 #include <opencv2/highgui.hpp>
@@ -168,7 +168,7 @@ ConfigGui::ConfigGui(string config_fn)
     Mat input_frame;
     std::shared_ptr<FrameSource> source;
     if (_open) {
-#ifdef PGR_USB3
+#if defined(PGR_USB2) || defined(PGR_USB3)
         try {
             // first try reading input as camera id
             int id = std::stoi(input_fn);
@@ -178,9 +178,9 @@ ConfigGui::ConfigGui(string config_fn)
             // then try loading as video file
             source = std::make_shared<CVSource>(input_fn);
         }
-#else // !PGR_USB3
+#else // !PGR_USB2/3
         source = std::make_shared<CVSource>(input_fn);
-#endif // PGR_USB3
+#endif // PGR_USB2/3
         if (!source->isOpen()) {
             LOG_ERR("Error! Could not open input frame source (%s)!", input_fn.c_str());
             _open = false;
