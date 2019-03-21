@@ -177,7 +177,7 @@ bool ConfigParser::getStr(string key, string& val) {
         val = _data[key];
         return true;
     }
-    LOG_WRN("Warning! Key (%s) not found.", key.c_str());
+    LOG_DBG("Key (%s) not found.", key.c_str());
     return false;
 }
 
