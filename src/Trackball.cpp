@@ -1319,8 +1319,8 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
                 draw_camera->vectorToPixelIndex(vec, px, py);
 
                 // draw link
-                if ((ppx >= 0) && (ppy >= 0) && (px >= 0) && (py >= 0) && (ppx < draw_input.cols) && (ppy > draw_input.rows) && (px < draw_input.cols) && (py < draw_input.rows)) {
-                    float mix = (i + 0.5f) / static_cast<float>(R_roi_hist.size());
+                if ((ppx >= 0) && (ppy >= 0) && (px >= 0) && (py >= 0) && (ppx < draw_input.cols) && (ppy < draw_input.rows) && (px < draw_input.cols) && (py < draw_input.rows)) {
+                    float mix = 0.33f + 0.67f * (i + 0.5f) / static_cast<float>(R_roi_hist.size());
                     cv::Vec3b rgb = draw_input.at<cv::Vec3b>(static_cast<int>((ppy + py) / 2.f), static_cast<int>((ppx + px) / 2.f));   // px/py are pixel index values
                     int b = static_cast<int>((1 - mix) * rgb[0] + mix * 255.f + 0.5f);
                     int g = static_cast<int>((1 - mix) * rgb[1] + mix * 255.f + 0.5f);
