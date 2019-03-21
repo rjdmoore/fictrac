@@ -170,6 +170,7 @@ ConfigGui::ConfigGui(string config_fn)
     if (_open) {
 #if defined(PGR_USB2) || defined(PGR_USB3)
         try {
+            if (input_fn.size() > 2) { throw std::exception(); }
             // first try reading input as camera id
             int id = std::stoi(input_fn);
             source = std::make_shared<PGRSource>(id);
