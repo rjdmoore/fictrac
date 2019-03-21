@@ -30,6 +30,7 @@ CVSource::CVSource(std::string input)
     try {
         // try reading input as camera id
         LOG_DBG("Trying source as camera id..");
+        if (input.size() > 2) { throw std::exception(); }
         int id = std::stoi(input);
         _cap = std::shared_ptr<cv::VideoCapture>(new cv::VideoCapture(id));
         if (!_cap->isOpened()) { throw 0; }
