@@ -80,11 +80,11 @@ public:
 private:
     bool setFrame(cv::Mat& frame);
 
-    bool updateC2ATransform(const cv::Mat& ref_cnrs, cv::Mat& R, cv::Mat& t);
+    bool updateRt(const std::string& ref_str, cv::Mat& R, cv::Mat& t);
     //void drawC2ATransform(cv::Mat& disp_frame, const cv::Mat& ref_cnrs, const cv::Mat& R, const cv::Mat& t, const double& r, const CmPoint& c);
     void drawC2AAxes(cv::Mat& disp_frame, const cv::Mat& R, const cv::Mat& t, const double& r, const CmPoint& c);
-    void drawC2ACorners(cv::Mat& disp_frame, const cv::Mat& ref_cnrs, const cv::Mat& R, const cv::Mat& t);
-    bool saveC2ATransform(const cv::Mat& R, const cv::Mat& t);
+    void drawC2ACorners(cv::Mat& disp_frame, const std::string& ref_str, const cv::Mat& R, const cv::Mat& t);
+    bool saveC2ATransform(const std::string& ref_str, const cv::Mat& R, const cv::Mat& t);
 
     void changeState(INPUT_MODE new_state);
     

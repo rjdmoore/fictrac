@@ -221,7 +221,7 @@ Trackball::Trackball(string cfg_fn)
                 cv::fillPoly(src_mask, ignr_polys_pts, CV_RGB(0, 0, 0));
             }
             else {
-                LOG_WRN("Warning! No valid mask ignore regions specified in config file (roi_ignr)!");
+                LOG_DBG("No valid mask ignore regions specified in config file (roi_ignr)!");
             }
                 
             /// Sphere config read successfully.
@@ -234,22 +234,13 @@ Trackball::Trackball(string cfg_fn)
         }
     }
 
-    /*
-    * The model sphere has it's own coordinate system, because we arbitrarily set
-    * the view vector corresponding to the centre of the projection of the tracking
-    * ball to be the principal axis of the virtual camera (cam_model).
-    *
-    * All incoming and outgoing vectors and matrices must thus be transposed to/from
-    * this coordinate system: lab <= (_cam_to_lab_R) => cam <= (_roi_to_cam_R) => roi.
-    */
-
     /// Create coordinate frame transformation matrices.
     CmPoint64f roi_to_cam_r;
     {
         // ROI to cam transformation from sphere centre ray.
         CmPoint64f z(0, 0, 1);      // forward in camera coords
         roi_to_cam_r = _sphere_c.getRotationTo(z);    // find axis-angle to rotate sphere centre to camera centre.
-        _roi_to_cam_R = CmPoint64f::omegaToMatrix(roi_to_cam_r);
+        /*_roi_to_cam_R = CmPoint64f::omegaToMatrix(roi_to_cam_r);*/
 
         LOG_DBG("roi_to_cam_r: %.4f %.4f %.4f", roi_to_cam_r[0], roi_to_cam_r[1], roi_to_cam_r[2]);
 
@@ -270,6 +261,7 @@ Trackball::Trackball(string cfg_fn)
             }
             Mat t;
             if (computeRtFromSquare(_src_model, c2a_src.substr(c2a_src.size() - 2), cnrs, _cam_to_lab_R, t)) {
+                _cam_to_lab_R = _cam_to_lab_R.t();  // transpose to convert to camera-lab transform
                 CmPoint64f cam_to_lab_r = CmPoint64f::matrixToOmega(_cam_to_lab_R);
                 LOG_WRN("Warning! Re-computed C2A rotational transform [%f %f %f] using %s.", cam_to_lab_r[0], cam_to_lab_r[1], cam_to_lab_r[2], c2a_src.c_str());
             }
@@ -360,7 +352,7 @@ Trackball::Trackball(string cfg_fn)
     _global_search = OPT_GLOBAL_SEARCH_DEFAULT;
     if (!_cfg.getBool("opt_do_global", _global_search)) {
         LOG_WRN("Warning! Using default value for opt_do_global (%d).", _global_search);
-        _cfg.add("opt_do_global", _global_search);
+        _cfg.add("opt_do_global", _global_search ? "y" : "n");
     }
     _max_bad_frames = OPT_MAX_BAD_FRAMES_DEFAULT;
     if (!_cfg.getInt("max_bad_frames", _max_bad_frames)) {
@@ -422,17 +414,17 @@ Trackball::Trackball(string cfg_fn)
     _do_display = DO_DISPLAY_DEFAULT;
     if (!_cfg.getBool("do_display", _do_display)) {
         LOG_WRN("Warning! Using default value for do_display (%d).", _do_display);
-        _cfg.add("do_display", _do_display);
+        _cfg.add("do_display", _do_display ? "y" : "n");
     }
     _save_raw = SAVE_RAW_DEFAULT;
     if (!source->isLive() || !_cfg.getBool("save_raw", _save_raw)) {
         LOG_WRN("Warning! Using default value for save_raw (%d).", _save_raw);
-        _cfg.add("save_raw", _save_raw);
+        _cfg.add("save_raw", _save_raw ? "y" : "n");
     }
     _save_debug = SAVE_DEBUG_DEFAULT;
     if (!_cfg.getBool("save_debug", _save_debug)) {
         LOG_WRN("Warning! Using default value for save_debug (%d).", _save_debug);
-        _cfg.add("save_debug", _save_debug);
+        _cfg.add("save_debug", _save_debug ? "y" : "n");
     }
     if (_save_debug & !_do_display) {
         LOG("Forcing do_display = true, becase save_debug == true.");
@@ -848,10 +840,10 @@ void Trackball::updatePath()
     _r_roi = CmPoint64f::matrixToOmega(_R_roi);
     
     // rel vec cam
-    _dr_cam = _dr_roi.getTransformed(_roi_to_cam_R);
+    _dr_cam = _dr_roi/*.getTransformed(_roi_to_cam_R)*/;
 
     // abs mat cam
-    _R_cam = _roi_to_cam_R * _R_roi;
+    _R_cam = /*_roi_to_cam_R * */_R_roi;
 
     // abs vec cam
     _r_cam = CmPoint64f::matrixToOmega(_R_cam);
@@ -1310,14 +1302,14 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
     /// Draw sphere orientation history (animal position history on sphere).
     {
         static const CmPoint up(0, 0, -1.0);
-        static CmPoint up_roi = up.getTransformed(_roi_to_cam_R.t() * _cam_to_lab_R.t()).getNormalised() * _r_d_ratio;
+        CmPoint up_roi = up.getTransformed(/*_roi_to_cam_R.t() * */_cam_to_lab_R.t()).getNormalised() * _r_d_ratio;
 
         double ppx = -1, ppy = -1;
-        draw_camera->vectorToPixelIndex(up_roi, ppx, ppy);
+        draw_camera->vectorToPixelIndex(up_roi, ppx, ppy);  // don't need to correct for roi2cam R because origin is implicitly centre of draw_camera image anyway
         for (int i = R_roi_hist.size() - 1; i >= 0; i--) {
             // multiply by transpose - see Localiser::testRotation()
             CmPoint vec = up_roi.getTransformed(R_roi * R_roi_hist[i].t()).getNormalised() * _r_d_ratio;
-                
+
             // sphere is centred at (0,0,1) cam coords, with r
             double px = -1, py = -1;
 

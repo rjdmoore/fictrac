@@ -257,25 +257,10 @@ bool ConfigGui::setFrame(Mat& frame)
 
 ///
 /// Write camera-animal transform to config file.
+/// Warning: input R+t is animal to camera frame transform!
 ///
-bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
+bool ConfigGui::saveC2ATransform(const string& ref_str, const Mat& R, const Mat& t)
 {
-	string sqr_type = "";
-	switch (_input_data.mode) {
-		case R_XY:
-			sqr_type = "c2a_cnrs_xy";
-			break;
-		case R_YZ:
-			sqr_type = "c2a_cnrs_yz";
-			break;
-		case R_XZ:
-			sqr_type = "c2a_cnrs_xz";
-			break;
-        default:
-            LOG_ERR("Uh oh, something went wrong :-(");
-            return false;
-	}
-
 	// dump corner points to config file
 	vector<int> cfg_pts;
 	for (auto p : _input_data.sqrPts) {
@@ -284,13 +269,13 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 	}
 
 	// write to config file
-	LOG("Adding c2a_src and %s to config file and writing to disk (%s) ..", sqr_type.c_str(), _config_fn.c_str());
-    _cfg.add("c2a_src", sqr_type);
-    _cfg.add(sqr_type, cfg_pts);
+	LOG("Adding c2a_src and %s to config file and writing to disk (%s) ..", ref_str.c_str(), _config_fn.c_str());
+    _cfg.add("c2a_src", ref_str);
+    _cfg.add(ref_str, cfg_pts);
 
 	// dump R to config file
 	vector<double> cfg_r, cfg_t;
-	CmPoint angleAxis = CmPoint64f::matrixToOmega(R);
+	CmPoint angleAxis = CmPoint64f::matrixToOmega(R.t());   // transpose to get camera-animal transform
 	for (int i = 0; i < 3; i++) {
 		cfg_r.push_back(angleAxis[i]);
 		cfg_t.push_back(t.at<double>(i, 0));
@@ -321,21 +306,25 @@ bool ConfigGui::saveC2ATransform(const Mat& R, const Mat& t)
 ///
 /// Update animal coordinate frame estimate.
 ///
-bool ConfigGui::updateC2ATransform(const Mat& ref_cnrs, Mat& R, Mat& t)
+bool ConfigGui::updateRt(const string& ref_str, Mat& R, Mat& t)
 {
-	bool ret = false;
-	if (_input_data.newEvent) {
-        //FIXME: also support edge clicks! e.g.:
-        //  double x1 = click[2 * i + 0].x;     double y1 = click[2 * i + 0].y;
-        //  double x2 = click[2 * i + 1].x;     double y2 = click[2 * i + 1].y;
-        //  double x3 = click[2 * i + 2].x;     double y3 = click[2 * i + 2].y;
-        //  double x4 = click[2 * i + 3].x;     double y4 = click[2 * i + 3].y;
-        //  double px = ((x1*y2 - y1 * x2)*(x3 - x4) - (x1 - x2)*(x3*y4 - y3 * x4)) / ((x1 - x2)*(y3 - y4) - (y1 - y2)*(x3 - x4));
-        //  double py = ((x1*y2 - y1 * x2)*(y3 - y4) - (y1 - y2)*(x3*y4 - y3 * x4)) / ((x1 - x2)*(y3 - y4) - (y1 - y2)*(x3 - x4));
-		ret = computeRtFromSquare(_cam_model, ref_cnrs, _input_data.sqrPts, R, t);
-		_input_data.newEvent = false;
-	}
-	return ret;
+    //FIXME: also support edge clicks! e.g.:
+    //  double x1 = click[2 * i + 0].x;     double y1 = click[2 * i + 0].y;
+    //  double x2 = click[2 * i + 1].x;     double y2 = click[2 * i + 1].y;
+    //  double x3 = click[2 * i + 2].x;     double y3 = click[2 * i + 2].y;
+    //  double x4 = click[2 * i + 3].x;     double y4 = click[2 * i + 3].y;
+    //  double px = ((x1*y2 - y1 * x2)*(x3 - x4) - (x1 - x2)*(x3*y4 - y3 * x4)) / ((x1 - x2)*(y3 - y4) - (y1 - y2)*(x3 - x4));
+    //  double py = ((x1*y2 - y1 * x2)*(y3 - y4) - (y1 - y2)*(x3*y4 - y3 * x4)) / ((x1 - x2)*(y3 - y4) - (y1 - y2)*(x3 - x4));
+
+    bool ret = false;
+    if (ref_str == "c2a_cnrs_xy") {
+        ret = computeRtFromSquare(_cam_model, XY_CNRS, _input_data.sqrPts, R, t);
+    } else if (ref_str == "c2a_cnrs_yz") {
+        ret = computeRtFromSquare(_cam_model, YZ_CNRS, _input_data.sqrPts, R, t);
+    } else if (ref_str == "c2a_cnrs_xz") {
+        ret = computeRtFromSquare(_cam_model, XZ_CNRS, _input_data.sqrPts, R, t);
+    }
+    return ret;
 }
 
 /////
@@ -364,11 +353,22 @@ bool ConfigGui::updateC2ATransform(const Mat& ref_cnrs, Mat& R, Mat& t)
 ///
 ///
 ///
-void ConfigGui::drawC2ACorners(Mat& disp_frame, const Mat& ref_cnrs, const Mat& R, const Mat& t)
+void ConfigGui::drawC2ACorners(Mat& disp_frame, const string& ref_str, const Mat& R, const Mat& t)
 {
     // make x4 mat for projecting corners
     Mat T(3, 4, CV_64F);
     for (int i = 0; i < 4; i++) { t.copyTo(T.col(i)); }
+
+    Mat ref_cnrs;
+    if (ref_str == "c2a_cnrs_xy") {
+        ref_cnrs = XY_CNRS;
+    } else if (ref_str == "c2a_cnrs_yz") {
+        ref_cnrs = YZ_CNRS;
+    } else if (ref_str == "c2a_cnrs_xz") {
+        ref_cnrs = XZ_CNRS;
+    } else {
+        return;
+    }
 
     // project reference corners
     Mat p = R * ref_cnrs + T;
@@ -387,6 +387,7 @@ void ConfigGui::drawC2AAxes(Mat& disp_frame, const Mat& R, const Mat& t, const d
         double scale = 1.0 / tan(r);
         Mat so = (cv::Mat_<double>(3, 1) << c.x, c.y, c.z) * scale;
         drawAxes(disp_frame, _cam_model, R, so, Scalar(0, 0, 255));
+        drawAnimalAxis(disp_frame, _cam_model, R, so, r, Scalar(255, 0, 0));
     }
 }
 
@@ -419,7 +420,7 @@ bool ConfigGui::run()
     double r = -1;
     char key = 0;
     string val;
-	string cfg_r_src;
+	string c2a_src;
     vector<int> cfg_pts;
     vector<double> cfg_vec;
     vector<vector<int>> cfg_polys;
@@ -725,60 +726,69 @@ bool ConfigGui::run()
             
             /// Choose method for defining animal frame.
             case R_INIT:
+                /// Check if corners specified (optional).
+                _input_data.sqrPts.clear();
+                if (_cfg.getStr("c2a_src", c2a_src)) {
+                    LOG_DBG("Found c2a_src: %s", c2a_src.c_str());
+
+                    /// Load square corners from config file.
+                    cfg_pts.clear();
+                    if (_cfg.getVecInt(c2a_src, cfg_pts)) {
+                        for (unsigned int i = 1; i < cfg_pts.size(); i += 2) {
+                            _input_data.sqrPts.push_back(cv::Point2d(cfg_pts[i - 1], cfg_pts[i]));
+                        }
+                    }
+                }
+
                 /// Load R+t transform from config file.
+                R.release();    // clear mat
                 cfg_vec.clear();
                 if (!reconfig && _cfg.getVecDbl("c2a_r", cfg_vec)) {
                     LOG_DBG("Read c2a_r = [%f %f %f]", cfg_vec[0], cfg_vec[1], cfg_vec[2]);
-                    R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2]));
+                    R = CmPoint64f::omegaToMatrix(CmPoint(cfg_vec[0], cfg_vec[1], cfg_vec[2])).t();     // transpose to lab-camera transform
                 }
                 else {
-                    LOG_DBG("Error reading c2a_r from config file! Re-running configuration ..");
-                    changeState(R_SLCT);
-                    break;
+                    LOG_WRN("Warning! c2a_r missing from config file. Looking for corner points..");
                 }
 
+                t.release();    // clear mat
                 cfg_vec.clear();
                 if (!reconfig && _cfg.getVecDbl("c2a_t", cfg_vec)) {
                     LOG_DBG("Read c2a_t = [%f %f %f]", cfg_vec[0], cfg_vec[1], cfg_vec[2]);
                     t = (cv::Mat_<double>(3, 1) << cfg_vec[0], cfg_vec[1], cfg_vec[2]);
                 }
                 else {
-                    LOG_DBG("Error reading c2a_t from config file! Re-running configuration ..");
+                    LOG_WRN("Warning! c2a_t missing from config file. Looking for corner points..");
+                }
+
+                if (R.empty() || t.empty()) {
+                    if (!_input_data.sqrPts.empty()) {
+                        LOG_DBG("Recomputing R+t from specified corner points...");
+
+                        /// Recompute R+t
+                        if (updateRt(c2a_src, R, t)) {
+                            saveC2ATransform(c2a_src, R, t);
+                        }
+                    }
+                }
+                else {
+                    LOG_WRN("Warning! When c2a_r and c2a_t are specified in the config file, c2a_src and associated corners points will be ignored.\nTo re-compute c2a_r and c2a_t, please delete these values or set reconfig : y in the config file and reconfigure.");
+                }
+
+                /// If c2a_r/t missing and couldn't re-compute from specified corners points.
+                if (R.empty() || t.empty()) {
+                    LOG_ERR("Error! Could not read or compute c2a_r and/or c2a_t. Re-running configuration..");
                     changeState(R_SLCT);
                     break;
                 }
 
-                LOG_WRN("Warning! When c2a_r and c2a_t are specified in the config file, c2a_src and associated corners points will be ignored.\nTo re-compute c2a_r and c2a_t, please delete these values or set reconfig : y in the config file and reconfigure.");
-
-                /// Check also if corners specified (unnecessary).
-                if (_cfg.getStr("c2a_src", cfg_r_src)) {
-                    LOG_DBG("Found c2a_src: %s", cfg_r_src.c_str());
-
-                    /// Load square corners from config file.
-                    cfg_pts.clear();
-                    if (_cfg.getVecInt(cfg_r_src, cfg_pts)) {
-                        _input_data.sqrPts.clear();
-                        for (unsigned int i = 1; i < cfg_pts.size(); i += 2) {
-                            _input_data.sqrPts.push_back(cv::Point2d(cfg_pts[i - 1], cfg_pts[i]));
-                        }
-
-                        /// Draw previous clicks.
-                        for (auto click : _input_data.sqrPts) {
-                            cv::circle(disp_frame, click, click_rad, Scalar(255, 255, 0), 1, cv::LINE_AA);
-                        }
-
-                        /// Draw reference corners.
-                        if (cfg_r_src == "c2a_cnrs_xy") {
-                            drawC2ACorners(disp_frame, XY_CNRS, R, t);
-                        }
-                        else if (cfg_r_src == "c2a_cnrs_yz") {
-                            drawC2ACorners(disp_frame, YZ_CNRS, R, t);
-                        }
-                        else if (cfg_r_src == "c2a_cnrs_xz") {
-                            drawC2ACorners(disp_frame, XZ_CNRS, R, t);
-                        }
-                    }
+                /// Draw previous clicks.
+                for (auto click : _input_data.sqrPts) {
+                    cv::circle(disp_frame, click, click_rad, Scalar(255, 255, 0), 1, cv::LINE_AA);
                 }
+
+                /// Draw reference corners.
+                drawC2ACorners(disp_frame, c2a_src, R, t);
 
                 /// Draw axes.
                 drawC2AAxes(disp_frame, R, t, r, c);
@@ -851,18 +861,21 @@ bool ConfigGui::run()
                     {
                         case 1:
                             printf("\n\n\n  XY-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Y axes. The corners must be clicked in the following order: (+X,-Y), (+X,+Y), (-X,+Y), (-X,-Y). If your camera is looking down on the animal from above, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is below the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit..\n\n");
+                            c2a_src = "c2a_cnrs_xy";
                             // advance state
 							changeState(R_XY);
                             break;
                             
                         case 2:
                             printf("\n\n\n  YZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's Y-Z axes. The corners must be clicked in the following order: (-Y,-Z), (+Y,-Z), (+Y,+Z), (-Y,+Z). If your camera is behind the animal, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is in front of the animal, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit..\n\n");
+                            c2a_src = "c2a_cnrs_yz";
                             // advance state
 							changeState(R_YZ);
                             break;
                             
                         case 3:
                             printf("\n\n\n  XZ-square method.\n\n  Please click on the four corners of a square shape that is aligned with the animal's X-Z axes. The corners must be clicked in the following order: (+X,-Z), (-X,-Z), (-X,+Z), (+X,+Z). If your camera is to the animal's left side, then the four corners are (in order): TL, TR, BR, BL from the camera's perspective. If your camera is to the animal's right side, then the order is TR, TL, BL, BR.\n\n  Make sure the displayed axis is the correct right-handed coordinate frame!!\n\n  You can hold F to mirror the axis if the handedness is incorrect.\n\n  Press ENTER when you are satisfied with the animal's axis, or press ESC to exit..\n\n");
+                            c2a_src = "c2a_cnrs_xz";
                             // advance state
 							changeState(R_XZ);
                             break;
@@ -874,6 +887,7 @@ bool ConfigGui::run()
                             // break;
                             
                         case 5:
+                            c2a_src = "ext";
                             // advance state
 							changeState(R_EXT);
                             break;
@@ -897,8 +911,11 @@ bool ConfigGui::run()
                 
                 /// Draw axes.
                 if (_input_data.sqrPts.size() == 4) {
-					updateC2ATransform(XY_CNRS, R, t);
-                    drawC2ACorners(disp_frame, XY_CNRS, R, t);
+                    if (_input_data.newEvent) {
+                        updateRt(c2a_src, R, t);
+                        _input_data.newEvent = false;
+                    }
+                    drawC2ACorners(disp_frame, c2a_src, R, t);
                     drawC2AAxes(disp_frame, R, t, r, c);
                 }
                 
@@ -917,7 +934,7 @@ bool ConfigGui::run()
                 if (key == enter_key) {
                     if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
-						if (!saveC2ATransform(R, t)) {
+						if (!saveC2ATransform(c2a_src, R, t)) {
 							LOG_ERR("Error writing coordinate transform to config file!");
                             _open = false;      // will cause exit
 						}
@@ -947,8 +964,11 @@ bool ConfigGui::run()
                 
                 /// Draw axes.
                 if (_input_data.sqrPts.size() == 4) {
-					updateC2ATransform(YZ_CNRS, R, t);
-                    drawC2ACorners(disp_frame, YZ_CNRS, R, t);
+                    if (_input_data.newEvent) {
+                        updateRt(c2a_src, R, t);
+                        _input_data.newEvent = false;
+                    }
+                    drawC2ACorners(disp_frame, c2a_src, R, t);
                     drawC2AAxes(disp_frame, R, t, r, c);
                 }
                 
@@ -967,7 +987,7 @@ bool ConfigGui::run()
                 if (key == enter_key) {
 					if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
-						if (!saveC2ATransform(R, t)) {
+						if (!saveC2ATransform(c2a_src, R, t)) {
 							LOG_ERR("Error writing coordinate transform to config file!");
                             _open = false;      // will cause exit
 						}
@@ -997,8 +1017,11 @@ bool ConfigGui::run()
                 
                 /// Draw axes.
                 if (_input_data.sqrPts.size() == 4) {
-					updateC2ATransform(XZ_CNRS, R, t);
-                    drawC2ACorners(disp_frame, XZ_CNRS, R, t);
+                    if (_input_data.newEvent) {
+                        updateRt(c2a_src, R, t);
+                        _input_data.newEvent = false;
+                    }
+                    drawC2ACorners(disp_frame, c2a_src, R, t);
                     drawC2AAxes(disp_frame, R, t, r, c);
                 }
                 
@@ -1017,7 +1040,7 @@ bool ConfigGui::run()
                 if (key == enter_key) {
 					if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
-						if (!saveC2ATransform(R, t)) {
+						if (!saveC2ATransform(c2a_src, R, t)) {
 							LOG_ERR("Error writing coordinate transform to config file!");
                             _open = false;      // will cause exit
 						}
@@ -1113,13 +1136,7 @@ bool ConfigGui::run()
 
 	// draw animal coordinate frame
 	if (_input_data.sqrPts.size() == 4) {
-		if (cfg_r_src == "c2a_cnrs_xy") {
-            drawC2ACorners(disp_frame, XY_CNRS, R, t);
-		} else if (cfg_r_src == "c2a_cnrs_yz") {
-            drawC2ACorners(disp_frame, YZ_CNRS, R, t);
-		} else if (cfg_r_src == "c2a_cnrs_xz") {
-            drawC2ACorners(disp_frame, XZ_CNRS, R, t);
-		}
+        drawC2ACorners(disp_frame, c2a_src, R, t);
 	}
     drawC2AAxes(disp_frame, R, t, r, c);
 

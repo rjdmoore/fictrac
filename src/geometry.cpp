@@ -102,7 +102,8 @@ bool circleFit_camModel(const vector<Point2d>& pix2d, const CameraModelPtr cam_m
 }
 
 ///
-/// Compute camera-animal R+t transform from supplied square corners.
+/// Compute animal-camera R+t transform from supplied square corners.
+/// R is animal frame to camera frame transform.
 ///
 bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, const vector<Point2d>& cnrs, Mat& R, Mat& t)
 {
@@ -153,7 +154,7 @@ bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, co
 }
 
 ///
-/// Wrapper for computing camera-animal R+t transform from XY square.
+/// Wrapper for computing animal-camera R+t transform from XY square.
 /// Square normal = animal Z axis. Corner ordering is TL (+X,-Y), TR (+X,+Y), BR (-X,+Y), BL (-X,-Y).
 ///
 bool computeRtFromSquare_XY(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R, Mat& t)
@@ -162,7 +163,7 @@ bool computeRtFromSquare_XY(const CameraModelPtr cam_model, const vector<Point2d
 }
 
 ///
-/// Wrapper for computing camera-animal R+t transform from YZ square.
+/// Wrapper for computing animal-camera R+t transform from YZ square.
 /// Square normal = animal X axis. Corner ordering is TL (-Y,-Z), TR (+Y,-Z), BR (+Y,+Z), BL (-Y,+Z).
 ///
 bool computeRtFromSquare_YZ(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R, Mat& t)
@@ -171,7 +172,7 @@ bool computeRtFromSquare_YZ(const CameraModelPtr cam_model, const vector<Point2d
 }
 
 ///
-/// Wrapper for computing camera-animal R+t transform from XZ square.
+/// Wrapper for computing animal-camera R+t transform from XZ square.
 /// Square normal = animal Y axis. Corner ordering is TL (+X,-Z), TR (-X,-Z), BR (-X,+Z), BL (+X,+Z).
 ///
 bool computeRtFromSquare_XZ(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R, Mat& t)
@@ -180,7 +181,7 @@ bool computeRtFromSquare_XZ(const CameraModelPtr cam_model, const vector<Point2d
 }
 
 ///
-/// Wrapper for computing camera-animal R+t transform.
+/// Wrapper for computing animal-camera R+t transform.
 ///
 bool computeRtFromSquare(const CameraModelPtr cam_model, const string ref_str, const vector<Point2d>& cnrs, Mat& R, Mat& t)
 {

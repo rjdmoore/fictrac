@@ -144,7 +144,7 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
     Mat sy = R * (cv::Mat_<double>(3,1) << 0,1,0) + t;
     Mat sz = R * (cv::Mat_<double>(3,1) << 0,0,1) + t;
     
-    /// Draw transformed axes.
+    /// Find axes origin.
     double vec[3];
     Point2d pt, pt0;
     vec[0] = t.at<double>(0,0);
@@ -208,6 +208,44 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
             cv::line(rgb, 4 * (pt + Point2d(-4, 4)), 4 * (pt + Point2d(4, -4)), colour, 2, cv::LINE_AA, 2);
         }
     }
+}
+
+///
+/// Draw animal axis.
+///
+void drawAnimalAxis(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat& t, const double r, const cv::Scalar colour)
+{
+    /// Transformed axes.
+    Mat sx = R * 0.5 * (cv::Mat_<double>(3, 1) << 1, 0, 0);
+    Mat sx1 = R * 0.45 * (cv::Mat_<double>(3, 1) << 1, 0, 0);
+    Mat sx2 = R * 0.45 * (cv::Mat_<double>(3, 1) << 1, 0, 0);
+    Mat sz = R * -1.0 * (cv::Mat_<double>(3, 1) << 0, 0, 1) + t;
+
+    ///// Find axes origin.
+    //double vec[3];
+    //vec[0] = t.at<double>(0, 0);
+    //vec[1] = t.at<double>(1, 0);
+    //vec[2] = t.at<double>(2, 0);
+    //Point2d o;
+    //cam_model->vectorToPixel(vec, o.x, o.y);
+
+    // up
+    double vec[3];
+    vec[0] = sz.at<double>(0, 0);
+    vec[1] = sz.at<double>(1, 0);
+    vec[2] = sz.at<double>(2, 0);
+    Point2d up;
+    cam_model->vectorToPixel(vec, up.x, up.y);
+
+    // fwd
+    vec[0] = sx.at<double>(0, 0) + sz.at<double>(0, 0);
+    vec[1] = sx.at<double>(1, 0) + sz.at<double>(1, 0);
+    vec[2] = sx.at<double>(2, 0) + sz.at<double>(2, 0);
+    Point2d fwd;
+    cam_model->vectorToPixel(vec, fwd.x, fwd.y);
+
+    cv::line(rgb, 4 * up, 4 * fwd, colour, 2, cv::LINE_AA, 2);
+    cv::circle(rgb, 4 * up, 4 * 2, colour, 2, cv::LINE_AA, 2);
 }
 
 ///
