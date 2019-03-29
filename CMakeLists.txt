@@ -33,7 +33,7 @@ endif()
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPENCV_DIR} ${NLOPT_DIR})
 if(MSVC)
     find_package(opencv)
-    find_library(NLOPT_LIB nlopt.lib)
+    find_library(NLOPT_LIB libnlopt-0.lib)
     # find_file(NLOPT_LIB libnlopt-0.dll)
     
     if(PGR_USB3)
