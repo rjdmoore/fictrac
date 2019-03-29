@@ -13,7 +13,7 @@ configure_file (
 
 # dependency search dirs
 set(OPENCV_DIR "." CACHE PATH "Path to OpenCV folder containing OpenCVConfig.cmake")
-set(NLOPT_DIR "." CACHE PATH "Path to NLopt folder containing libnlopt-0.lib")
+set(NLOPT_DIR "." CACHE PATH "Path to NLopt folder containing libnlopt-0.dll")
 
 # output dirs
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -33,7 +33,8 @@ endif()
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPENCV_DIR} ${NLOPT_DIR})
 if(MSVC)
     find_package(opencv)
-    find_library(NLOPT_LIB libnlopt-0.lib)
+    # find_library(NLOPT_LIB libnlopt-0.lib)
+    find_file(NLOPT_LIB libnlopt-0.dll)
     
     if(PGR_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR}/lib64/vs2015)
@@ -110,19 +111,25 @@ endif()
 # add compile options
 if(MSVC)
     target_compile_options(libfictrac PUBLIC $<$<CONFIG:Release>:/MP /GS /GL /W3 /WX- /Gy /Zc:wchar_t /O2 /Oi /Zc:inline /fp:precise /MD /EHsc>)
+    # set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG")
 else()  # gcc
     target_compile_options(libfictrac PUBLIC -Ofast -Wall -c -fmessage-length=0 -std=c++14 -Wno-unused-function -march=native -MMD)
 endif()
 
-# linking and post-build
-target_link_libraries(libfictrac PUBLIC ${OpenCV_LIBS} ${NLOPT_LIB})
+# linking
+target_link_libraries(libfictrac PUBLIC ${OpenCV_LIBS})
+if(MSVC)
+    target_link_libraries(libfictrac PUBLIC Ws2_32)
+else()  # gcc
+    target_link_libraries(libfictrac PUBLIC ${NLOPT_LIB} pthread)
+endif()
 if(PGR_USB2 OR PGR_USB3)
     target_link_libraries(libfictrac PUBLIC ${PGR_LIB})
 endif()
+
+
+# post-build
 if(MSVC)
-    # win-specific libraries
-    target_link_libraries(libfictrac PUBLIC Ws2_32)
-    
     # copy all opencv dlls
     set(OPENCV_VER_STRING ${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH})
     foreach(lib ${OpenCV_LIBS})
@@ -151,8 +158,7 @@ if(MSVC)
                         ${TO_COPY}
                         "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/")
 else()  # gcc
-    # socket libs, pthread
-    target_link_libraries(libfictrac PUBLIC pthread)
+    # nothing here...
 endif()
 
 target_link_libraries(configGui libfictrac)
