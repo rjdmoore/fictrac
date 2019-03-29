@@ -33,8 +33,8 @@ endif()
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPENCV_DIR} ${NLOPT_DIR})
 if(MSVC)
     find_package(opencv)
-    # find_library(NLOPT_LIB libnlopt-0.lib)
-    find_file(NLOPT_LIB libnlopt-0.dll)
+    find_library(NLOPT_LIB nlopt.lib)
+    # find_file(NLOPT_LIB libnlopt-0.dll)
     
     if(PGR_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR}/lib64/vs2015)
@@ -117,16 +117,15 @@ else()  # gcc
 endif()
 
 # linking
-target_link_libraries(libfictrac PUBLIC ${OpenCV_LIBS})
+target_link_libraries(libfictrac PUBLIC ${OpenCV_LIBS} ${NLOPT_LIB})
 if(MSVC)
     target_link_libraries(libfictrac PUBLIC Ws2_32)
 else()  # gcc
-    target_link_libraries(libfictrac PUBLIC ${NLOPT_LIB} pthread)
+    target_link_libraries(libfictrac PUBLIC pthread)
 endif()
 if(PGR_USB2 OR PGR_USB3)
     target_link_libraries(libfictrac PUBLIC ${PGR_LIB})
 endif()
-
 
 # post-build
 if(MSVC)
