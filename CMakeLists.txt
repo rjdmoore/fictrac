@@ -13,7 +13,7 @@ configure_file (
 
 # dependency search dirs
 set(OPENCV_DIR "." CACHE PATH "Path to OpenCV folder containing OpenCVConfig.cmake")
-set(NLOPT_DIR "." CACHE PATH "Path to NLopt folder containing libnlopt-0.dll")
+set(NLOPT_DIR "." CACHE PATH "Path to NLopt folder containing libnlopt-0.lib")
 
 # output dirs
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
