@@ -53,7 +53,7 @@ The FicTrac source code can be built for both Windows and Ubuntu (Linux) operati
 1. Download and install required dependencies:
     1. [Cmake build system](https://cmake.org/download/) (binary distribution)
     2. [OpenCV computer vision library](https://opencv.org/releases.html) (version 4.0.1 Win pack)
-    3. [NLopt optimisation library](https://nlopt.readthedocs.io/en/latest/NLopt_on_Windows/) (precompiled DLL)
+    3. [NLopt optimisation library](https://www.dropbox.com/s/z0rjd7ksbf17fjd/nlopt-2.4.2-x64.zip?dl=0) (Just extract the zip folder somewhere. If you need the 32-bit version you can download the precompiled DLL from [here](https://nlopt.readthedocs.io/en/latest/NLopt_on_Windows/) and follow directions to create the LIB)
 2. Clone or download the FicTrac repository, then navigate to that folder, open a terminal, and create a build directory:
 ```
 mkdir build
