@@ -4,6 +4,8 @@
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
+#if defined(PGR_USB2) || defined(PGR_USB3)
+
 #include "PGRSource.h"
 
 #include "Logger.h"
@@ -310,3 +312,5 @@ bool PGRSource::grab(cv::Mat& frame)
     return true;
 #endif // PGR_USB2/3
 }
+
+#endif // PGR_USB2/3

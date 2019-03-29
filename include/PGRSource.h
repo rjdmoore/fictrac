@@ -4,6 +4,8 @@
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
+#if defined(PGR_USB2) || defined(PGR_USB3)
+
 #pragma once
 
 #include "FrameSource.h"
@@ -36,3 +38,5 @@ private:
     std::shared_ptr<FlyCapture2::Camera> _cam;
 #endif // PGR_USB2/3
 };
+
+#endif // PGR_USB2/3
