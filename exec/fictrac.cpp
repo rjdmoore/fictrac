@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
 	/// Parse args.
 	string log_level = "info";
 	string config_fn = "config.txt";
+    bool do_test = false;
 	for (int i = 1; i < argc; ++i) {
 		if ((string(argv[i]) == "--verbosity") || (string(argv[i]) == "-v")) {
 			if (++i < argc) {
@@ -43,8 +44,11 @@ int main(int argc, char *argv[])
                 LOG_ERR("-v/--verbosity requires one argument (debug < info (default) < warn < error)!");
 				return -1;
 			}
-		}
-		else {
+        }
+        else if ((string(argv[i]) == "--test") || (string(argv[i]) == "-t")) {
+            do_test = true;
+        }
+        else {
             config_fn = argv[i];
 		}
 	}
@@ -75,8 +79,11 @@ int main(int argc, char *argv[])
         sleep(250);
     }
 
-    //tracker.printState();
     tracker.writeTemplate();
+
+    if (do_test) {
+        tracker.dumpState();
+    }
 
     //PRINT("\n\nHit ENTER to exit..");
     //getchar_clean();
