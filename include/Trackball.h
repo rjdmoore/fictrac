@@ -38,7 +38,7 @@ public:
 
     bool isActive() { return _active; }
     void terminate() { _kill = true; }
-    void printState();
+    void dumpState();
     bool writeTemplate(std::string fn = "");
 
 private:
