@@ -30,21 +30,8 @@
 #include <cmath>
 #include <exception>
 
-using std::string;
-using std::make_unique;
-using std::make_shared;
-using std::unique_lock;
-using std::lock_guard;
-using std::mutex;
-using std::vector;
-using std::deque;
-using cv::Mat;
-using cv::Scalar;
-using cv::Rect;
-using cv::Point2d;
-using cv::Point2i;
-using cv::VideoWriter;
-
+using namespace cv;
+using namespace std;
 
 const int DRAW_SPHERE_HIST_LENGTH = 250;
 const int DRAW_CELL_DIM = 160;
@@ -111,7 +98,7 @@ Trackball::Trackball(string cfg_fn)
 
     /// Open frame source and set fps.
     string src_fn = _cfg("src_fn");
-    std::shared_ptr<FrameSource> source;
+    shared_ptr<FrameSource> source;
 #if defined(PGR_USB2) || defined(PGR_USB3)
     try {
         if (src_fn.size() > 2) { throw std::exception(); }
@@ -124,7 +111,7 @@ Trackball::Trackball(string cfg_fn)
         source = make_shared<CVSource>(src_fn);
     }
 #else // !PGR_USB2/3
-    source = std::make_shared<CVSource>(src_fn);
+    source = make_shared<CVSource>(src_fn);
 #endif // PGR_USB2/3
     if (!source->isOpen()) {
         LOG_ERR("Error! Could not open input frame source (%s)!", src_fn.c_str());
@@ -317,7 +304,7 @@ Trackball::Trackball(string cfg_fn)
     }
 
     /// Pre-calc view rays.
-    _p1s_lut = std::shared_ptr<double[]>(new double[_roi_w * _roi_h * 3]);
+    _p1s_lut = shared_ptr<double[]>(new double[_roi_w * _roi_h * 3]);
     memset(_p1s_lut.get(), 0, _roi_w * _roi_h * 3 * sizeof(double));
     for (int i = 0; i < _roi_h; i++) {
         uint8_t* pmask = _roi_mask.ptr(i);
@@ -490,7 +477,7 @@ Trackball::Trackball(string cfg_fn)
     }
 
     /// Frame source.
-    _frameGrabber = std::make_unique<FrameGrabber>(
+    _frameGrabber = make_unique<FrameGrabber>(
         source,
         remapper,
         _roi_mask,
@@ -1135,7 +1122,7 @@ void makeSphereRotMaps(
 ///
 ///
 ///
-bool Trackball::updateCanvasAsync(std::shared_ptr<DrawData> data)
+bool Trackball::updateCanvasAsync(shared_ptr<DrawData> data)
 {
     bool ret = false;
     lock_guard<mutex> l(_drawMutex);
@@ -1193,7 +1180,7 @@ void Trackball::processDrawQ()
 ///
 ///
 ///
-void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
+void Trackball::drawCanvas(shared_ptr<DrawData> data)
 {
     static Mat canvas(3 * DRAW_CELL_DIM, 4 * DRAW_CELL_DIM, CV_8UC3);
     canvas.setTo(Scalar::all(0));
@@ -1401,9 +1388,9 @@ void Trackball::drawCanvas(std::shared_ptr<DrawData> data)
     }
 }
 
-void Trackball::printState()
+void Trackball::dumpState()
 {
-    PRINT("");
+    PRINT("\n----------------------------------------------------------------------");
     PRINT("Trackball state");
     PRINT("Sphere orientation (cam): %f %f %f", _r_cam[0], _r_cam[1], _r_cam[2]);
     PRINT("Total heading rotation: %f deg", _ang_dist * CM_R2D);
@@ -1412,6 +1399,7 @@ void Trackball::printState()
     PRINT("Distance travelled: %f rad (%f * 2pi)", _dist, _dist / (2 * CM_PI));
     PRINT("Integrated X/Y position: (%.3e, %.3e) rad (%f / %f %% total path length)", _posx, _posy, _posx * 100. / _dist, _posy * 100. / _dist);
     PRINT("Average/stdev rotation: %.3e / %.3e rad/frame", _step_avg, sqrt(_step_var / _cnt));  // population variance
+    PRINT("\n----------------------------------------------------------------------");
 }
 
 bool Trackball::writeTemplate(std::string fn)
