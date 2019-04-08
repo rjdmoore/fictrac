@@ -41,15 +41,19 @@ public:
     bool getVVecInt(std::string key, std::vector<std::vector<int>>& val);
 
     /// Write access
-    template<typename T>
-    void add(std::string key, T& val) { _data[key] = std::to_string(val); }
+    template<
+        typename T,
+        typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+    > void add(std::string key, T& val) { _data[key] = std::to_string(val); }
 
     // special case: string
     void add(std::string key, std::string val) { _data[key] = val; }
     
     // special case: vector
-    template<typename T>
-    void add(std::string key, std::vector<T>& val) {
+    template<
+        typename T,
+        typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+    > void add(std::string key, std::vector<T>& val) {
         std::string str = "{ ";
         for (auto v : val) {
             str += std::to_string(v) + ", ";
@@ -59,8 +63,10 @@ public:
     }
     
     // super special case: vector of vectors
-    template<typename T>
-    void add(std::string key, std::vector<std::vector<T>>& val) {
+    template<
+        typename T,
+        typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+    > void add(std::string key, std::vector<std::vector<T>>& val) {
         std::string str = "{ ";
         for (auto v : val) {
             str += "{ ";
