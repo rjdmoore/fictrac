@@ -71,6 +71,8 @@ cmake --build . --config Release -j 4
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
 
+Remember to update and re-build FicTrac occasionally, as the program is still under development and fixes and improvements are being made continuously.
+
 #### Ubuntu (Linux) installation
 
 1. Install the required dependencies:
@@ -92,6 +94,8 @@ cmake --build . --config Release -- -j 4
 ```
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
+
+Remember to update and re-build FicTrac occasionally, as the program is still under development and fixes and improvements are being made continuously.
 
 #### USB3 camera installation
 
