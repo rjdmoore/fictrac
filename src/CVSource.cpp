@@ -135,8 +135,9 @@ bool CVSource::grab(cv::Mat& frame)
 		LOG_ERR("Error grabbing image frame!");
 		return false;
 	}
-    double ts = static_cast<double>(ts_ms());    // backup, in case the device timestamp is junk
+    double ts = ts_ms();    // backup, in case the device timestamp is junk
 	_timestamp = _cap->get(cv::CAP_PROP_POS_MSEC);
+    LOG_DBG("Frame captured %dx%d%d @ %f (%f)", _frame_cap.cols, _frame_cap.rows, _frame_cap.channels(), _timestamp, ts);
     if (_timestamp <= 0) {
         _timestamp = ts;
     }
