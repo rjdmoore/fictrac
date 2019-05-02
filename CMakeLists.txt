@@ -137,10 +137,11 @@ if(MSVC)
     endforeach()
     
     set(FFMPEG_LIB_BASE opencv_ffmpeg${OPENCV_VER_STRING})
-    if(${OpenCV_ARCH} STREQUAL x64)
-        set(FFMPEG_LIB ${FFMPEG_LIB_BASE}_64.dll)
-    else()
+    if("${OpenCV_ARCH}" STREQUAL x86)
         set(FFMPEG_LIB ${FFMPEG_LIB_BASE}.dll)
+    else()
+        # default to 64-bit
+        set(FFMPEG_LIB ${FFMPEG_LIB_BASE}_64.dll)
     endif()
     list(APPEND TO_COPY "${_OpenCV_LIB_PATH}/${FFMPEG_LIB}")
     
