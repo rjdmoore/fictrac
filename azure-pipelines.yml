@@ -22,14 +22,13 @@ jobs:
   steps:
   - script: |
       echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
-      less $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
     displayName: vcpkg set build type
   - script: vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux
     displayName: vcpkg install dependencies
   - task: CMake@1
     inputs:
       workingDirectory: build
-      cmakeArgs: ..
+      cmakeArgs: -D OPENCV_DIR=$VCPKG_INSTALLATION_ROOT/installed/x64-linux/share/opencv ..
 
 # Provide a name for the job
 - job: Windows
