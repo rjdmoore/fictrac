@@ -27,7 +27,7 @@ jobs:
   - task: CMake@1
     inputs:
       workingDirectory: build
-      cmakeArgs: -D CMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake ..
+      cmakeArgs: -D CMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake ..
 
 # Provide a name for the job
 - job: Windows
