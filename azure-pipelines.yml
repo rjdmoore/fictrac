@@ -1,19 +1,38 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
+# Azure CI/CD pipeline config file
 # https://aka.ms/yaml
+
+# Trigger builds on master branch
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/build/triggers?view=azure-devops&tabs=yaml
 
 trigger:
 - master
 
-pool:
-  vmImage: 'ubuntu-latest'
+# We can run multiple jobs in parallel.
+# see https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases
+jobs:
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+# Provide a name for the job
+- job: Linux
+  # The VM image to use for the hosted agent. For a list of possible agents
+  # see https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted
+  # You can see the software installed on each agent at the same link.
+  pool:
+    vmImage: 'ubuntu-latest'
+  # The steps to run to execute the build.
+  steps:
+  - task: CMake@1
+    inputs:
+      cmakeArgs: 
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+# Provide a name for the job
+- job: Windows
+  # The VM image to use for the hosted agent. For a list of possible agents
+  # see https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted
+  # You can see the software installed on each agent at the same link.
+  pool:
+    vmImage: 'vs2017-win2016'
+  # The steps to run to execute the build.
+  steps:
+  - task: CMake@1
+    inputs:
+      cmakeArgs: '-G "Visual Studio 15 2017 Win64"'
