@@ -28,6 +28,10 @@ jobs:
     inputs:
       workingDirectory: build
       cmakeArgs: -D CMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+  - task: CMake@1
+    inputs:
+      workingDirectory: build
+      cmakeArgs: --build . --config Release
 
 # Provide a name for the job
 - job: Windows
@@ -44,3 +48,7 @@ jobs:
     inputs:
       workingDirectory: build
       cmakeArgs: -D CMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 15 2017 Win64" ..
+  - task: CMake@1
+    inputs:
+      workingDirectory: build
+      cmakeArgs: --build . --config Release
