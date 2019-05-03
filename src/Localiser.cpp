@@ -96,7 +96,7 @@ double Localiser::testRotation(const double x[3])
     for (int i = 0; i < _roi_h; i++) {
         const uint8_t* pmask = _roi_mask.ptr(i);
         const uint8_t* proi = _roi_frame.ptr(i);
-        const double* v = &(_p1s_lut.get()[i * _roi_w * 3]);
+        const double* v = &(_p1s_lut[i * _roi_w * 3]);
         for (int j = 0; j < _roi_w; j++) {
             if (pmask[j] < 255) { continue; }
             cnt++;

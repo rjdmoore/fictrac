@@ -315,7 +315,7 @@ Trackball::Trackball(string cfg_fn)
             _roi_model->pixelIndexToVector(j, i, l);
             vec3normalise(l);
 
-            double* s = &_p1s_lut.get()[(i * _roi_w + j) * 3];
+            double* s = &_p1s_lut[(i * _roi_w + j) * 3];
             if (!intersectSphere(l, s, _r_d_ratio)) { pmask[j] = 128; }
         }
     }
@@ -772,7 +772,7 @@ void Trackball::updateSphere()
             cnt++;
 
             // rotate point about rotation axis (sphere coords)
-            double* v = &_p1s_lut.get()[(i * _roi_w + j) * 3];
+            double* v = &_p1s_lut[(i * _roi_w + j) * 3];
             //p2s[0] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2];
             //p2s[1] = m[3] * v[0] + m[4] * v[1] + m[5] * v[2];
             //p2s[2] = m[6] * v[0] + m[7] * v[1] + m[8] * v[2];
@@ -1013,7 +1013,7 @@ double Trackball::testRotation(const double x[3])
     for (int i = 0; i < _roi_h; i++) {
         uint8_t* pmask = _roi_mask.ptr(i);
         uint8_t* proi = _roi_frame.ptr(i);
-        double* v = &_p1s_lut.get()[i * _roi_w * 3];
+        double* v = &_p1s_lut[i * _roi_w * 3];
         for (int j = 0; j < _roi_w; j++) {
             if (pmask[j] < 255) { continue; }
             cnt++;
