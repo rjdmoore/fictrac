@@ -22,7 +22,8 @@ jobs:
   steps:
   - task: CMake@1
     inputs:
-      cmakeArgs: 
+      workingDirectory: build
+      cmakeArgs: ..
 
 # Provide a name for the job
 - job: Windows
