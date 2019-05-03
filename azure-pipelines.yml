@@ -20,7 +20,7 @@ jobs:
     vmImage: 'ubuntu-latest'
   # The steps to run to execute the build.
   steps:
-  - script: locate vcpkg
+  - script: echo $VCPKG_INSTALLATION_ROOT
   #- script: vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux
   #  displayName: vcpkg install dependencies
   - task: CMake@1
