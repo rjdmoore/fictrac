@@ -9,14 +9,14 @@
 #include "Logger.h"
 
 using cv::Mat;
-
+using namespace std;
 
 ///
 ///
 ///
 Localiser::Localiser(nlopt_algorithm alg, double bound, double tol, int max_evals,
     CameraModelPtr sphere_model, const Mat& sphere_map,
-    const Mat& roi_mask, std::shared_ptr<double[]> p1s_lut)
+    const Mat& roi_mask, shared_ptr<vector<double>> p1s_lut)
     : _bound(bound), _sphere_model(sphere_model), _sphere_map(sphere_map), _roi_mask(roi_mask), _p1s_lut(p1s_lut)
 {
     init(alg, 3);
@@ -96,7 +96,7 @@ double Localiser::testRotation(const double x[3])
     for (int i = 0; i < _roi_h; i++) {
         const uint8_t* pmask = _roi_mask.ptr(i);
         const uint8_t* proi = _roi_frame.ptr(i);
-        const double* v = &(_p1s_lut[i * _roi_w * 3]);
+        const double* v = &(*_p1s_lut)[i * _roi_w * 3];
         for (int j = 0; j < _roi_w; j++) {
             if (pmask[j] < 255) { continue; }
             cnt++;

@@ -87,7 +87,7 @@ private:
     CameraModelPtr _src_model, _roi_model, _sphere_model;
     RemapTransformPtr _cam_to_roi;
     cv::Mat _roi_to_cam_R, _cam_to_lab_R;
-    std::shared_ptr<double[]> _p1s_lut;
+    std::shared_ptr<std::vector<double>> _p1s_lut;
 
     /// Arrays.
     int _map_w, _map_h;

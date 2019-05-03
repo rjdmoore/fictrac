@@ -68,7 +68,7 @@ void drawCircle(cv::Mat& img, shared_ptr<vector<cv::Point2d>> circ_pts, const cv
 
     /// Draw lines between circumference points.
     Point2d p1 = circ_pts->front(), p2;
-    for (int i = 1; i < circ_pts->size(); i++) {
+    for (unsigned int i = 1; i < circ_pts->size(); i++) {
         /// Draw dashed/solid.
         p2 = (*circ_pts)[i];
         if (solid || (i % 2)) { cv::line(img, 4 * p1, 4 * p2, colour, 2, cv::LINE_AA, 2); }
