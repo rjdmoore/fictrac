@@ -109,10 +109,10 @@ endif()
 
 # add compile options
 if(MSVC)
-    target_compile_options(libfictrac PUBLIC $<$<CONFIG:Release>:/MP /GS /GL /W3 /WX- /Gy /Zc:wchar_t /O2 /Oi /Zc:inline /fp:precise /MD /EHsc>)
+    target_compile_options(libfictrac PUBLIC $<$<CONFIG:Release>:/MP /GS /GL /W3 /WX- /Gy /Zc:wchar_t /O2 /Oi /Zc:inline /fp:precise /MD /EHsc /std:c++17>)
     # set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG")
 else()  # gcc
-    target_compile_options(libfictrac PUBLIC -Ofast -Wall -c -fmessage-length=0 -std=c++14 -Wno-unused-function -march=native -MMD)
+    target_compile_options(libfictrac PUBLIC -Ofast -Wall -c -fmessage-length=0 -std=c++17 -Wno-unused-function -march=native -MMD)
 endif()
 
 # linking
