@@ -20,8 +20,6 @@ jobs:
     vmImage: 'ubuntu-latest'
   # The steps to run to execute the build.
   steps:
-  - script: bootstrap-vcpkg.sh
-    displayName: Bootstrap vcpkg
   - script: vcpkg install opencv:x64-linux nlopt:x64-linux
     displayName: vcpkg install dependencies
   - task: CMake@1
