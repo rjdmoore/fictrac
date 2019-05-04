@@ -13,7 +13,7 @@ configure_file (
 
 # dependency search dirs
 set(OPENCV_DIR "." CACHE PATH "Path to OpenCV folder containing OpenCVConfig.cmake")
-set(NLOPT_DIR "." CACHE PATH "Path to NLopt folder containing libnlopt-0.lib")
+set(NLOPT_DIR "." CACHE PATH "Path to NLopt folder containing NLoptConfig.cmake")
 
 # output dirs
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -33,7 +33,14 @@ endif()
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPENCV_DIR} ${NLOPT_DIR})
 if(MSVC)
     find_package(opencv)
-    find_library(NLOPT_LIB libnlopt-0.lib)
+    find_package(nlopt)
+    if(nlopt_FOUND)
+        set(NLopt_INCLUDE_DIRS ${NLOPT_INCLUDE_DIRS}/include)
+        # set(NLopt_LIBS ${NLOPT_LIBRARY_DIRS}/lib/nlopt.lib)
+        message(STATUS "Found NLopt: ${NLOPT_LIBRARY_DIRS}")
+    else()
+        message(FATAL_ERROR "Error! Could not find NLopt lib at ${NLOPT_LIB}!")
+    endif()
     
     if(PGR_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR}/lib64/vs2015)
@@ -44,7 +51,14 @@ if(MSVC)
     endif()
 else()  # gcc
     find_package(OpenCV)
-    find_library(NLOPT_LIB libnlopt.a)
+    find_package(NLopt)
+    if(NLopt_FOUND)
+        set(NLopt_INCLUDE_DIRS ${NLOPT_INCLUDE_DIRS}/include)
+        # set(NLopt_LIBS ${NLOPT_LIBRARY_DIRS}/lib/libnlopt.a)
+        message(STATUS "Found NLopt: ${NLOPT_LIBRARY_DIRS}")
+    else()
+        message(FATAL_ERROR "Error! Could not find NLopt lib at ${NLOPT_LIB}!")
+    endif()
     
     if(PGR_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR})
@@ -53,15 +67,6 @@ else()  # gcc
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR})
         find_library(PGR_LIB libflycapture.so)
     endif()
-endif()
-get_filename_component(NLOPT_DIR ${NLOPT_LIB} DIRECTORY)
-if(NLOPT_LIB)
-    message(STATUS "Found NLopt lib ${NLOPT_LIB}")
-    if(MSVC)
-        message(STATUS "You might need to add ${NLOPT_DIR} to your PATH to be able to run the executable.")
-    endif()
-else()
-    message(FATAL_ERROR "Error! Could not find NLopt lib at ${NLOPT_LIB}!")
 endif()
 if(PGR_USB2 OR PGR_USB3)
     get_filename_component(PGR_DIR ${PGR_LIB} DIRECTORY)
@@ -77,7 +82,7 @@ if(PGR_USB2 OR PGR_USB3)
 endif()
 
 # add include dirs
-include_directories(${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${NLOPT_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${NLopt_INCLUDE_DIRS})
 if(PGR_USB2 OR PGR_USB3)
     if(MSVC)
         include_directories(${PGR_DIR}/include)
@@ -94,36 +99,36 @@ endif()
 file(GLOB LIBFICTRAC_SRCS ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 # add targets
-add_library(libfictrac STATIC ${LIBFICTRAC_SRCS})
+add_library(fictrac_core STATIC ${LIBFICTRAC_SRCS})
 add_executable(configGui ${PROJECT_SOURCE_DIR}/exec/configGui.cpp)
 add_executable(fictrac ${PROJECT_SOURCE_DIR}/exec/fictrac.cpp)
 
 # add preprocessor definitions
 # public means defs will be inherited by linked executables
-target_compile_definitions(libfictrac PUBLIC _CRT_SECURE_NO_WARNINGS NOMINMAX)
+target_compile_definitions(fictrac_core PUBLIC _CRT_SECURE_NO_WARNINGS NOMINMAX)
 if(PGR_USB2)
-    target_compile_definitions(libfictrac PUBLIC PGR_USB2)
+    target_compile_definitions(fictrac_core PUBLIC PGR_USB2)
 elseif(PGR_USB3)
-    target_compile_definitions(libfictrac PUBLIC PGR_USB3)
+    target_compile_definitions(fictrac_core PUBLIC PGR_USB3)
 endif()
 
 # add compile options
 if(MSVC)
-    target_compile_options(libfictrac PUBLIC $<$<CONFIG:Release>:/MP /GS /GL /W3 /WX- /Gy /Zc:wchar_t /O2 /Oi /Zc:inline /fp:precise /MD /EHsc /std:c++17>)
+    target_compile_options(fictrac_core PUBLIC $<$<CONFIG:Release>:/MP /GS /GL /W3 /WX- /Gy /Zc:wchar_t /O2 /Oi /Zc:inline /fp:precise /MD /EHsc /std:c++17>)
     # set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG")
 else()  # gcc
-    target_compile_options(libfictrac PUBLIC -Ofast -Wall -c -fmessage-length=0 -std=c++17 -Wno-unused-function -march=native -MMD)
+    target_compile_options(fictrac_core PUBLIC -Ofast -Wall -c -fmessage-length=0 -std=c++17 -Wno-unused-function -march=native -MMD)
 endif()
 
 # linking
-target_link_libraries(libfictrac PUBLIC ${OpenCV_LIBS} ${NLOPT_LIB})
+target_link_libraries(fictrac_core PUBLIC ${OpenCV_LIBS} ${NLOPT_LIBRARIES})
 if(MSVC)
-    target_link_libraries(libfictrac PUBLIC Ws2_32)
+    target_link_libraries(fictrac_core PUBLIC Ws2_32)
 else()  # gcc
-    target_link_libraries(libfictrac PUBLIC pthread)
+    target_link_libraries(fictrac_core PUBLIC pthread)
 endif()
 if(PGR_USB2 OR PGR_USB3)
-    target_link_libraries(libfictrac PUBLIC ${PGR_LIB})
+    target_link_libraries(fictrac_core PUBLIC ${PGR_LIB})
 endif()
 
 # post-build
@@ -131,8 +136,8 @@ if(MSVC)
     # copy all opencv dlls
     set(OPENCV_VER_STRING ${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH})
     foreach(lib ${OpenCV_LIBS})
-        if(EXISTS "${_OpenCV_LIB_PATH}/${lib}${OPENCV_VER_STRING}.dll")
-            list(APPEND TO_COPY "${_OpenCV_LIB_PATH}/${lib}${OPENCV_VER_STRING}.dll" "${_OpenCV_LIB_PATH}/${lib}${OPENCV_VER_STRING}d.dll")
+        if(EXISTS "${OpenCV_INSTALL_PATH}/bin/${lib}${OPENCV_VER_STRING}.dll")
+            list(APPEND TO_COPY "${OpenCV_INSTALL_PATH}/bin/${lib}${OPENCV_VER_STRING}.dll")
         endif()
     endforeach()
     
@@ -143,10 +148,10 @@ if(MSVC)
         # default to 64-bit
         set(FFMPEG_LIB ${FFMPEG_LIB_BASE}_64.dll)
     endif()
-    list(APPEND TO_COPY "${_OpenCV_LIB_PATH}/${FFMPEG_LIB}")
+    list(APPEND TO_COPY "${OpenCV_INSTALL_PATH}/bin/${FFMPEG_LIB}")
     
     # copy nlopt dll
-    list(APPEND TO_COPY "${NLOPT_DIR}/libnlopt-0.dll")
+    list(APPEND TO_COPY "${NLOPT_LIBRARY_DIRS}/bin/nlopt.dll")
     
     # copy h264 dll
     file(GLOB DLLS ${PROJECT_SOURCE_DIR}/dll/*.dll)
@@ -160,7 +165,7 @@ else()  # gcc
     # nothing here...
 endif()
 
-target_link_libraries(configGui libfictrac)
-add_dependencies(configGui libfictrac)
-target_link_libraries(fictrac libfictrac)
-add_dependencies(fictrac libfictrac)
+target_link_libraries(configGui fictrac_core)
+add_dependencies(configGui fictrac_core)
+target_link_libraries(fictrac fictrac_core)
+add_dependencies(fictrac fictrac_core)
