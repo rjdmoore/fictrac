@@ -1,0 +1,106 @@
+/// FicTrac http://rjdmoore.net/fictrac/
+/// \file       SerialRecorder_win.cpp
+/// \brief      Windows implementation of serial recorder.
+/// \author     Richard Moore
+/// \copyright  CC BY-NC-SA 3.0
+
+#include "SerialRecorder_win.h"
+
+#include "Logger.h"
+
+#include <iostream>
+
+using namespace std;
+
+typedef std::basic_string<TCHAR> tstring;
+
+///
+///
+///
+SerialRecorder::SerialRecorder()
+{
+    _type = COM;
+}
+
+///
+///
+///
+SerialRecorder::~SerialRecorder()
+{
+    closeRecord();
+}
+
+///
+///
+///
+bool SerialRecorder::openRecord(std::string port_baud)
+{
+    // extract port no
+    size_t pos = port_baud.find_first_of('/');
+    if (pos == string::npos) {
+        LOG_ERR("Error! Malformed port:baud string.");
+        return false;
+    }
+
+    string port = port_baud.substr(0, pos);
+    int baud = stoi(port_baud.substr(pos + 1));
+
+    _commHandle = CreateFile(port.c_str(), GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	if(_commHandle == INVALID_HANDLE_VALUE) {
+        LOG_ERR("Error! Could not open com port (%s).", port.c_str());
+        return false;
+	}
+	else {
+		// set timeouts
+		COMMTIMEOUTS cto = { MAXDWORD, 0, 0, 0, 0 };
+		DCB dcb;
+		if(!SetCommTimeouts(_commHandle,&cto)) {
+			LOG_ERR("Error! Could not set com port time-outs.");
+            return false;
+		}
+
+		// set DCB
+		memset(&dcb,0,sizeof(dcb));
+		dcb.DCBlength = sizeof(dcb);
+		dcb.BaudRate = baud;
+		dcb.fBinary = 1;
+		dcb.fDtrControl = DTR_CONTROL_ENABLE;
+		dcb.fRtsControl = RTS_CONTROL_ENABLE;
+
+		dcb.Parity = NOPARITY;
+		dcb.StopBits = ONESTOPBIT;
+		dcb.ByteSize = 8;
+
+		if(!SetCommState(_commHandle,&dcb)) {
+			LOG_ERR("Error! Could not set com port parameters.");
+            return false;
+		}
+	}
+
+    return (_open = true);
+}
+
+///
+///
+///
+bool SerialRecorder::writeRecord(std::string s)
+{
+    if (_open) {
+        DWORD numWritten;
+        WriteFile(_commHandle, s.c_str(), s.size(), &numWritten, NULL);
+        if (numWritten <= 0) {
+            LOG_ERR("Error! No bytes written to com port.");
+            return false;
+        }
+    }
+    return _open;
+}
+
+///
+///
+///
+void SerialRecorder::closeRecord()
+{
+    _open = false;
+    CloseHandle(_commHandle);
+}

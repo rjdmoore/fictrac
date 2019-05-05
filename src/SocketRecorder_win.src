@@ -1,10 +1,10 @@
 /// FicTrac http://rjdmoore.net/fictrac/
-/// \file       SocketRecorder_winsocket.cpp
+/// \file       SocketRecorder_win.cpp
 /// \brief      Windows implementation of socket recorder.
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
-#include "SocketRecorder_winsocket.h"
+#include "SocketRecorder_win.h"
 
 #include "Logger.h"
 

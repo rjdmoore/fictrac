@@ -127,8 +127,8 @@ private:
     /// Data i/o.
     std::string _base_fn;
     std::unique_ptr<FrameGrabber> _frameGrabber;
-    bool _do_sock_output;
-    std::unique_ptr<Recorder> _data_log, _data_sock;
+    bool _do_sock_output, _do_com_output;
+    std::unique_ptr<Recorder> _data_log, _data_sock, _data_com;
 
     /// Thread stuff.
     std::atomic_bool _active, _kill, _do_reset;

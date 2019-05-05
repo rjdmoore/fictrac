@@ -1,5 +1,5 @@
 /// FicTrac http://rjdmoore.net/fictrac/
-/// \file       SocketRecorder_winsocket.h
+/// \file       SocketRecorder_win.h
 /// \brief      Windows implementation of socket recorder.
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0

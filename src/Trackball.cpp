@@ -49,7 +49,9 @@ const double THRESH_WIN_PC_DEFAULT = 0.25;
 
 const uint8_t SPHERE_MAP_FIRST_HIT_BONUS = 64;
 
-const int OUT_PORT_DEFAULT = -1;
+const int SOCK_PORT_DEFAULT = -1;
+
+const int COM_BAUD_DEFAULT = 115200;
 
 const bool DO_DISPLAY_DEFAULT = true;
 const bool SAVE_RAW_DEFAULT = false;
@@ -381,19 +383,40 @@ Trackball::Trackball(string cfg_fn)
         return;
     }
 
-    int out_port = OUT_PORT_DEFAULT;
+    int sock_port = SOCK_PORT_DEFAULT;
     _do_sock_output = false;
-    if (_cfg.getInt("out_port", out_port) && (out_port > 0)) {
-        _data_sock = make_unique<Recorder>(RecorderInterface::RecordType::SOCK, std::to_string(out_port));
+    if (_cfg.getInt("sock_port", sock_port) && (sock_port > 0)) {
+        _data_sock = make_unique<Recorder>(RecorderInterface::RecordType::SOCK, std::to_string(sock_port));
         if (!_data_sock->is_active()) {
-            LOG_ERR("Error! Unable to open output data socket (%d).", out_port);
+            LOG_ERR("Error! Unable to open output data socket (%d).", sock_port);
             _active = false;
             return;
         }
         _do_sock_output = true;
     } else {
-        LOG_WRN("Warning! Using default value for out_port (%d).", out_port);
-        _cfg.add("out_port", out_port);
+        LOG_WRN("Warning! Using default value for sock_port (%d).", sock_port);
+        _cfg.add("sock_port", sock_port);
+    }
+
+    string com_port = _cfg("com_port");
+    _do_com_output = false;
+    if (com_port.length() > 0) {
+        int com_baud = COM_BAUD_DEFAULT;
+        if (!_cfg.getInt("com_baud", com_baud)) {
+            LOG_WRN("Warning! Using default value for com_baud (%d).", com_baud);
+            _cfg.add("com_baud", com_baud);
+        }
+
+        _data_com = make_unique<Recorder>(RecorderInterface::RecordType::COM, com_port + "/" + std::to_string(com_baud));
+        if (!_data_com->is_active()) {
+            LOG_ERR("Error! Unable to open output data com port (%s/%d).", com_port.c_str(), com_baud);
+            _active = false;
+            return;
+        }
+        _do_com_output = true;
+    }
+    else {
+        _cfg.add("com_port", com_port);
     }
 
     /// Display.
@@ -964,6 +987,9 @@ bool Trackball::logData()
     bool ret = true;
     if (_do_sock_output) {
         ret &= _data_sock->addMsg("FT, " + ss.str());
+    }
+    if (_do_com_output) {
+        ret &= _data_com->addMsg("FT, " + ss.str());
     }
     ret &= _data_log->addMsg(ss.str());
     return ret;

@@ -1,13 +1,13 @@
 /// FicTrac http://rjdmoore.net/fictrac/
-/// \file       SocketRecorder.h
-/// \brief      Implementation of socket recorder.
+/// \file       SerialRecorder.h
+/// \brief      Implementation of serial recorder.
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
 #pragma once
 
 #ifdef __linux__ 
-#include "SocketRecorder_linux.h"
+#include "SerialRecorder_linux.h"
 #elif _WIN32
-#include "SocketRecorder_win.h"
+#include "SerialRecorder_win.h"
 #endif
