@@ -6,6 +6,7 @@
 
 trigger:
 - master
+- develop
 
 # We can run multiple jobs in parallel.
 # see https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases
