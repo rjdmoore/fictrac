@@ -511,10 +511,12 @@ Trackball::Trackball(string cfg_fn)
     _cfg.write();
 
     /// Data.
-    _cnt = 0;
-    _err = 0;
-    _intx = _inty = 0;
     reset();
+
+    // not reset in resetData because they are not affected by heading reset
+    _data.cnt = 0;
+    _data.intx = _data.inty = 0;
+    _err = 0;
 
     /// Thread stuff.
     _init = true;
@@ -549,6 +551,19 @@ Trackball::~Trackball()
 ///
 ///
 ///
+void Trackball::resetData()
+{
+    DATA new_data;
+    new_data.cnt = _data.cnt;       // preserve cnt across resets (but reset seq)
+    new_data.intx = _data.intx;     // can preserve intx/y because they're not affected by heading reset
+    new_data.inty = _data.inty;
+
+    _data = new_data;
+}
+
+///
+///
+///
 void Trackball::reset()
 {
     _reset = true;
@@ -560,21 +575,7 @@ void Trackball::reset()
         _clean_map = true;
     }
 
-    /// Reset sphere.
-    _R_roi = Mat::eye(3, 3, CV_64F);
-
-    /// Reset data.
-    _seq = 0;       // indicates new sequence started
-    _posx = 0;      // reset because heading was lost
-    _posy = 0;
-    _heading = 0;
-
-    // test data
-    _dist = 0;
-    _ang_dist = 0;
-    _step_avg = 0;
-    _step_var = 0;
-    _evals_avg = 0;
+    resetData();
 
     /// Drawing.
     if (_do_display) {
@@ -605,11 +606,11 @@ void Trackball::process()
     double t1, t2, t3, t4, t5, t6;
     double t1avg = 0, t2avg = 0, t3avg = 0, t4avg = 0, t5avg = 0, t6avg = 0;
     double tfirst = -1, tlast = 0;
-    while (!_kill && _active && _frameGrabber->getNextFrameSet(_src_frame, _roi_frame, _ts)) {
+    while (!_kill && _active && _frameGrabber->getNextFrameSet(_src_frame, _roi_frame, _data.ts)) {
         t1 = ts_ms();
 
         PRINT("");
-        LOG("Frame %d", _cnt);
+        LOG("Frame %d", _data.cnt);
 
         /// Handle reset request
         if (_do_reset) {
@@ -642,7 +643,7 @@ void Trackball::process()
             nbad = 0;
             reset();
         } else {
-            _seq++;
+            _data.seq++;
         }
 
         if (_do_display) {
@@ -651,8 +652,8 @@ void Trackball::process()
             data->roi_frame = _roi_frame.clone();
             data->sphere_map = _sphere_map.clone();
             data->sphere_view = _sphere_view.clone();
-            data->dr_roi = _dr_roi;
-            data->R_roi = _R_roi.clone();
+            data->dr_roi = _data.dr_roi;
+            data->R_roi = _data.R_roi.clone();
             data->R_roi_hist = _R_roi_hist;
             data->pos_heading_hist = _pos_heading_hist;
 
@@ -661,7 +662,7 @@ void Trackball::process()
         t6 = ts_ms();
 
         /// Timing.
-        if (_cnt > 0) {     // skip first frame (often global search...)
+        if (_data.cnt > 0) {     // skip first frame (often global search...)
             t1avg += t1 - t0;
             t2avg += t2 - t1;
             t3avg += t3 - t2;
@@ -670,7 +671,7 @@ void Trackball::process()
             t6avg += t6 - t5;
 
             // opt evals
-            _evals_avg += _nevals;
+            _data.evals_avg += _nevals;
         }
         LOG("Timing grab/opt/map/plot/log/disp: %.1f / %.1f / %.1f / %.1f / %.1f / %.1f ms",
             t1 - t0, t2 - t1, t3 - t2, t4 - t3, t5 - t4, t6 - t5);
@@ -678,14 +679,14 @@ void Trackball::process()
         double fps_out = (t6 - prev_t6) > 0 ? 1000 / (t6 - prev_t6) : 0;
         static double fps_avg = fps_out;
         fps_avg += 0.25 * (fps_out - fps_avg);
-        static double prev_ts = _ts;
-        double fps_in = (_ts - prev_ts) > 0 ? 1000 / (_ts - prev_ts) : 0;
+        static double prev_ts = _data.ts;
+        double fps_in = (_data.ts - prev_ts) > 0 ? 1000 / (_data.ts - prev_ts) : 0;
         LOG("Average frame rate [in/out]: %.1f [%.1f / %.1f] fps", fps_avg, fps_in, fps_out);
         prev_t6 = t6;
-        prev_ts = _ts;
+        prev_ts = _data.ts;
 
         /// Always increment frame counter.
-        _cnt++;
+        _data.cnt++;
 
         t0 = ts_ms();
         if (tfirst < 0) { tfirst = t0; }
@@ -696,16 +697,16 @@ void Trackball::process()
 
     _frameGrabber->terminate();     // make sure we've stopped grabbing frames as well
 
-    if (_cnt > 1) {
+    if (_data.cnt > 1) {
         PRINT("\n----------------------------------------------------------------------------");
         LOG("Trackball timing:");
         LOG("Average grab/opt/map/plot/log/disp time: %.1f / %.1f / %.1f / %.1f / %.1f / %.1f ms",
-            t1avg / (_cnt - 1), t2avg / (_cnt - 1), t3avg / (_cnt - 1), t4avg / (_cnt - 1), t5avg / (_cnt - 1), t6avg / (_cnt - 1));
-        LOG("Average fps: %.2f", 1000. * (_cnt - 1) / (tlast - tfirst));
+            t1avg / (_data.cnt - 1), t2avg / (_data.cnt - 1), t3avg / (_data.cnt - 1), t4avg / (_data.cnt - 1), t5avg / (_data.cnt - 1), t6avg / (_data.cnt - 1));
+        LOG("Average fps: %.2f", 1000. * (_data.cnt - 1) / (tlast - tfirst));
 
         PRINT("");
         LOG("Optimiser test data:");
-        LOG("Average number evals / frame: %.1f", _evals_avg / (_cnt - 1));
+        LOG("Average number evals / frame: %.1f", _data.evals_avg / (_data.cnt - 1));
         PRINT("----------------------------------------------------------------------------");
     }
 
@@ -724,12 +725,12 @@ bool Trackball::doSearch(bool allow_global = false)
     /// Run optimisation and save result.
     _nevals = 0;
     if (!_reset) {
-        _dr_roi = guess;
-        _err = _localOpt->search(_roi_frame, _R_roi, _dr_roi);  // _dr_roi contains optimal rotation
+        _data.dr_roi = guess;
+        _err = _localOpt->search(_roi_frame, _data.R_roi, _data.dr_roi);  // _dr_roi contains optimal rotation
         _nevals = _localOpt->getNumEval();
     }
     else {
-        _dr_roi = CmPoint64f(0, 0, 0);
+        _data.dr_roi = CmPoint64f(0, 0, 0);
         _err = 0;
     }
 
@@ -740,31 +741,31 @@ bool Trackball::doSearch(bool allow_global = false)
         LOG("Doing global search..");
 
         // do global search
-        _err = _globalOpt->search(_roi_frame, _R_roi, _r_roi); // use last know orientation, _r_roi, as guess and update with result
+        _err = _globalOpt->search(_roi_frame, _data.R_roi, _data.r_roi); // use last know orientation, _r_roi, as guess and update with result
         _nevals = _globalOpt->getNumEval();
         bad_frame = _error_thresh >= 0 ? (_err > _error_thresh) : false;
 
         // if global search failed as well, just reset global orientation too
         if (bad_frame) {
-            _r_roi = CmPoint64f(0, 0, 0);  // zero absolute orientation
+            _data.r_roi = CmPoint64f(0, 0, 0);  // zero absolute orientation
         }
         
         // reset sphere to found orientation with zero motion
-        _dr_roi = CmPoint64f(0, 0, 0);  // zero relative rotation
-        _R_roi = CmPoint64f::omegaToMatrix(_r_roi);
+        _data.dr_roi = CmPoint64f(0, 0, 0);  // zero relative rotation
+        _data.R_roi = CmPoint64f::omegaToMatrix(_data.r_roi);
     }
     else {
         /// Accumulate sphere orientation.
-        Mat tmpR = CmPoint64f::omegaToMatrix(_dr_roi);      // relative rotation (angle-axis) in ROI frame
-        _R_roi = tmpR * _R_roi;                             // pre-multiply to accumulate orientation matrix
-        _r_roi = CmPoint64f::matrixToOmega(_R_roi);
+        Mat tmpR = CmPoint64f::omegaToMatrix(_data.dr_roi);    // relative rotation (angle-axis) in ROI frame
+        _data.R_roi = tmpR * _data.R_roi;                     // pre-multiply to accumulate orientation matrix
+        _data.r_roi = CmPoint64f::matrixToOmega(_data.R_roi);
     }
 
-    LOG("optimum sphere rotation:\t%.3f %.3f %.3f  (err=%.3e/its=%d)", _dr_roi[0], _dr_roi[1], _dr_roi[2], _err, _nevals);
-    LOG_DBG("Current sphere orientation:\t%.3f %.3f %.3f", _r_roi[0], _r_roi[1], _r_roi[2]);
+    LOG("optimum sphere rotation:\t%.3f %.3f %.3f  (err=%.3e/its=%d)", _data.dr_roi[0], _data.dr_roi[1], _data.dr_roi[2], _err, _nevals);
+    LOG_DBG("Current sphere orientation:\t%.3f %.3f %.3f", _data.r_roi[0], _data.r_roi[1], _data.r_roi[2]);
 
     if (!bad_frame) {
-        guess = 0.9 * _dr_roi + 0.1 * guess;
+        guess = 0.9 * _data.dr_roi + 0.1 * guess;
     } else {
         guess = CmPoint64f(0,0,0);
     }
@@ -777,7 +778,7 @@ bool Trackball::doSearch(bool allow_global = false)
 ///
 void Trackball::updateSphere()
 {
-    double* m = reinterpret_cast<double*>(_R_roi.data); // absolute orientation (3d mat) in ROI frame
+    double* m = reinterpret_cast<double*>(_data.R_roi.data); // absolute orientation (3d mat) in ROI frame
 
     if (_do_display) {
         _sphere_view.setTo(Scalar::all(128));
@@ -846,25 +847,25 @@ void Trackball::updatePath()
     // _R_roi
 
     // abs vec roi
-    _r_roi = CmPoint64f::matrixToOmega(_R_roi);
+    _data.r_roi = CmPoint64f::matrixToOmega(_data.R_roi);
     
     // rel vec cam
-    _dr_cam = _dr_roi/*.getTransformed(_roi_to_cam_R)*/;
+    _data.dr_cam = _data.dr_roi/*.getTransformed(_roi_to_cam_R)*/;
 
     // abs mat cam
-    _R_cam = /*_roi_to_cam_R * */_R_roi;
+    _data.R_cam = /*_roi_to_cam_R * */_data.R_roi;
 
     // abs vec cam
-    _r_cam = CmPoint64f::matrixToOmega(_R_cam);
+    _data.r_cam = CmPoint64f::matrixToOmega(_data.R_cam);
 
     // rel vec world
-    _dr_lab = _dr_cam.getTransformed(_cam_to_lab_R);
+    _data.dr_lab = _data.dr_cam.getTransformed(_cam_to_lab_R);
 
     // abs mat world
-    _R_lab = _cam_to_lab_R * _R_cam;
+    _data.R_lab = _cam_to_lab_R * _data.R_cam;
 
     // abs vec world
-    _r_lab = CmPoint64f::matrixToOmega(_R_lab);
+    _data.r_lab = CmPoint64f::matrixToOmega(_data.R_lab);
 
 
     //// store initial rotation from template (if any)
@@ -892,64 +893,64 @@ void Trackball::updatePath()
 
 
     // running speed, radians/frame (-ve rotation around x-axis causes y-axis translation & vice-versa!!)
-    _velx = _dr_lab[1];
-    _vely = -_dr_lab[0];
-    _step_mag = sqrt(_velx * _velx + _vely * _vely); // magnitude (radians) of ball rotation excluding turning (change in heading)
+    _data.velx = _data.dr_lab[1];
+    _data.vely = -_data.dr_lab[0];
+    _data.step_mag = sqrt(_data.velx * _data.velx + _data.vely * _data.vely);  // magnitude (radians) of ball rotation excluding turning (change in heading)
     
     // test data
-    if (_cnt > 0) {
-        _dist += _step_mag;
-        double v = _dr_lab.len();
-        double delta = v - _step_avg;
-        _step_avg += delta / static_cast<double>(_cnt); // running average
-        double delta2 = v - _step_avg;
-        _step_var += delta * delta2;                    // running variance (Welford's alg)
+    if (_data.cnt > 0) {
+        _data.dist += _data.step_mag;
+        double v = _data.dr_lab.len();
+        double delta = v - _data.step_avg;
+        _data.step_avg += delta / static_cast<double>(_data.cnt); // running average
+        double delta2 = v - _data.step_avg;
+        _data.step_var += delta * delta2;  // running variance (Welford's alg)
     }
 
     // running direction
-    _step_dir = atan2(_vely, _velx);
-    if (_step_dir < 0) { _step_dir += 360 * CM_D2R; }
+    _data.step_dir = atan2(_data.vely, _data.velx);
+    if (_data.step_dir < 0) { _data.step_dir += 360 * CM_D2R; }
 
     // integrated x/y pos (optical mouse style)
-    _intx += _velx;
-    _inty += _vely;
+    _data.intx += _data.velx;
+    _data.inty += _data.vely;
 
     // integrate bee heading
-    _heading -= _dr_lab[2];
-    while (_heading < 0) { _heading += 360 * CM_D2R; }
-    while (_heading >= 360 * CM_D2R) { _heading -= 360 * CM_D2R; }
-    _ang_dist += abs(_dr_lab[2]);
+    _data.heading -= _data.dr_lab[2];
+    while (_data.heading < 0) { _data.heading += 360 * CM_D2R; }
+    while (_data.heading >= 360 * CM_D2R) { _data.heading -= 360 * CM_D2R; }
+    _data.ang_dist += abs(_data.dr_lab[2]);
 
     // integrate 2d position
     {
         const int steps = 4;	// increasing this doesn't help much
-        double step = _step_mag / steps;
+        double step = _data.step_mag / steps;
         static double prev_heading = 0;
         if (_reset) { prev_heading = 0; }
-        double heading_step = (_heading - prev_heading);
+        double heading_step = (_data.heading - prev_heading);
         while (heading_step >= 180 * CM_D2R) { heading_step -= 360 * CM_D2R; }
         while (heading_step < -180 * CM_D2R) { heading_step += 360 * CM_D2R; }
         heading_step /= steps;  // do after wrapping above
 
         // super-res integration
-        CmPoint64f dir(_velx, _vely, 0);
+        CmPoint64f dir(_data.velx, _data.vely, 0);
         dir.normalise();
         dir.rotateAboutNorm(CmPoint(0, 0, 1), prev_heading + heading_step / 2.0);
         for (int i = 0; i < steps; i++) {
-            _posx += step * dir[0];
-            _posy += step * dir[1];
+            _data.posx += step * dir[0];
+            _data.posy += step * dir[1];
             dir.rotateAboutNorm(CmPoint(0, 0, 1), heading_step);
         }
-        prev_heading = _heading;
+        prev_heading = _data.heading;
     }
 
     if (_do_display) {
         // update pos hist (in ROI-space!)
-        _R_roi_hist.push_back(_R_roi.clone());
+        _R_roi_hist.push_back(_data.R_roi.clone());
         while (_R_roi_hist.size() > DRAW_SPHERE_HIST_LENGTH) {
             _R_roi_hist.pop_front();
         }
-        _pos_heading_hist.push_back(CmPoint(_posx, _posy, _heading));
+        _pos_heading_hist.push_back(CmPoint(_data.posx, _data.posy, _data.heading));
         while (_pos_heading_hist.size() > DRAW_FICTIVE_PATH_LENGTH) {
             _pos_heading_hist.pop_front();
         }
@@ -965,23 +966,23 @@ bool Trackball::logData()
     ss.precision(14);
 
     // frame_count
-    ss << _cnt << ", ";
+    ss << _data.cnt << ", ";
     // rel_vec_cam[3] | error
-    ss << _dr_cam[0] << ", " << _dr_cam[1] << ", " << _dr_cam[2] << ", " << _err << ", ";
+    ss << _data.dr_cam[0] << ", " << _data.dr_cam[1] << ", " << _data.dr_cam[2] << ", " << _err << ", ";
     // rel_vec_world[3]
-    ss << _dr_lab[0] << ", " << _dr_lab[1] << ", " << _dr_lab[2] << ", ";
+    ss << _data.dr_lab[0] << ", " << _data.dr_lab[1] << ", " << _data.dr_lab[2] << ", ";
     // abs_vec_cam[3]
-    ss << _r_cam[0] << ", " << _r_cam[1] << ", " << _r_cam[2] << ", ";
+    ss << _data.r_cam[0] << ", " << _data.r_cam[1] << ", " << _data.r_cam[2] << ", ";
     // abs_vec_world[3]
-    ss << _r_lab[0] << ", " << _r_lab[1] << ", " << _r_lab[2] << ", ";
+    ss << _data.r_lab[0] << ", " << _data.r_lab[1] << ", " << _data.r_lab[2] << ", ";
     // integrated xpos | integrated ypos | integrated heading
-    ss << _posx << ", " << _posy << ", " << _heading << ", ";
+    ss << _data.posx << ", " << _data.posy << ", " << _data.heading << ", ";
     // direction (radians) | speed (radians/frame)
-    ss << _step_dir << ", " << _step_mag << ", ";
+    ss << _data.step_dir << ", " << _data.step_mag << ", ";
     // integrated x movement | integrated y movement (mouse output equivalent)
-    ss << _intx << ", " << _inty << ", ";
+    ss << _data.intx << ", " << _data.inty << ", ";
     // timestamp | sequence number
-    ss << _ts << ", " << _seq << std::endl;
+    ss << _data.ts << ", " << _data.seq << std::endl;
 
     // async i/o
     bool ret = true;
@@ -1002,9 +1003,9 @@ double Trackball::testRotation(const double x[3])
 {
     static double lmat[9];
     CmPoint64f tmp(x[0], x[1], x[2]);
-    tmp.omegaToMatrix(lmat);                // relative rotation in camera frame
-    double* rmat = (double*)_R_roi.data;    // pre-multiply to orientation matrix
-    static double m[9];                     // absolute orientation in camera frame
+    tmp.omegaToMatrix(lmat);                    // relative rotation in camera frame
+    double* rmat = (double*)_data.R_roi.data;  // pre-multiply to orientation matrix
+    static double m[9];                         // absolute orientation in camera frame
 
     m[0] = lmat[0] * rmat[0] + lmat[1] * rmat[3] + lmat[2] * rmat[6];
     m[1] = lmat[0] * rmat[1] + lmat[1] * rmat[4] + lmat[2] * rmat[7];
@@ -1413,20 +1414,34 @@ void Trackball::drawCanvas(shared_ptr<DrawData> data)
     }
 }
 
+///
+///
+///
+shared_ptr<Trackball::DATA> Trackball::getState()
+{
+    return make_shared<DATA>(_data);
+}
+
+///
+///
+///
 void Trackball::dumpState()
 {
     PRINT("\n----------------------------------------------------------------------");
     PRINT("Trackball state");
-    PRINT("Sphere orientation (cam): %f %f %f", _r_cam[0], _r_cam[1], _r_cam[2]);
-    PRINT("Total heading rotation: %f deg", _ang_dist * CM_R2D);
-    PRINT("Heading direction: %f deg (%f %% total heading rotation)", _heading * CM_R2D, _heading * 100. / _ang_dist);
-    PRINT("Accumulated X/Y motion: %f / %f rad (%f / %f * 2pi)", _intx, _inty, _intx / (2 * CM_PI), _inty / (2 * CM_PI));
-    PRINT("Distance travelled: %f rad (%f * 2pi)", _dist, _dist / (2 * CM_PI));
-    PRINT("Integrated X/Y position: (%.3e, %.3e) rad (%f / %f %% total path length)", _posx, _posy, _posx * 100. / _dist, _posy * 100. / _dist);
-    PRINT("Average/stdev rotation: %.3e / %.3e rad/frame", _step_avg, sqrt(_step_var / _cnt));  // population variance
+    PRINT("Sphere orientation (cam): %f %f %f", _data.r_cam[0], _data.r_cam[1], _data.r_cam[2]);
+    PRINT("Total heading rotation: %f deg", _data.ang_dist * CM_R2D);
+    PRINT("Heading direction: %f deg (%f %% total heading rotation)", _data.heading * CM_R2D, _data.heading * 100. / _data.ang_dist);
+    PRINT("Accumulated X/Y motion: %f / %f rad (%f / %f * 2pi)", _data.intx, _data.inty, _data.intx / (2 * CM_PI), _data.inty / (2 * CM_PI));
+    PRINT("Distance travelled: %f rad (%f * 2pi)", _data.dist, _data.dist / (2 * CM_PI));
+    PRINT("Integrated X/Y position: (%.3e, %.3e) rad (%f / %f %% total path length)", _data.posx, _data.posy, _data.posx * 100. / _data.dist, _data.posy * 100. / _data.dist);
+    PRINT("Average/stdev rotation: %.3e / %.3e rad/frame", _data.step_avg, sqrt(_data.step_var / _data.cnt));  // population variance
     PRINT("\n----------------------------------------------------------------------");
 }
 
+///
+///
+///
 bool Trackball::writeTemplate(std::string fn)
 {
     if (!_init) { return false; }
