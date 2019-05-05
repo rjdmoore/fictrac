@@ -33,6 +33,10 @@ jobs:
     inputs:
       workingDirectory: build
       cmakeArgs: --build . --config Release
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: 'bin'
+      artifactName: drop
 
 # Provide a name for the job
 - job: Windows
@@ -53,3 +57,7 @@ jobs:
     inputs:
       workingDirectory: build
       cmakeArgs: --build . --config Release
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: 'bin'
+      artifactName: drop
