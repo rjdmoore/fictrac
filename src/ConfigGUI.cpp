@@ -425,16 +425,10 @@ bool ConfigGui::run()
     vector<double> cfg_vec;
     vector<vector<int>> cfg_polys;
 	changeState(CIRC_INIT);
-    const char exit_key = 0x1b;
-#ifdef WIN32
-    const char enter_key = 0x0d;
-#else // !WIN32
-    const char enter_key = 0x0a;
-#endif // WIN32
     const int click_rad = std::max(int(_w/150+0.5), 5);
     Mat disp_frame, zoom_frame(ZOOM_DIM, ZOOM_DIM, CV_8UC3);
     const int scaled_zoom_dim = static_cast<int>(ZOOM_DIM * ZOOM_SCL + 0.5);
-    while (_open && (key != exit_key)) {
+    while (_open && (key != 0x1b)) {    // esc
         /// Create frame for drawing.
         //cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
         disp_frame = _frame.clone();
@@ -551,7 +545,7 @@ bool ConfigGui::run()
                 key = cv::waitKey(5);
                 
                 /// State machine logic.
-                if (key == enter_key) {
+                if ((key == 0x0d) || (key == 0x0a)) {   // return
                     if (_input_data.circPts.size() >= 3) {
                         // dump circumference points, c, and r to config file
                         cfg_pts.clear();
@@ -684,7 +678,7 @@ bool ConfigGui::run()
                 key = cv::waitKey(5);
                 
                 /// State machine logic.
-                if (key == enter_key) {
+                if ((key == 0x0d) || (key == 0x0a)) {  // return
                     // if current poly is empty, assume we've finished
                     if (_input_data.ignrPts.empty() || _input_data.ignrPts.back().empty()) {
                         if (!_input_data.ignrPts.empty()) { _input_data.ignrPts.pop_back(); }
@@ -931,7 +925,7 @@ bool ConfigGui::run()
                 key = cv::waitKey(5);
                 
                 /// State machine logic.
-                if (key == enter_key) {
+                if ((key == 0x0d) || (key == 0x0a)) {   // return
                     if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
 						if (!saveC2ATransform(c2a_src, R, t)) {
@@ -984,7 +978,7 @@ bool ConfigGui::run()
                 key = cv::waitKey(5);
                 
                 /// State machine logic.
-                if (key == enter_key) {
+                if ((key == 0x0d) || (key == 0x0a)) {   // return
 					if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
 						if (!saveC2ATransform(c2a_src, R, t)) {
@@ -1037,7 +1031,7 @@ bool ConfigGui::run()
                 key = cv::waitKey(5);
                 
                 /// State machine logic.
-                if (key == enter_key) {
+                if ((key == 0x0d) || (key == 0x0a)) {   // return
 					if ((_input_data.sqrPts.size() == 4) && !R.empty()) {
                         // dump corner points to config file
 						if (!saveC2ATransform(c2a_src, R, t)) {
@@ -1108,7 +1102,7 @@ bool ConfigGui::run()
             
             /// Exit config.
             case EXIT:
-                key = exit_key;
+                key = 0x1b; // esc
                 break;
         }
     }
