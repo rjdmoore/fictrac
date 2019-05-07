@@ -44,8 +44,6 @@ FicTrac imposes no requirements on the *italicised* items; how you design these 
 
 ### Installation
 
-[![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master)
-
 The FicTrac source code can be built for both Windows and Ubuntu (Linux) operating systems, or you can build and run FicTrac from within a [virtual machine](https://www.virtualbox.org/) on any operating system.
 
 1. Download and install required dependencies:
@@ -76,6 +74,10 @@ cd build
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
 
 Remember to update and re-build FicTrac occasionally, as the program is still under development and fixes and improvements are being made continuously.
+
+| | | | | |
+| --- | --- | --- | --- | --- |
+| Build status | Windows | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Windows)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) | Linux | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Linux)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) |
 
 #### USB3 camera installation
 
