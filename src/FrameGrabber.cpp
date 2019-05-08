@@ -71,7 +71,7 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
 ///
 FrameGrabber::~FrameGrabber()
 {
-    LOG("Closing input stream..");
+    LOG("Closing input stream");
 
     unique_lock<mutex> l(_qMutex);
     _active = false;
@@ -194,7 +194,7 @@ void FrameGrabber::process()
     if (!SetThreadVeryHighPriority()) {
         LOG_ERR("Error! Unable to set thread priority!");
     } else {
-        LOG("Set frame grabbing thread priority to HIGH!");
+        LOG_DBG("Set frame grabbing thread priority to HIGH!");
     }
 
     /// Frame grab loop.
