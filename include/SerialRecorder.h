@@ -8,7 +8,9 @@
 
 #include "RecorderInterface.h"
 
+#ifdef _WIN32
 #include <SDKDDKVer.h>
+#endif
 #include <boost/asio/serial_port.hpp> 
 
 #include <string>
