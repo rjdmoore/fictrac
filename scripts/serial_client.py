@@ -1,30 +1,22 @@
 #!/usr/bin/env python3
 
-import socket
+import serial
 
-HOST = '127.0.0.1'  # The server's hostname or IP address
-PORT = ????         # The port used by the server
+PORT = 'COM?'       # The com port to receive data
+BAUD = 115200       # Baud rate used by the com port
+TIMEOUT_S = 1
 
-# Open the connection (FicTrac must be waiting for socket connection)
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-    sock.connect((HOST, PORT))
-    
-    data = ""
+# Open the connection
+with serial.Serial(PORT, BAUD, timeout=TIMEOUT_S) as com:
     
     # Keep receiving data until FicTrac closes
-    while True:
+    while com.is_open:
         # Receive one data frame
-        new_data = sock.recv(1024)
-        if not new_data:
+        data = com.readline()
+        if (not data):
             break
-        
-        # Decode received data
-        data += new_data.decode('UTF-8')
-        
-        # Find the first frame of data
-        endline = data.find("\n")
-        line = data[:endline]       # copy first frame
-        data = data[endline+1:]     # delete first frame
+            
+        line = data.decode('UTF-8')
         
         # Tokenise
         toks = line.split(", ")

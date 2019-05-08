@@ -15,7 +15,8 @@ public:
         CLOSED,
         TERM,
         FILE,
-        SOCK
+        SOCK,
+        COM
     };
 
     RecorderInterface() : _open(false), _type(CLOSED) {}

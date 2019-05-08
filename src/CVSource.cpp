@@ -29,7 +29,7 @@ CVSource::CVSource(std::string input)
     Mat test_frame;
     try {
         // try reading input as camera id
-        LOG_DBG("Trying source as camera id..");
+        LOG_DBG("Trying source as camera id...");
         if (input.size() > 2) { throw std::exception(); }
         int id = std::stoi(input);
         _cap = std::shared_ptr<cv::VideoCapture>(new cv::VideoCapture(id));
@@ -43,7 +43,7 @@ CVSource::CVSource(std::string input)
     catch (...) {
         try {
             // then try loading as video file
-            LOG_DBG("Trying source as video file..");
+            LOG_DBG("Trying source as video file...");
             _cap = std::shared_ptr<cv::VideoCapture>(new cv::VideoCapture(input));
             if (!_cap->isOpened()) { throw 0; }
             *_cap >> test_frame;
@@ -138,7 +138,7 @@ bool CVSource::grab(cv::Mat& frame)
     double ts = ts_ms();    // backup, in case the device timestamp is junk
 	_timestamp = _cap->get(cv::CAP_PROP_POS_MSEC);
     LOG_DBG("Frame captured %dx%d%d @ %f (%f)", _frame_cap.cols, _frame_cap.rows, _frame_cap.channels(), _timestamp, ts);
-    if (_timestamp <= 0) {
+    if ((_timestamp <= 0) || (!_live)) {    // also use system time when playing back from file
         _timestamp = ts;
     }
 

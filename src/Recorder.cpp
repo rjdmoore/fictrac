@@ -9,6 +9,7 @@
 #include "TermRecorder.h"
 #include "FileRecorder.h"
 #include "SocketRecorder.h"
+#include "SerialRecorder.h"
 #include "misc.h"   // thread priority
 
 #include <iostream> // cout/cerr
@@ -28,6 +29,10 @@ Recorder::Recorder(RecorderInterface::RecordType type, string fn)
         break;
     case RecorderInterface::RecordType::SOCK:
         _record = make_unique<SocketRecorder>();
+        break;
+    case RecorderInterface::RecordType::COM:
+        _record = make_unique<SerialRecorder>();
+        break;
     default:
         break;
     }
