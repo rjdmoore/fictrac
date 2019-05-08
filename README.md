@@ -50,10 +50,10 @@ The FicTrac source code can be built for both Windows and Ubuntu (Linux) operati
     1. [Cmake build system](https://cmake.org/download/) (binary distribution)
     2. For Windows installations, if you don't already have Visual Studio (C++ workflow) installed, you will need to install the [build tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
     3. Clone or download the [Vcpkg](https://github.com/Microsoft/vcpkg) repository and then follow the guide to install (make sure to perform the bootstrap and integration steps).
-    4. Using Vcpkg, install OpenCV and NLopt software packages:
+    4. Using Vcpkg, install OpenCV, NLopt, and Boost::asio software packages (this may take 10-30 mins):
 ```
-[Windows] .\vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows
-[Linux] ./vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux
+[Windows] .\vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows
+[Linux] ./vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux boost-asio:x64-linux
 ```
 2. Clone or download the FicTrac repository, then navigate to that folder, open a terminal, and create a build directory:
 ```
