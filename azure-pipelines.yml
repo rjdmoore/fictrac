@@ -23,7 +23,7 @@ jobs:
   steps:
   #- script: echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
   #  displayName: vcpkg set build type
-  - script: vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux
+  - script: vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux boost-asio:x64-linux
     displayName: vcpkg install dependencies
   - task: CMake@1
     inputs:
@@ -43,7 +43,7 @@ jobs:
     vmImage: 'vs2017-win2016'
   # The steps to run to execute the build.
   steps:
-  - script: vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows
+  - script: vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows
     displayName: vcpkg install dependencies
   - task: CMake@1
     inputs:
