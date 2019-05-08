@@ -6,8 +6,26 @@
 
 #pragma once
 
-#ifdef __linux__ 
-#include "SerialRecorder_linux.h"
-#elif _WIN32
-#include "SerialRecorder_win.h"
-#endif
+#include "RecorderInterface.h"
+
+#include <SDKDDKVer.h>
+#include <boost/asio/serial_port.hpp> 
+
+#include <string>
+#include <memory>
+
+class SerialRecorder : public RecorderInterface
+{
+public:
+    SerialRecorder();
+    ~SerialRecorder();
+
+    /// Interface to be overridden by implementations.
+    bool openRecord(std::string port_baud);
+    bool writeRecord(std::string s);
+    void closeRecord();
+
+private:
+    std::string _port_name;
+    std::shared_ptr<boost::asio::serial_port> _port;
+};

@@ -29,8 +29,10 @@ Recorder::Recorder(RecorderInterface::RecordType type, string fn)
         break;
     case RecorderInterface::RecordType::SOCK:
         _record = make_unique<SocketRecorder>();
+        break;
     case RecorderInterface::RecordType::COM:
         _record = make_unique<SerialRecorder>();
+        break;
     default:
         break;
     }

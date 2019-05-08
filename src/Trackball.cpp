@@ -49,8 +49,6 @@ const double THRESH_WIN_PC_DEFAULT = 0.25;
 
 const uint8_t SPHERE_MAP_FIRST_HIT_BONUS = 64;
 
-const int SOCK_PORT_DEFAULT = -1;
-
 const int COM_BAUD_DEFAULT = 115200;
 
 const bool DO_DISPLAY_DEFAULT = true;
@@ -122,7 +120,7 @@ Trackball::Trackball(string cfg_fn)
     }
     double src_fps = -1;
     if (_cfg.getDbl("src_fps", src_fps) && (src_fps > 0)) {
-        LOG("Setting source fps = %.2f..", src_fps);
+        LOG("Attempting to set source fps to %.2f", src_fps);
         source->setFPS(src_fps);
     }
     else {
@@ -383,7 +381,7 @@ Trackball::Trackball(string cfg_fn)
         return;
     }
 
-    int sock_port = SOCK_PORT_DEFAULT;
+    int sock_port = 0;
     _do_sock_output = false;
     if (_cfg.getInt("sock_port", sock_port) && (sock_port > 0)) {
         _data_sock = make_unique<Recorder>(RecorderInterface::RecordType::SOCK, std::to_string(sock_port));
@@ -393,9 +391,6 @@ Trackball::Trackball(string cfg_fn)
             return;
         }
         _do_sock_output = true;
-    } else {
-        LOG_WRN("Warning! Using default value for sock_port (%d).", sock_port);
-        _cfg.add("sock_port", sock_port);
     }
 
     string com_port = _cfg("com_port");
@@ -407,16 +402,13 @@ Trackball::Trackball(string cfg_fn)
             _cfg.add("com_baud", com_baud);
         }
 
-        _data_com = make_unique<Recorder>(RecorderInterface::RecordType::COM, com_port + "/" + std::to_string(com_baud));
+        _data_com = make_unique<Recorder>(RecorderInterface::RecordType::COM, com_port + "@" + std::to_string(com_baud));
         if (!_data_com->is_active()) {
-            LOG_ERR("Error! Unable to open output data com port (%s/%d).", com_port.c_str(), com_baud);
+            LOG_ERR("Error! Unable to open output data com port (%s@%d).", com_port.c_str(), com_baud);
             _active = false;
             return;
         }
         _do_com_output = true;
-    }
-    else {
-        _cfg.add("com_port", com_port);
     }
 
     /// Display.
@@ -534,7 +526,7 @@ Trackball::Trackball(string cfg_fn)
 ///
 Trackball::~Trackball()
 {
-    LOG("Closing sphere tracker..");
+    LOG("Closing sphere tracker");
 
     _init = false;
     _active = false;
@@ -597,7 +589,7 @@ void Trackball::process()
     if (!SetThreadHighPriority()) {
         LOG_ERR("Error! Unable to set thread priority!");
     } else {
-        LOG("Set processing thread priority to HIGH!");
+        LOG_DBG("Set processing thread priority to HIGH!");
     }
 
     /// Sphere tracking loop.
@@ -738,7 +730,7 @@ bool Trackball::doSearch(bool allow_global = false)
     bool bad_frame = _error_thresh >= 0 ? (_err > _error_thresh) : false;
     if (allow_global && (bad_frame || (_reset && !_clean_map))) {
 
-        LOG("Doing global search..");
+        LOG("Doing global search");
 
         // do global search
         _err = _globalOpt->search(_roi_frame, _data.R_roi, _data.r_roi); // use last know orientation, _r_roi, as guess and update with result
@@ -1398,7 +1390,7 @@ void Trackball::drawCanvas(shared_ptr<DrawData> data)
     cv::imshow("FicTrac-debug", canvas);
     uint16_t key = cv::waitKey(1);
     if (key == 0x1B) {  // esc
-        LOG("Exiting..");
+        LOG("Exiting");
         terminate();
     }
     else if (key == 0x52) { // shift+R
