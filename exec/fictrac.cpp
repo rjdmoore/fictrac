@@ -12,8 +12,9 @@
 
 #include <string>
 #include <csignal>
+#include <memory>
 
-using std::string;
+using namespace std;
 
 /// Ctrl-c handling
 bool _active = true;
@@ -66,24 +67,32 @@ int main(int argc, char *argv[])
         LOG("Set process priority to HIGH!");
     }
 
-    Trackball tracker(config_fn);
+    unique_ptr<Trackball> tracker = make_unique<Trackball>(config_fn);
 
     /// Now Trackball has spawned our worker threads, we set this thread to low priority.
     SetThreadNormalPriority();
 
-    // wait for tracking to finish
-    while (tracker.isActive()) {
+    /// Wait for tracking to finish.
+    while (tracker->isActive()) {
         if (!_active) {
-            tracker.terminate();
+            tracker->terminate();
         }
         sleep(250);
     }
 
-    tracker.writeTemplate();
+    /// Save the eventual template to disk.
+    tracker->writeTemplate();
 
+    /// If we're running in test mode, print some stats.
     if (do_test) {
-        tracker.dumpState();
+        tracker->dumpState();
     }
+
+    /// Try to force release of all objects.
+    tracker.reset();
+
+    /// Wait a bit before exiting...
+    sleep(250);
 
     //PRINT("\n\nHit ENTER to exit..");
     //getchar_clean();
