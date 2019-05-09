@@ -463,7 +463,7 @@ Trackball::Trackball(string cfg_fn)
 
         // raw input video
         if (_save_raw) {
-            string vid_fn = _base_fn + "-raw." + fext;
+            string vid_fn = _base_fn + "-raw-" + execTime() + "." + fext;
             double fps = source->getFPS();
             if (fps <= 0) { fps = 25; }
             LOG_DBG("Opening %s for video writing (%s %dx%d @ %f FPS)", vid_fn.c_str(), cstr.c_str(), source->getWidth(), source->getHeight(), fps);
@@ -477,7 +477,7 @@ Trackball::Trackball(string cfg_fn)
 
         // debug output video
         if (_save_debug) {
-            string vid_fn = _base_fn + "-debug." + fext;
+            string vid_fn = _base_fn + "-dbg-" + execTime() + "." + fext;
             double fps = source->getFPS();
             if (fps <= 0) { fps = 25; }
             LOG_DBG("Opening %s for video writing (%s %dx%d @ %f FPS)", vid_fn.c_str(), cstr.c_str(), 4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM, fps);
