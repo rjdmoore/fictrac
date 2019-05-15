@@ -432,6 +432,13 @@ bool ConfigGui::run()
         /// Create frame for drawing.
         //cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
         disp_frame = _frame.clone();
+
+        // normalise zoom window
+        {
+            double min, max;
+            cv::minMaxLoc(disp_frame, &min, &max);
+            disp_frame = (disp_frame - min) * 255 / (max - min);
+        }
         
         int in;
         string str;
