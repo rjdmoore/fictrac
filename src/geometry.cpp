@@ -126,7 +126,7 @@ bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, co
 
     /// Minimise transform from reference corners.
     SquareRT square(cnr_vecs, ref_cnrs);
-    double guess[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+    double guess[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 100.0};
     if (!R.empty() && !t.empty()) {
         // init guess
         if ((R.depth() != CV_64F) || (t.depth() != CV_64F)) {
