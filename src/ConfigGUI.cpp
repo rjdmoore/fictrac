@@ -141,7 +141,7 @@ void createZoomROI(Mat& zoom_roi, const Mat& frame, const Point2d& pt, int orig_
     int x = frame.cols/2;
     if (pt.x >= 0) { x = clamp(int(pt.x - orig_dim/2 + 0.5), int(orig_dim/2), frame.cols - 1 - orig_dim); }
     int y = frame.rows/2;
-    if (pt.y >= 0) { y = clamp(int(pt.y - orig_dim/2 + 0.5), int(orig_dim/2), frame.rows - 1 - orig_dim); }
+    if (pt.y >= 0) { y = clamp(int(pt.y - orig_dim/2 + 0.5), 0, frame.rows - 1 - orig_dim); }
     Mat crop_rect = frame(cv::Rect(x, y, orig_dim, orig_dim));
     cv::resize(crop_rect, zoom_roi, zoom_roi.size());
 }
@@ -432,6 +432,13 @@ bool ConfigGui::run()
         /// Create frame for drawing.
         //cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
         disp_frame = _frame.clone();
+
+        // normalise zoom window
+        {
+            double min, max;
+            cv::minMaxLoc(disp_frame, &min, &max);
+            disp_frame = (disp_frame - min) * 255 / (max - min);
+        }
         
         int in;
         string str;
@@ -457,9 +464,25 @@ bool ConfigGui::run()
 
                     /// Fit circular FoV to sphere.
                     if (_input_data.circPts.size() >= 3) {
-                        circleFit_camModel(_input_data.circPts, _cam_model, c, r);
+                        if (circleFit_camModel(_input_data.circPts, _cam_model, c, r)) {
 
-                        LOG_DBG("Computed roi_c = [%f %f %f] and roi_r = %f rad from %d roi_circ points.", c[0], c[1], c[2], r, _input_data.circPts.size());
+                            LOG_DBG("Computed roi_c = [%f %f %f] and roi_r = %f rad from %d roi_circ points.", c[0], c[1], c[2], r, _input_data.circPts.size());
+
+                            // save re-computed values
+                            cfg_vec.clear();
+                            cfg_vec.push_back(c[0]);
+                            cfg_vec.push_back(c[1]);
+                            cfg_vec.push_back(c[2]);
+
+                            // write to config file
+                            LOG("Adding roi_c and roi_r to config file and writing to disk (%s) ..", _config_fn.c_str());
+                            _cfg.add("roi_c", cfg_vec);
+                            _cfg.add("roi_r", r);
+                            if (_cfg.write() <= 0) {
+                                LOG_ERR("Error writing to config file (%s)!", _config_fn.c_str());
+                                _open = false;  // will cause exit
+                            }
+                        }
                     }
                 }
                 else {

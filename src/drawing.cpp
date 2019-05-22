@@ -138,7 +138,9 @@ void drawCursor(Mat& rgb, const Point2d& pt, cv::Scalar colour)
 /// Draw transformed axes.
 ///
 void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat& t, const cv::Scalar colour)
-{    
+{
+    if (R.empty() || t.empty()) { return; }
+
     /// Transformed axes.
     Mat sx = R * (cv::Mat_<double>(3,1) << 1,0,0) + t;
     Mat sy = R * (cv::Mat_<double>(3,1) << 0,1,0) + t;
@@ -215,6 +217,8 @@ void drawAxes(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat&
 ///
 void drawAnimalAxis(Mat& rgb, const CameraModelPtr cam_model, const Mat& R, const Mat& t, const double r, const cv::Scalar colour)
 {
+    if (R.empty() || t.empty()) { return; }
+
     /// Transformed axes.
     Mat sx = R * 0.5 * (cv::Mat_<double>(3, 1) << 1, 0, 0);
     Mat sx1 = R * 0.45 * (cv::Mat_<double>(3, 1) << 1, 0, 0);

@@ -159,7 +159,7 @@ Trackball::Trackball(string cfg_fn)
 
     /// Load sphere config and mask.
     bool reconfig = false;
-    _cfg.getBool("reconfig", reconfig); // ignore saved roi_c, roi_r, c2a_r, and c2a_t values and recompute from pixel coords - dangerous!!
+    //_cfg.getBool("reconfig", reconfig); // ignore saved roi_c, roi_r, c2a_r, and c2a_t values and recompute from pixel coords - dangerous!!
     Mat src_mask(source->getHeight(), source->getWidth(), CV_8UC1);
     src_mask.setTo(Scalar::all(0));
     {
