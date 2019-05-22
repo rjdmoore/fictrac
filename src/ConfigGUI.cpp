@@ -141,7 +141,7 @@ void createZoomROI(Mat& zoom_roi, const Mat& frame, const Point2d& pt, int orig_
     int x = frame.cols/2;
     if (pt.x >= 0) { x = clamp(int(pt.x - orig_dim/2 + 0.5), int(orig_dim/2), frame.cols - 1 - orig_dim); }
     int y = frame.rows/2;
-    if (pt.y >= 0) { y = clamp(int(pt.y - orig_dim/2 + 0.5), int(orig_dim/2), frame.rows - 1 - orig_dim); }
+    if (pt.y >= 0) { y = clamp(int(pt.y - orig_dim/2 + 0.5), 0, frame.rows - 1 - orig_dim); }
     Mat crop_rect = frame(cv::Rect(x, y, orig_dim, orig_dim));
     cv::resize(crop_rect, zoom_roi, zoom_roi.size());
 }
