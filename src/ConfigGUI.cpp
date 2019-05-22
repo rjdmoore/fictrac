@@ -464,9 +464,25 @@ bool ConfigGui::run()
 
                     /// Fit circular FoV to sphere.
                     if (_input_data.circPts.size() >= 3) {
-                        circleFit_camModel(_input_data.circPts, _cam_model, c, r);
+                        if (circleFit_camModel(_input_data.circPts, _cam_model, c, r)) {
 
-                        LOG_DBG("Computed roi_c = [%f %f %f] and roi_r = %f rad from %d roi_circ points.", c[0], c[1], c[2], r, _input_data.circPts.size());
+                            LOG_DBG("Computed roi_c = [%f %f %f] and roi_r = %f rad from %d roi_circ points.", c[0], c[1], c[2], r, _input_data.circPts.size());
+
+                            // save re-computed values
+                            cfg_vec.clear();
+                            cfg_vec.push_back(c[0]);
+                            cfg_vec.push_back(c[1]);
+                            cfg_vec.push_back(c[2]);
+
+                            // write to config file
+                            LOG("Adding roi_c and roi_r to config file and writing to disk (%s) ..", _config_fn.c_str());
+                            _cfg.add("roi_c", cfg_vec);
+                            _cfg.add("roi_r", r);
+                            if (_cfg.write() <= 0) {
+                                LOG_ERR("Error writing to config file (%s)!", _config_fn.c_str());
+                                _open = false;  // will cause exit
+                            }
+                        }
                     }
                 }
                 else {
