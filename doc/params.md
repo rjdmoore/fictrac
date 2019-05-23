@@ -14,6 +14,7 @@ In the table below, the various possible parameters are listed. If nothing is li
 | com_port   | string     |               |             | If you want to      | Serial port over which to transmit FicTrac data. If unset, FicTrac will not transmit data over serial. |
 | com_baud   | int        | 115200        |             | If you want to      | Baud rate to use for COM port. Unused if no com_port set. |
 |            |            |               |             |                     |             |
+| fisheye    | bool       | n             | y/n         | Only if you need to | If set, FicTrac will assume the imaging system has a fisheye lens, otherwise a rectilinear lens is assumed. |
 | q_factor   | int        | 6             | (0,inf)     | Only if you need to | Adjusts the resolution of the tracking window. Smaller values correspond to coarser but quicker tracking and vice-versa. Normally in the range [3,10]. |
 | src_fps    | float      | -1            | (0,inf)     | Only if you need to | If set, FicTrac will attempt to set the frame rate for the image source (video file or camera). |
 | max_bad_frames | int    | -1            | (0,inf)     | Only if you need to | If set, FicTrac will reset tracking after being unable to match this many frames in a row. Defaults to never resetting tracking. |
