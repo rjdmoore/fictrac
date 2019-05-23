@@ -144,8 +144,14 @@ Trackball::Trackball(string cfg_fn)
         _active = false;
         return;
     }
-    //FIXME: support other camera models
-    _src_model = CameraModel::createRectilinear(source->getWidth(), source->getHeight(), vfov * CM_D2R);
+    bool fisheye = false;
+    if (_cfg.getBool("fisheye", fisheye) && fisheye) {
+        _src_model = CameraModel::createFisheye(source->getWidth(), source->getHeight(), vfov * CM_D2R / (double)source->getHeight(), 360 * CM_D2R);
+    }
+    else {
+        // default to rectilinear
+        _src_model = CameraModel::createRectilinear(source->getWidth(), source->getHeight(), vfov * CM_D2R);
+    }
 
     /// Dimensions - quality defaults to 6 (remap_dim 60x60, sphere_dim 180x90).
     int q_factor = Q_FACTOR_DEFAULT;
