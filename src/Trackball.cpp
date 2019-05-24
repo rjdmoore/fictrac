@@ -341,10 +341,10 @@ Trackball::Trackball(string cfg_fn)
         LOG_WRN("Warning! Using default value for opt_max_eval (%d).", max_evals);
         _cfg.add("opt_max_evals", max_evals);
     }
-    _global_search = OPT_GLOBAL_SEARCH_DEFAULT;
-    if (!_cfg.getBool("opt_do_global", _global_search)) {
-        LOG_WRN("Warning! Using default value for opt_do_global (%d).", _global_search);
-        _cfg.add("opt_do_global", _global_search ? "y" : "n");
+    _do_global_search = OPT_GLOBAL_SEARCH_DEFAULT;
+    if (!_cfg.getBool("opt_do_global", _do_global_search)) {
+        LOG_WRN("Warning! Using default value for opt_do_global (%d).", _do_global_search);
+        _cfg.add("opt_do_global", _do_global_search ? "y" : "n");
     }
     _max_bad_frames = OPT_MAX_BAD_FRAMES_DEFAULT;
     if (!_cfg.getInt("max_bad_frames", _max_bad_frames)) {
@@ -567,7 +567,7 @@ void Trackball::reset()
     _reset = true;
 
     /// Clear maps if we can't search the entire sphere to relocalise.
-    if (!_global_search) {
+    if (!_do_global_search) {
         //FIXME: possible for users to specify sphere_template without enabling global search..
         _sphere_template.copyTo(_sphere_map);
         _clean_map = true;
@@ -617,7 +617,7 @@ void Trackball::process()
         }
 
         /// Localise current view of sphere.
-        if (!doSearch(_global_search)) {
+        if (!doSearch(_do_global_search)) {
             t2 = t3 = t4 = t5 = ts_ms();
             LOG_WRN("Warning! Could not match current sphere orientation to within error threshold (%f).\nNo data will be output for this frame!", _error_thresh);
             nbad++;

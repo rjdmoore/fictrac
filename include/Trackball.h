@@ -161,7 +161,7 @@ private:
     /// Optimisation.
     std::unique_ptr<Localiser> _localOpt, _globalOpt;
     double _error_thresh, _err;
-    bool _global_search;
+    bool _do_global_search;
     int _max_bad_frames;
     int _nevals;
 
