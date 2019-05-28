@@ -11,7 +11,6 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <exception>    // try, catch
 #include <algorithm>    // erase, remove
 
@@ -143,29 +142,15 @@ int ConfigParser::write(string fn)
 ///
 ///
 ///
-string ConfigParser::operator()(string key)
+string ConfigParser::operator()(string key) const
 {
-    string s = "";
-    getStr(key, s);
-    return s;
-}
-
-///
-///
-///
-template<typename T>
-T ConfigParser::get(string key)
-{
-    T val;
-    string s;
-    if (getStr(key, s)) {
-        std::stringstream ss(s);
-        try { ss >> val; }
-        catch (std::exception& e) {
-            LOG_ERR("Error parsing config file value (%s : %s)! Error was: %s", key.c_str(), ss.str().c_str(), e.what());
-        }
+    try {
+        return _data.at(key);
     }
-    return val;
+    catch (...) {
+        LOG_DBG("Key (%s) not found.", key.c_str());
+    }
+    return "";
 }
 
 ///
