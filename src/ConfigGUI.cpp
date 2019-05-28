@@ -193,6 +193,28 @@ ConfigGui::ConfigGui(string config_fn)
         }
     }
 
+    /// Optionally enhance frame for config
+    bool do_enhance = false;
+    _cfg.getBool("enhance_cfg", do_enhance);
+    if (_open && do_enhance) {
+        LOG("Enhancing config image ..");
+        Mat maximg = input_frame.clone();
+        Mat minimg = input_frame.clone();
+        while (source->grab(input_frame)) {
+            for (int i = 0; i < input_frame.rows; i++) {
+                uint8_t* pmin = minimg.ptr(i);
+                uint8_t* pmax = maximg.ptr(i);
+                const uint8_t* pimg = input_frame.ptr(i);
+                for (int j = 0; j < input_frame.cols * input_frame.channels(); j++) {
+                    uint8_t p = pimg[j];
+                    if (p > pmax[j]) { pmax[j] = p; }
+                    if (p < pmin[j]) { pmin[j] = p; }
+                }
+            }
+        }
+        input_frame = maximg - minimg;
+    }
+
     /// Create base file name for output files.
     _base_fn = _cfg("output_fn");
     if (_base_fn.empty()) {
