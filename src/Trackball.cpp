@@ -33,7 +33,7 @@
 using namespace cv;
 using namespace std;
 
-const int DRAW_SPHERE_HIST_LENGTH = 250;
+const int DRAW_SPHERE_HIST_LENGTH = 1024;
 const int DRAW_CELL_DIM = 160;
 const int DRAW_FICTIVE_PATH_LENGTH = 1000;
 
@@ -283,7 +283,7 @@ Trackball::Trackball(string cfg_fn)
     erode(_roi_mask, _roi_mask, Mat(), cv::Point(-1, -1), 1, cv::BORDER_CONSTANT, 0);   // remove edge effects
 
     /// Surface mapping.
-    _sphere_model = CameraModel::createEquiArea(_map_w, _map_h);
+    _sphere_model = CameraModel::createEquiArea(_map_w, _map_h, CM_PI_2, -CM_PI, CM_PI, -2 * CM_PI);
 
     /// Buffers.
     _sphere_map.create(_map_h, _map_w, CV_8UC1);
