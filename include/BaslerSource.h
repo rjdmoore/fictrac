@@ -15,10 +15,10 @@ class BaslerSource : public FrameSource {
 
 public:
   BaslerSource(int index=0);
-  virtual ~PGRSource();
+  virtual ~BaslerSource();
 
   virtual double getFPS();
-  virtual bool setFPS();
+  virtual bool setFPS(double);
 
   virtual bool rewind() {return false; };
   virtual bool grab(cv::Mat& frame);
