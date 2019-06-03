@@ -270,9 +270,15 @@ bool ConfigGui::setFrame(Mat& frame)
 	}
 
     LOG("Using vfov: %f deg", vfov);
-    
-    //FIXME: support also fisheye models!
-    _cam_model = CameraModel::createRectilinear(static_cast<int>(_w), static_cast<int>(_h), vfov * CM_D2R);
+
+    bool fisheye = false;
+    if (_cfg.getBool("fisheye", fisheye) && fisheye) {
+        _cam_model = CameraModel::createFisheye(_w, _h, vfov * CM_D2R / (double)_h, 360 * CM_D2R);
+    }
+    else {
+        // default to rectilinear
+        _cam_model = CameraModel::createRectilinear(_w, _h, vfov * CM_D2R);
+    }
     
     return true;
 }
