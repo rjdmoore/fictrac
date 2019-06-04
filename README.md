@@ -101,7 +101,7 @@ Before running FicTrac, you may configure your camera (frame rate, resolution, e
 
 ##### PGR (FLIR) Spinnaker SDK
 
-1. Download and install the latest [Spinnaker (full) SDK](https://www.flir.com/products/spinnaker-sdk/).
+1. Download and install the latest [Spinnaker SDK](https://www.flir.com/products/spinnaker-sdk/).
 2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a Windows installation you would replace step 3 above with:
 ```
 cmake -G "Visual Studio 15 2017 Win64" -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
