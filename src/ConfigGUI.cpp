@@ -195,7 +195,7 @@ ConfigGui::ConfigGui(string config_fn)
 
     /// Optionally enhance frame for config
     bool do_enhance = false;
-    _cfg.getBool("enhance_cfg", do_enhance);
+    _cfg.getBool("enh_cfg_disp", do_enhance);
     if (_open && do_enhance) {
         LOG("Enhancing config image ..");
         Mat maximg = input_frame.clone();
