@@ -231,7 +231,7 @@ bool PGRSource::setFPS(double fps)
 
 bool PGRSource::grab(cv::Mat& frame)
 {
-	if( !_open ) { return NULL; }
+	if( !_open ) { return false; }
 
 #if defined(PGR_USB3)
     ImagePtr pgr_image = NULL;
@@ -256,12 +256,12 @@ bool PGRSource::grab(cv::Mat& frame)
         }
     }
     catch (Spinnaker::Exception& e) {
-        LOG_ERR("Error grabbing PGR frame! Error was: %s", e.what());
+        LOG_ERR("Error grabbing frame! Error was: %s", e.what());
         pgr_image->Release();
         return false;
     }
     catch (...) {
-        LOG_ERR("Error grabbing PGR frame!");
+        LOG_ERR("Error grabbing frame!");
         pgr_image->Release();
         return false;
     }
@@ -279,12 +279,12 @@ bool PGRSource::grab(cv::Mat& frame)
         return true;
     }
     catch (Spinnaker::Exception& e) {
-        LOG_ERR("Error converting PGR frame! Error was: %s", e.what());
+        LOG_ERR("Error converting frame! Error was: %s", e.what());
         pgr_image->Release();
         return false;
     }
     catch (...) {
-        LOG_ERR("Error converting PGR frame!");
+        LOG_ERR("Error converting frame!");
         pgr_image->Release();
         return false;
     }

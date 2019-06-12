@@ -86,7 +86,7 @@ bool BaslerSource::setFPS(double fps)
 
 bool BaslerSource::grab(cv::Mat& frame)
 {
-  if (!_open) {return NULL;}
+    if (!_open) { return false; }
 
   // Set grab timeout
 
