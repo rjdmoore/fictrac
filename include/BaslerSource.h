@@ -1,3 +1,11 @@
+/// FicTrac http://rjdmoore.net/fictrac/
+/// \file       BaslerSource.h
+/// \brief      Basler USB3 sources (Pylon SDK).
+/// \author     Wenbin Yang
+/// \copyright  CC BY-NC-SA 3.0
+
+#if defined(BASLER_USB3)
+
 #pragma once
 
 #include "FrameSource.h"
@@ -6,26 +14,22 @@
 #include <pylon/PylonIncludes.h>
 #include <pylon/ImageFormatConverter.h>
 #include <pylon/usb/BaslerUsbInstantCameraArray.h>
-#ifdef PYLON_WIN_BUILD
-#	include <pylon/PylonGUI.h>
-#endif
-
 
 class BaslerSource : public FrameSource {
-
 public:
-  BaslerSource(int index=0);
-  virtual ~BaslerSource();
+    BaslerSource(int index=0);
+    ~BaslerSource();
 
-  virtual double getFPS();
-  virtual bool setFPS(double);
+    double getFPS();
+    bool setFPS(double);
 
-  virtual bool rewind() {return false; };
-  virtual bool grab(cv::Mat& frame);
+    bool rewind() { return false; };
+    bool grab(cv::Mat& frame);
 
-private:
-  Pylon::CPylonImage pylonImg;
-  Pylon::CGrabResultPtr ptrGrabResult;
-  Pylon::CInstantCamera cam;
-
+    private:
+    Pylon::CPylonImage _pylonImg;
+    Pylon::CGrabResultPtr _ptrGrabResult;
+    Pylon::CInstantCamera _cam;
 };
+
+#endif // BASLER_USB3
