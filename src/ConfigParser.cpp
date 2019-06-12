@@ -3,8 +3,6 @@
 /// \brief      Read/write simple key/value pair config files.
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
-#pragma warning(disable : 4996)
-
 
 #include "ConfigParser.h"
 
