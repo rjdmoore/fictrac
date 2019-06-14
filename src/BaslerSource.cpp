@@ -94,6 +94,7 @@ bool BaslerSource::setFPS(double fps)
         _fps = getFPS();
         LOG("Device frame rate is now %.2f", _fps);
     }
+    return ret;
 }
 
 bool BaslerSource::grab(cv::Mat& frame)
