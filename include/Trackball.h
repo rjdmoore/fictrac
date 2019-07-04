@@ -116,6 +116,7 @@ private:
 private:
     /// Drawing
     struct DrawData {
+        unsigned int log_frame;
         cv::Mat src_frame, roi_frame, sphere_view, sphere_map;
         CmPoint64f dr_roi;
         cv::Mat R_roi;
@@ -175,7 +176,7 @@ private:
     std::string _base_fn;
     std::unique_ptr<FrameGrabber> _frameGrabber;
     bool _do_sock_output, _do_com_output;
-    std::unique_ptr<Recorder> _data_log, _data_sock, _data_com;
+    std::unique_ptr<Recorder> _data_log, _data_sock, _data_com, _vid_frames;
 
     /// Thread stuff.
     std::atomic_bool _active, _kill, _do_reset;

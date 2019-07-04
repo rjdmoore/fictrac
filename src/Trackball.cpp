@@ -89,6 +89,9 @@ bool intersectSphere(const double camVec[3], double sphereVec[3], const double r
 Trackball::Trackball(string cfg_fn)
     : _init(false), _reset(true), _clean_map(true), _active(true), _kill(false), _do_reset(false)
 {
+    /// Save execTime for outptut file naming.
+    string exec_time = execTime();
+
     /// Load and parse config file.
     if (_cfg.read(cfg_fn) <= 0) {
         LOG_ERR("Error parsing config file (%s)!", cfg_fn.c_str());
@@ -379,7 +382,7 @@ Trackball::Trackball(string cfg_fn)
         _roi_mask, _p1s_lut);
 
     /// Output.
-    string data_fn = _base_fn + "-" + execTime() + ".dat";
+    string data_fn = _base_fn + "-" + exec_time + ".dat";
     _data_log = make_unique<Recorder>(RecorderInterface::RecordType::FILE, data_fn);
     if (!_data_log->is_active()) {
         LOG_ERR("Error! Unable to open output data log file (%s).", data_fn.c_str());
@@ -469,7 +472,7 @@ Trackball::Trackball(string cfg_fn)
 
         // raw input video
         if (_save_raw) {
-            string vid_fn = _base_fn + "-raw-" + execTime() + "." + fext;
+            string vid_fn = _base_fn + "-raw-" + exec_time + "." + fext;
             double fps = source->getFPS();
             if (fps <= 0) { fps = 25; }
             LOG_DBG("Opening %s for video writing (%s %dx%d @ %f FPS)", vid_fn.c_str(), cstr.c_str(), source->getWidth(), source->getHeight(), fps);
@@ -483,7 +486,7 @@ Trackball::Trackball(string cfg_fn)
 
         // debug output video
         if (_save_debug) {
-            string vid_fn = _base_fn + "-dbg-" + execTime() + "." + fext;
+            string vid_fn = _base_fn + "-dbg-" + exec_time + "." + fext;
             double fps = source->getFPS();
             if (fps <= 0) { fps = 25; }
             LOG_DBG("Opening %s for video writing (%s %dx%d @ %f FPS)", vid_fn.c_str(), cstr.c_str(), 4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM, fps);
@@ -493,6 +496,15 @@ Trackball::Trackball(string cfg_fn)
                 _active = false;
                 return;
             }
+        }
+
+        // create output file containing log lines corresponding to video frames, for synching video output
+        string fn = _base_fn + "-vidLogFrames-" + exec_time + ".txt";
+        _vid_frames = make_unique<Recorder>(RecorderInterface::RecordType::FILE, fn);
+        if (!_vid_frames->is_active()) {
+            LOG_ERR("Error! Unable to open output video frame number log file (%s).", fn.c_str());
+            _active = false;
+            return;
         }
     }
 
@@ -646,6 +658,7 @@ void Trackball::process()
 
         if (_do_display) {
             auto data = make_shared<DrawData>();
+            data->log_frame = _data.cnt;
             data->src_frame = _src_frame.clone();
             data->roi_frame = _roi_frame.clone();
             data->sphere_map = _sphere_map.clone();
@@ -1218,6 +1231,7 @@ void Trackball::drawCanvas(shared_ptr<DrawData> data)
     Mat& sphere_map = data->sphere_map;
     deque<Mat>& R_roi_hist = data->R_roi_hist;
     deque<CmPoint64f>& pos_heading_hist = data->pos_heading_hist;
+    unsigned int log_frame = data->log_frame;
 
     /// Draw source image.
     double radPerPix = _sphere_rad * 3.0 / (2 * DRAW_CELL_DIM);
@@ -1409,6 +1423,9 @@ void Trackball::drawCanvas(shared_ptr<DrawData> data)
     }
     if (_save_debug) {
         _debug_vid.write(canvas);
+    }
+    if (_save_raw || _save_debug) {
+        _vid_frames->addMsg(to_string(log_frame) + "\n");
     }
 }
 
