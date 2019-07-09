@@ -30,6 +30,7 @@ public:
                     const cv::Mat&                  remap_mask,
                     double                          thresh_ratio,
                     double                          thresh_win_pc,
+                    std::string                     thresh_rgb_transform = "grey",
                     int                             max_buf_len = 1,
                     int                             max_frame_cnt = -1
     );
@@ -58,6 +59,12 @@ private:
 
     double _thresh_ratio;
     int _thresh_win, _thresh_rad;
+    enum {
+        GREY,
+        RED,
+        GREEN,
+        BLUE
+    } _thresh_rgb_transform;
 
     int _max_buf_len, _max_frame_cnt;
 

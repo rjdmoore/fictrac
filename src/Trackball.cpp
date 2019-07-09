@@ -198,7 +198,7 @@ Trackball::Trackball(string cfg_fn)
             _r_d_ratio = sin(_sphere_rad);
 
             /// Allow sphere region in mask.
-            auto int_circ = projCircleInt(_src_model, _sphere_c, _sphere_rad);
+            auto int_circ = projCircleInt(_src_model, _sphere_c, _sphere_rad * 0.975f);   // crop a bit of the circle to avoid circumference thresholding issues
             cv::fillConvexPoly(src_mask, *int_circ, CV_RGB(255, 255, 255));
 
             /// Mask out ignore regions.
@@ -283,7 +283,6 @@ Trackball::Trackball(string cfg_fn)
     _roi_mask.create(_roi_h, _roi_w, CV_8UC1);
     _roi_mask.setTo(cv::Scalar::all(255));
     remapper->apply(src_mask, _roi_mask);
-    erode(_roi_mask, _roi_mask, Mat(), cv::Point(-1, -1), 1, cv::BORDER_CONSTANT, 0);   // remove edge effects
 
     /// Surface mapping.
     _sphere_model = CameraModel::createEquiArea(_map_w, _map_h, CM_PI_2, -CM_PI, CM_PI, -2 * CM_PI);
@@ -514,7 +513,8 @@ Trackball::Trackball(string cfg_fn)
         remapper,
         _roi_mask,
         thresh_ratio,
-        thresh_win_pc
+        thresh_win_pc,
+        _cfg("thr_rgb_tfrm")
     );
 
     /// Write all parameters back to config file.

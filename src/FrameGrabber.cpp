@@ -18,11 +18,10 @@
 #include <opencv2/videoio.hpp>
 
 #include <cmath>    // round
+#include <string>
 
 using cv::Mat;
-using std::shared_ptr;
-using std::unique_lock;
-using std::mutex;
+using namespace std;
 
 ///
 ///
@@ -32,6 +31,7 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
                             const Mat&              remap_mask,
                             double                  thresh_ratio,
                             double                  thresh_win_pc,
+                            string                  thresh_rgb_transform,
                             int                     max_buf_len,
                             int                     max_frame_cnt
 )   : _source(source), _remapper(remapper), _remap_mask(remap_mask), _active(false)
@@ -48,6 +48,16 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
         thresh_ratio = 1.0;
     }
     _thresh_ratio = thresh_ratio;
+
+    if ((thresh_rgb_transform == "red") || (thresh_rgb_transform == "r")) {
+        _thresh_rgb_transform = FrameGrabber::RED;
+    } else if ((thresh_rgb_transform == "green") || (thresh_rgb_transform == "g")) {
+        _thresh_rgb_transform = FrameGrabber::GREEN;
+    } else if ((thresh_rgb_transform == "blue") || (thresh_rgb_transform == "b")) {
+        _thresh_rgb_transform = FrameGrabber::BLUE;
+    } else {
+        _thresh_rgb_transform = FrameGrabber::GREY;
+    }
 
     if ((thresh_win_pc < 0) || (thresh_win_pc > 1.0)) {
         LOG_WRN("Invalid thresh_win parameter (%f)! Defaulting to 0.2", thresh_win_pc);
@@ -241,7 +251,28 @@ void FrameGrabber::process()
         memset(win_min_hist.get(), 0, _thresh_win);
 
         /// Create grey ROI frame.
-        cv::cvtColor(frame_bgr, frame_grey, cv::COLOR_BGR2GRAY);
+        int from_to[2] = { 0, 0 };
+        switch (_thresh_rgb_transform) {
+        case RED:
+            from_to[0] = 2; from_to[1] = 0;
+            cv::mixChannels(&frame_bgr, 1, &frame_grey, 1, from_to, 1);
+            break;
+
+        case GREEN:
+            from_to[0] = 1; from_to[1] = 0;
+            cv::mixChannels(&frame_bgr, 1, &frame_grey, 1, from_to, 1);
+            break;
+
+        case BLUE:
+            from_to[0] = 0; from_to[1] = 0;
+            cv::mixChannels(&frame_bgr, 1, &frame_grey, 1, from_to, 1);
+            break;
+
+        case GREY:
+        default:
+            cv::cvtColor(frame_bgr, frame_grey, cv::COLOR_BGR2GRAY);
+            break;
+        }
         _remapper->apply(frame_grey, remap_grey);
 
         /// Blur image before calculating region min/max values.
@@ -259,12 +290,13 @@ void FrameGrabber::process()
             uint8_t* pgrey = remap_blur.ptr(i);
             for (int j = 0; j <= _thresh_rad; j++) {
                 if (pmask[j] < 255) { continue; }
-                uint8_t g = pgrey[j];
+                const uint8_t& g = pgrey[j];
                 if ((g > max) && (g < 255)) { max = g; }	// ignore overexposed regions
                 if (g < min) { min = g; }
             }
-            win_max_hist[win_it++] = max;
-            win_min_hist[win_it++] = min;
+            win_max_hist[win_it] = max;
+            win_min_hist[win_it] = min;
+            win_it++;
         }
 
         // compute window min/max
@@ -272,16 +304,17 @@ void FrameGrabber::process()
         uint8_t* pthrmin = thresh_min.data;
         for (int j = 0; j < _rw; j++) {
             for (int i = 0; i < _rh; i++) {
+
                 // add row
                 max = 0; min = 255;
                 if ((i + _thresh_rad) < _rh) {
                     const uint8_t* pmask = _remap_mask.ptr(i + _thresh_rad);
-                    uint8_t* pgrey = remap_blur.ptr(i + _thresh_rad);
+                    const uint8_t* pgrey = remap_blur.ptr(i + _thresh_rad);
                     for (int s = -_thresh_rad; s <= _thresh_rad; s++) {
-                        int js = j + s;
+                        const int js = j + s;
                         if ((js < 0) || (js >= _rw)) { continue; }
                         if (pmask[js] < 255) { continue; }
-                        uint8_t g = pgrey[js];
+                        const uint8_t& g = pgrey[js];
                         if ((g > max) && (g < 255)) { max = g; }	// ignore overexposed regions
                         if (g < min) { min = g; }
                     }
@@ -291,10 +324,10 @@ void FrameGrabber::process()
                     const uint8_t* pmask = _remap_mask.ptr(i + _thresh_rad - _rh);
                     uint8_t* pgrey = remap_blur.ptr(i + _thresh_rad - _rh);
                     for (int s = -_thresh_rad; s <= _thresh_rad; s++) {
-                        int js = j + s + 1;
+                        const int js = j + s + 1;
                         if ((js < 0) || (js >= _rw)) { continue; }
                         if (pmask[js] < 255) { continue; }
-                        uint8_t g = pgrey[js];
+                        const uint8_t& g = pgrey[js];
                         if ((g > max) && (g < 255)) { max = g; }	// ignore overexposed regions
                         if (g < min) { min = g; }
                     }
