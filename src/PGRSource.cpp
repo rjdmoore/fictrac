@@ -241,8 +241,9 @@ bool PGRSource::grab(cv::Mat& frame)
         long int timeout = _fps > 0 ? std::max(static_cast<long int>(1000), static_cast<long int>(1000. / _fps)) : 1000; // set capture timeout to at least 1000 ms
         pgr_image = _cam->GetNextImage(timeout);
         double ts = ts_ms();    // backup, in case the device timestamp is junk
+        _ms_since_midnight = ms_since_midnight();
         _timestamp = pgr_image->GetTimeStamp();
-        LOG_DBG("Frame captured %dx%d%d @ %f (%f)", pgr_image->GetWidth(), pgr_image->GetHeight(), pgr_image->GetNumChannels(), _timestamp, ts);
+        LOG_DBG("Frame captured %dx%d%d @ %f (t_sys: %f ms, t_day: %f ms)", pgr_image->GetWidth(), pgr_image->GetHeight(), pgr_image->GetNumChannels(), _timestamp, ts, _ms_since_midnight);
         if (_timestamp <= 0) {
             _timestamp = ts;
         }

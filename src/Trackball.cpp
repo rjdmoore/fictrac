@@ -616,7 +616,7 @@ void Trackball::process()
     double t1, t2, t3, t4, t5, t6;
     double t1avg = 0, t2avg = 0, t3avg = 0, t4avg = 0, t5avg = 0, t6avg = 0;
     double tfirst = -1, tlast = 0;
-    while (!_kill && _active && _frameGrabber->getNextFrameSet(_src_frame, _roi_frame, _data.ts)) {
+    while (!_kill && _active && _frameGrabber->getNextFrameSet(_src_frame, _roi_frame, _data.ts, _data.ms)) {
         t1 = ts_ms();
 
         PRINT("");
@@ -976,6 +976,8 @@ bool Trackball::logData()
     std::stringstream ss;
     ss.precision(14);
 
+    static double prev_ts = _data.ts;
+
     // frame_count
     ss << _data.cnt << ", ";
     // rel_vec_cam[3] | error
@@ -992,8 +994,10 @@ bool Trackball::logData()
     ss << _data.step_dir << ", " << _data.step_mag << ", ";
     // integrated x movement | integrated y movement (mouse output equivalent)
     ss << _data.intx << ", " << _data.inty << ", ";
-    // timestamp | sequence number
-    ss << _data.ts << ", " << _data.seq << std::endl;
+    // timestamp (ms since midnight) | sequence number | delta ts (ms since last frame)
+    ss << _data.ms << ", " << _data.seq << ", " << (_data.ts - prev_ts) << std::endl;
+
+    prev_ts = _data.ts;     // caution - be sure that this time delta corresponds to deltas for step size, rotation rate, etc!!
 
     // async i/o
     bool ret = true;

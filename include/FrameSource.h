@@ -27,6 +27,7 @@ public:
 	int getWidth() { return _width; }
 	int getHeight() { return _height; }
 	double getTimestamp() { return _timestamp; }
+    double getMsSinceMidnight() { return _ms_since_midnight; }
 	void setBayerType(BAYER_TYPE bayer_type) { _bayerType = bayer_type; }
     bool isLive() { return _live; }
 
@@ -34,6 +35,6 @@ protected:
 	bool _open;
 	BAYER_TYPE _bayerType;
 	int _width, _height;
-	double _timestamp, _fps;
+	double _timestamp, _fps, _ms_since_midnight;
     bool _live;
 };

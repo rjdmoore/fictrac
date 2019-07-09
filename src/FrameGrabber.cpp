@@ -86,7 +86,7 @@ FrameGrabber::~FrameGrabber()
 ///
 ///
 ///
-bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool latest=true)
+bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, double& ms_since_midnight, bool latest)
 {
     unique_lock<mutex> l(_qMutex);
     while (_active && (_frame_q.size() == 0)) {
@@ -105,13 +105,14 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
     
     // must be frame_q.size() > 0 to get here (can be !_active)
 
-    if ((n != _remap_q.size()) || (n != _ts_q.size())) {
+    if ((n != _remap_q.size()) || (n != _ts_q.size()) || (n != _ms_q.size())) {
         LOG_ERR("Error! Input processed frame queues are misaligned!");
         
         // drop all frames
         _frame_q.clear();
         _remap_q.clear();
         _ts_q.clear();
+        _ms_q.clear();
 
         // wake processing thread
         _qCond.notify_all();
@@ -124,6 +125,7 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
         frame = _frame_q.back();
         remap = _remap_q.back();
         timestamp = _ts_q.back();
+        ms_since_midnight = _ms_q.back();
         
         if (n > 1) {
             LOG_WRN("Warning! Dropping %d frame/s from input processed frame queues!", n - 1);
@@ -133,15 +135,18 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
         _frame_q.clear();
         _remap_q.clear();
         _ts_q.clear();
+        _ms_q.clear();
     }
     else {
         frame = _frame_q.front();
         remap = _remap_q.front();
         timestamp = _ts_q.front();
+        ms_since_midnight = _ms_q.front();
 
         _frame_q.pop_front();
         _remap_q.pop_front();
         _ts_q.pop_front();
+        _ms_q.pop_front();
 
         if (n > 1) {
             LOG_DBG("%d frames remaining in processed frame queue.", _frame_q.size());
@@ -224,6 +229,7 @@ void FrameGrabber::process()
             break;
         }
         double timestamp = _source->getTimestamp();
+        double ms_since_midnight = _source->getMsSinceMidnight();
 
         /// Create output remap image in the loop.
         Mat remap_grey(_rh, _rw, CV_8UC1);
@@ -339,11 +345,12 @@ void FrameGrabber::process()
         _frame_q.push_back(frame_bgr);
         _remap_q.push_back(remap_grey);
         _ts_q.push_back(timestamp);
+        _ms_q.push_back(ms_since_midnight);
         _qCond.notify_all();
-        int q_size = _frame_q.size();
+        size_t q_size = _frame_q.size();
         l.unlock();
         
-        LOG_DBG("Processed frame added to input queue (l = %d).", q_size);
+        LOG_DBG("Processed frame added to input queue (l = %zd).", q_size);
     }
 
     LOG_DBG("Stopping frame grabbing loop!");

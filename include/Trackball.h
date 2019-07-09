@@ -43,7 +43,7 @@ public:
         cv::Mat R_cam;
         CmPoint64f dr_lab, r_lab;
         cv::Mat R_lab;
-        double ts;
+        double ts, ms;
 
         double velx, vely, step_mag, step_dir, intx, inty, heading, posx, posy;
 

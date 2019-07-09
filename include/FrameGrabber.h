@@ -37,12 +37,12 @@ public:
 
     void terminate();
     
-    bool getFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, bool latest);
-    bool getLatestFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp) {
-        return getFrameSet(frame, remap, timestamp, true);
+    bool getFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, double& ms_since_midnight, bool latest = true);
+    bool getLatestFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, double& ms_since_midnight) {
+        return getFrameSet(frame, remap, timestamp, ms_since_midnight, true);
     }
-    bool getNextFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp) {
-        return getFrameSet(frame, remap, timestamp, false);
+    bool getNextFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, double& ms_since_midnight) {
+        return getFrameSet(frame, remap, timestamp, ms_since_midnight, false);
     }
 
 private:
@@ -69,5 +69,5 @@ private:
 
     /// Output queues.
     std::deque<cv::Mat> _frame_q, _remap_q;
-    std::deque<double> _ts_q;
+    std::deque<double> _ts_q, _ms_q;
 };
