@@ -18,7 +18,7 @@
                                             in laboratory coordinates.
     15-16   integrated x/y position (lab)   Integrated x/y position (radians) in
                                             laboratory coordinates. Scale by sphere
-                                            radius for true position (?).
+                                            radius for true position.
     17      integrated animal heading (lab) Integrated heading orientation (radians) of
                                             the animal in laboratory coordinates. This
                                             is the direction the animal is facing.
@@ -29,7 +29,7 @@
                                             in world).
     19      animal movement speed           Instantaneous running speed (radians/frame)
                                             of the animal. Scale by sphere radius for
-                                            true speed (?).
+                                            true speed.
     20-21   integrated forward/side motion  Integrated x/y position (radians) of the
                                             sphere in laboratory coordinates neglecting
                                             heading. Equivalent to the output from two
