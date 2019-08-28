@@ -1,4 +1,4 @@
-This document provides a brief overview of FicTrac's configuration parameters. Many of these parameters are set automatically by the configuration utility. See the main documentation for instructions on how to [configure FicTrac](README.md#Configuration) before use.
+This document provides a brief overview of FicTrac's configuration parameters. Many of these parameters are set automatically by the configuration utility. See the main documentation for instructions on how to [configure FicTrac](../README.md#Configuration) before use.
 
 In the table below, the various possible parameters are listed. If nothing is listed under `Default value` then the parameter must be specified by the user. The valid range may use [interval notation](https://en.wikipedia.org/wiki/Interval_(mathematics)). The `Should I touch it?` column should give you some idea of which params to play around with.
 
