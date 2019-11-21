@@ -45,8 +45,7 @@ bool SocketRecorder::openRecord(std::string port)
 ///
 bool SocketRecorder::writeRecord(std::string s)
 {
-	std::cout << "Writing to socket!\n";
-    if (_open) 
+	if (_open) 
     	s_send(*publisher, s);
     
     return _open;
