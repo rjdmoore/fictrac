@@ -1,0 +1,55 @@
+# Azure CI/CD pipeline config file
+# https://aka.ms/yaml
+
+# Trigger builds on master branch
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/build/triggers?view=azure-devops&tabs=yaml
+
+trigger:
+- master
+- develop
+
+# We can run multiple jobs in parallel.
+# see https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases
+jobs:
+
+# Provide a name for the job
+- job: Linux
+  # The VM image to use for the hosted agent. For a list of possible agents
+  # see https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted
+  # You can see the software installed on each agent at the same link.
+  pool:
+    vmImage: 'ubuntu-latest'
+  # The steps to run to execute the build.
+  steps:
+  #- script: echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
+  #  displayName: vcpkg set build type
+  - script: vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux boost-asio:x64-linux
+    displayName: vcpkg install dependencies
+  - task: CMake@1
+    inputs:
+      workingDirectory: build
+      cmakeArgs: -D CMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake ..
+  - task: CMake@1
+    inputs:
+      workingDirectory: build
+      cmakeArgs: --build . --config Release
+
+# Provide a name for the job
+- job: Windows
+  # The VM image to use for the hosted agent. For a list of possible agents
+  # see https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted
+  # You can see the software installed on each agent at the same link.
+  pool:
+    vmImage: 'vs2017-win2016'
+  # The steps to run to execute the build.
+  steps:
+  - script: vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows
+    displayName: vcpkg install dependencies
+  - task: CMake@1
+    inputs:
+      workingDirectory: build
+      cmakeArgs: -D CMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -G "Visual Studio 15 2017 Win64" ..
+  - task: CMake@1
+    inputs:
+      workingDirectory: build
+      cmakeArgs: --build . --config Release

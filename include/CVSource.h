@@ -28,4 +28,6 @@ public:
 private:
 	std::shared_ptr<cv::VideoCapture> _cap;
 	cv::Mat _frame_cap;
+
+    bool _is_image;
 };

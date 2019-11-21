@@ -88,98 +88,74 @@ void Remapper::applyF4(const float *src, float *dst, int srcStep, int dstStep)
 	_apply(REMAP_TYPE_F4, src, dst, srcStep, dstStep);
 }
 
-void Remapper::apply(const IplImage *src, IplImage *dst)
-{
-	///
-	/// Sanity check.
-	///
-	if (src->width!=_srcW || src->height!=_srcH) {
-		LOG_ERR("Error applying remapping! Unexpected source image size (%dx%d)!", src->width, src->height);
-		return;
-	}
-	if (dst->width!=_dstW || dst->height!=_dstH) {
-		LOG_ERR("Error applying remapping! Unexpected destination image size (%dx%d)!", dst->width, dst->height);
-		return;
-	}
-
-	///
-	/// Note: not enforcing nChannels consistency directly, but a test is
-	///       performed in _apply() but only to avoid segfaults.  This is
-	///       to allow the likes of BayerRemap to overload the _apply()
-	///       method and perform a remapping using a single channel source
-	///       image and a three channel destination image.
-	///
-	if (src->depth != dst->depth) {
-		LOG_ERR("Error applying remapping! Image depth mismatch (%d != %d).", src->depth, dst->depth);
-		return;
-	}
-
-	switch (src->depth) {
-	case IPL_DEPTH_8U:
-	case IPL_DEPTH_8S:
-		switch (src->nChannels) {
-		case 1: _apply(REMAP_TYPE_C1,
-					src->imageData, dst->imageData,
-					src->widthStep, dst->widthStep); break;
-		case 3: _apply(REMAP_TYPE_C3,
-					src->imageData, dst->imageData,
-					src->widthStep, dst->widthStep); break;
-		case 4: _apply(REMAP_TYPE_C4,
-					src->imageData, dst->imageData,
-					src->widthStep, dst->widthStep); break;
-		default: break;
-		}
-		break;
-	case IPL_DEPTH_16U:
-	case IPL_DEPTH_16S:
-		switch (src->nChannels) {
-		case 1: _apply(REMAP_TYPE_S1,
-					src->imageData, dst->imageData,
-					src->widthStep, dst->widthStep); break;
-		case 3: _apply(REMAP_TYPE_S3,
-					src->imageData, dst->imageData,
-					src->widthStep, dst->widthStep); break;
-		case 4: _apply(REMAP_TYPE_S4,
-					src->imageData, dst->imageData,
-					src->widthStep, dst->widthStep); break;
-		default: break;
-		}
-		break;
-	case IPL_DEPTH_32F:
-		switch (src->nChannels) {
-		case 1: _apply(REMAP_TYPE_F1,
-					src->imageData, dst->imageData,
-					src->widthStep, dst->widthStep); break;
-		case 3: _apply(REMAP_TYPE_F3,
-					src->imageData, dst->imageData,
-					src->widthStep, dst->widthStep); break;
-		case 4: _apply(REMAP_TYPE_F4,
-					src->imageData, dst->imageData,
-					src->widthStep, dst->widthStep); break;
-		default: break;
-		}
-		break;
-	default:
-		LOG_ERR("Error applying remapping! Invalid data type");
-		return;
-	}
-}
-
 void Remapper::apply(const cv::Mat& src, cv::Mat& dst)
 {
-	///
-	/// Ensure destination is same type as source.
-	///
-	if (!dst.data || dst.cols!=_dstW || dst.rows!=_dstH
-			|| dst.type()!=src.type())
-	{
-		dst.create(_dstH, _dstW, src.type());
-		dst.setTo(cv::Scalar::all(0));
-	}
+    ///
+    /// Sanity check.
+    ///
+    if (src.cols != _srcW || src.rows != _srcH) {
+        LOG_ERR("Error applying remapping! Unexpected source image size (%dx%d)!", src.cols, src.rows);
+        return;
+    }
 
-	IplImage iplSrc = src;
-	IplImage iplDst = dst;
-	apply(&iplSrc, &iplDst);
+    ///
+    /// Ensure destination is same type as source.
+    ///
+    if (dst.cols != src.cols || dst.rows != src.rows || dst.type() != src.type()) {
+        // if logic unnecessary for create(), but we don't want to bother clearing mem unless we allocate
+        dst.create(_dstH, _dstW, src.type());
+        dst.setTo(cv::Scalar::all(0));
+    }
+
+    switch (src.depth()) {
+    case CV_8U:
+    case CV_8S:
+        switch (src.channels()) {
+        case 1: _apply(REMAP_TYPE_C1,
+            src.data, dst.data,
+            src.step, dst.step); break;
+        case 3: _apply(REMAP_TYPE_C3,
+            src.data, dst.data,
+            src.step, dst.step); break;
+        case 4: _apply(REMAP_TYPE_C4,
+            src.data, dst.data,
+            src.step, dst.step); break;
+        default: break;
+        }
+        break;
+    case CV_16U:
+    case CV_16S:
+        switch (src.channels()) {
+        case 1: _apply(REMAP_TYPE_S1,
+            src.data, dst.data,
+            src.step, dst.step); break;
+        case 3: _apply(REMAP_TYPE_S3,
+            src.data, dst.data,
+            src.step, dst.step); break;
+        case 4: _apply(REMAP_TYPE_S4,
+            src.data, dst.data,
+            src.step, dst.step); break;
+        default: break;
+        }
+        break;
+    case CV_32F:
+        switch (src.channels()) {
+        case 1: _apply(REMAP_TYPE_F1,
+            src.data, dst.data,
+            src.step, dst.step); break;
+        case 3: _apply(REMAP_TYPE_F3,
+            src.data, dst.data,
+            src.step, dst.step); break;
+        case 4: _apply(REMAP_TYPE_F4,
+            src.data, dst.data,
+            src.step, dst.step); break;
+        default: break;
+        }
+        break;
+    default:
+        LOG_ERR("Error applying remapping! Invalid data type");
+        return;
+    }
 }
 
 

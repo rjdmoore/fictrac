@@ -30,19 +30,20 @@ public:
                     const cv::Mat&                  remap_mask,
                     double                          thresh_ratio,
                     double                          thresh_win_pc,
-                    int                             max_buf_len = 10,
+                    std::string                     thresh_rgb_transform = "grey",
+                    int                             max_buf_len = 1,
                     int                             max_frame_cnt = -1
     );
     ~FrameGrabber();
 
     void terminate();
     
-    bool getFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, bool latest);
-    bool getLatestFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp) {
-        return getFrameSet(frame, remap, timestamp, true);
+    bool getFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, double& ms_since_midnight, bool latest = true);
+    bool getLatestFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, double& ms_since_midnight) {
+        return getFrameSet(frame, remap, timestamp, ms_since_midnight, true);
     }
-    bool getNextFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp) {
-        return getFrameSet(frame, remap, timestamp, false);
+    bool getNextFrameSet(cv::Mat& frame, cv::Mat& remap, double& timestamp, double& ms_since_midnight) {
+        return getFrameSet(frame, remap, timestamp, ms_since_midnight, false);
     }
 
 private:
@@ -58,6 +59,12 @@ private:
 
     double _thresh_ratio;
     int _thresh_win, _thresh_rad;
+    enum {
+        GREY,
+        RED,
+        GREEN,
+        BLUE
+    } _thresh_rgb_transform;
 
     int _max_buf_len, _max_frame_cnt;
 
@@ -69,5 +76,5 @@ private:
 
     /// Output queues.
     std::deque<cv::Mat> _frame_q, _remap_q;
-    std::deque<double> _ts_q;
+    std::deque<double> _ts_q, _ms_q;
 };

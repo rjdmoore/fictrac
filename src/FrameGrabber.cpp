@@ -18,11 +18,10 @@
 #include <opencv2/videoio.hpp>
 
 #include <cmath>    // round
+#include <string>
 
 using cv::Mat;
-using std::shared_ptr;
-using std::unique_lock;
-using std::mutex;
+using namespace std;
 
 ///
 ///
@@ -32,6 +31,7 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
                             const Mat&              remap_mask,
                             double                  thresh_ratio,
                             double                  thresh_win_pc,
+                            string                  thresh_rgb_transform,
                             int                     max_buf_len,
                             int                     max_frame_cnt
 )   : _source(source), _remapper(remapper), _remap_mask(remap_mask), _active(false)
@@ -43,11 +43,21 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
     _rh = _remapper->getDstH();
 
     /// Thresholding.
-    if (thresh_ratio < 0) {
+    if (thresh_ratio <= 0) {
         LOG_WRN("Invalid thresh_ratio parameter (%f)! Defaulting to 1.0", thresh_ratio);
         thresh_ratio = 1.0;
     }
     _thresh_ratio = thresh_ratio;
+
+    if ((thresh_rgb_transform == "red") || (thresh_rgb_transform == "r")) {
+        _thresh_rgb_transform = FrameGrabber::RED;
+    } else if ((thresh_rgb_transform == "green") || (thresh_rgb_transform == "g")) {
+        _thresh_rgb_transform = FrameGrabber::GREEN;
+    } else if ((thresh_rgb_transform == "blue") || (thresh_rgb_transform == "b")) {
+        _thresh_rgb_transform = FrameGrabber::BLUE;
+    } else {
+        _thresh_rgb_transform = FrameGrabber::GREY;
+    }
 
     if ((thresh_win_pc < 0) || (thresh_win_pc > 1.0)) {
         LOG_WRN("Invalid thresh_win parameter (%f)! Defaulting to 0.2", thresh_win_pc);
@@ -63,7 +73,7 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
 
     /// Thread stuff.
     _active = true;
-    _thread = std::unique_ptr<std::thread>(new std::thread(&FrameGrabber::process, this));
+    _thread = std::make_unique<std::thread>(&FrameGrabber::process, this);
 }
 
 ///
@@ -71,7 +81,7 @@ FrameGrabber::FrameGrabber( shared_ptr<FrameSource> source,
 ///
 FrameGrabber::~FrameGrabber()
 {
-    LOG("Closing input stream..");
+    LOG("Closing input stream");
 
     unique_lock<mutex> l(_qMutex);
     _active = false;
@@ -86,7 +96,7 @@ FrameGrabber::~FrameGrabber()
 ///
 ///
 ///
-bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool latest=true)
+bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, double& ms_since_midnight, bool latest)
 {
     unique_lock<mutex> l(_qMutex);
     while (_active && (_frame_q.size() == 0)) {
@@ -102,14 +112,17 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
         // mutex unlocked in unique_lock dstr
         return false;
     }
+    
+    // must be frame_q.size() > 0 to get here (can be !_active)
 
-    if ((n != _remap_q.size()) || (n != _ts_q.size())) {
+    if ((n != _remap_q.size()) || (n != _ts_q.size()) || (n != _ms_q.size())) {
         LOG_ERR("Error! Input processed frame queues are misaligned!");
         
         // drop all frames
         _frame_q.clear();
         _remap_q.clear();
         _ts_q.clear();
+        _ms_q.clear();
 
         // wake processing thread
         _qCond.notify_all();
@@ -122,6 +135,7 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
         frame = _frame_q.back();
         remap = _remap_q.back();
         timestamp = _ts_q.back();
+        ms_since_midnight = _ms_q.back();
         
         if (n > 1) {
             LOG_WRN("Warning! Dropping %d frame/s from input processed frame queues!", n - 1);
@@ -131,15 +145,18 @@ bool FrameGrabber::getFrameSet(Mat& frame, Mat& remap, double& timestamp, bool l
         _frame_q.clear();
         _remap_q.clear();
         _ts_q.clear();
+        _ms_q.clear();
     }
     else {
         frame = _frame_q.front();
         remap = _remap_q.front();
         timestamp = _ts_q.front();
+        ms_since_midnight = _ms_q.front();
 
         _frame_q.pop_front();
         _remap_q.pop_front();
         _ts_q.pop_front();
+        _ms_q.pop_front();
 
         if (n > 1) {
             LOG_DBG("%d frames remaining in processed frame queue.", _frame_q.size());
@@ -180,8 +197,8 @@ void FrameGrabber::process()
     Mat thresh_max(_rh, _rw, CV_8UC1);
     thresh_max.setTo(cv::Scalar::all(0));
 
-    std::unique_ptr<uint8_t[]> win_max_hist = std::unique_ptr<uint8_t[]>(new uint8_t[_thresh_win]);
-    std::unique_ptr<uint8_t[]> win_min_hist = std::unique_ptr<uint8_t[]>(new uint8_t[_thresh_win]);
+    auto win_max_hist = std::make_unique<uint8_t[]>(_thresh_win);
+    auto win_min_hist = std::make_unique<uint8_t[]>(_thresh_win);
 
     /// Rewind to video start.
     _source->rewind();
@@ -192,7 +209,7 @@ void FrameGrabber::process()
     if (!SetThreadVeryHighPriority()) {
         LOG_ERR("Error! Unable to set thread priority!");
     } else {
-        LOG("Set frame grabbing thread priority to HIGH!");
+        LOG_DBG("Set frame grabbing thread priority to HIGH!");
     }
 
     /// Frame grab loop.
@@ -200,7 +217,7 @@ void FrameGrabber::process()
     while (_active) {
         /// Wait until we need to capture a new frame.
         unique_lock<mutex> l(_qMutex);
-        while (_active && (_max_buf_len >= 0) && (_frame_q.size() >= _max_buf_len)) {
+        while (_active && (_max_buf_len > 0) && (_frame_q.size() >= _max_buf_len)) {
             _qCond.wait(l);
         }
         l.unlock();
@@ -222,6 +239,7 @@ void FrameGrabber::process()
             break;
         }
         double timestamp = _source->getTimestamp();
+        double ms_since_midnight = _source->getMsSinceMidnight();
 
         /// Create output remap image in the loop.
         Mat remap_grey(_rh, _rw, CV_8UC1);
@@ -233,7 +251,28 @@ void FrameGrabber::process()
         memset(win_min_hist.get(), 0, _thresh_win);
 
         /// Create grey ROI frame.
-        cv::cvtColor(frame_bgr, frame_grey, CV_BGR2GRAY);
+        int from_to[2] = { 0, 0 };
+        switch (_thresh_rgb_transform) {
+        case RED:
+            from_to[0] = 2; from_to[1] = 0;
+            cv::mixChannels(&frame_bgr, 1, &frame_grey, 1, from_to, 1);
+            break;
+
+        case GREEN:
+            from_to[0] = 1; from_to[1] = 0;
+            cv::mixChannels(&frame_bgr, 1, &frame_grey, 1, from_to, 1);
+            break;
+
+        case BLUE:
+            from_to[0] = 0; from_to[1] = 0;
+            cv::mixChannels(&frame_bgr, 1, &frame_grey, 1, from_to, 1);
+            break;
+
+        case GREY:
+        default:
+            cv::cvtColor(frame_bgr, frame_grey, cv::COLOR_BGR2GRAY);
+            break;
+        }
         _remapper->apply(frame_grey, remap_grey);
 
         /// Blur image before calculating region min/max values.
@@ -251,12 +290,13 @@ void FrameGrabber::process()
             uint8_t* pgrey = remap_blur.ptr(i);
             for (int j = 0; j <= _thresh_rad; j++) {
                 if (pmask[j] < 255) { continue; }
-                uint8_t g = pgrey[j];
+                const uint8_t& g = pgrey[j];
                 if ((g > max) && (g < 255)) { max = g; }	// ignore overexposed regions
                 if (g < min) { min = g; }
             }
-            win_max_hist[win_it++] = max;
-            win_min_hist[win_it++] = min;
+            win_max_hist[win_it] = max;
+            win_min_hist[win_it] = min;
+            win_it++;
         }
 
         // compute window min/max
@@ -264,16 +304,17 @@ void FrameGrabber::process()
         uint8_t* pthrmin = thresh_min.data;
         for (int j = 0; j < _rw; j++) {
             for (int i = 0; i < _rh; i++) {
+
                 // add row
                 max = 0; min = 255;
                 if ((i + _thresh_rad) < _rh) {
                     const uint8_t* pmask = _remap_mask.ptr(i + _thresh_rad);
-                    uint8_t* pgrey = remap_blur.ptr(i + _thresh_rad);
+                    const uint8_t* pgrey = remap_blur.ptr(i + _thresh_rad);
                     for (int s = -_thresh_rad; s <= _thresh_rad; s++) {
-                        int js = j + s;
+                        const int js = j + s;
                         if ((js < 0) || (js >= _rw)) { continue; }
                         if (pmask[js] < 255) { continue; }
-                        uint8_t g = pgrey[js];
+                        const uint8_t& g = pgrey[js];
                         if ((g > max) && (g < 255)) { max = g; }	// ignore overexposed regions
                         if (g < min) { min = g; }
                     }
@@ -283,10 +324,10 @@ void FrameGrabber::process()
                     const uint8_t* pmask = _remap_mask.ptr(i + _thresh_rad - _rh);
                     uint8_t* pgrey = remap_blur.ptr(i + _thresh_rad - _rh);
                     for (int s = -_thresh_rad; s <= _thresh_rad; s++) {
-                        int js = j + s + 1;
+                        const int js = j + s + 1;
                         if ((js < 0) || (js >= _rw)) { continue; }
                         if (pmask[js] < 255) { continue; }
-                        uint8_t g = pgrey[js];
+                        const uint8_t& g = pgrey[js];
                         if ((g > max) && (g < 255)) { max = g; }	// ignore overexposed regions
                         if (g < min) { min = g; }
                     }
@@ -337,11 +378,12 @@ void FrameGrabber::process()
         _frame_q.push_back(frame_bgr);
         _remap_q.push_back(remap_grey);
         _ts_q.push_back(timestamp);
+        _ms_q.push_back(ms_since_midnight);
         _qCond.notify_all();
-
-        LOG_DBG("Processed frame added to input queue (l = %d).", _frame_q.size());
-
+        size_t q_size = _frame_q.size();
         l.unlock();
+        
+        LOG_DBG("Processed frame added to input queue (l = %zd).", q_size);
     }
 
     LOG_DBG("Stopping frame grabbing loop!");

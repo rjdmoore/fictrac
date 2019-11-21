@@ -115,3 +115,6 @@ bool computeRtFromSquare_YZ(const CameraModelPtr cam_model, const std::vector<cv
 
 /// Compute camera-animal R+t transform from XZ square.
 bool computeRtFromSquare_XZ(const CameraModelPtr cam_model, const std::vector<cv::Point2d>& cnrs, cv::Mat& R, cv::Mat& t);
+
+/// Compute camera-animal R+t transform.
+bool computeRtFromSquare(const CameraModelPtr cam_model, const std::string ref_str, const std::vector<cv::Point2d>& cnrs, cv::Mat& R, cv::Mat& t);

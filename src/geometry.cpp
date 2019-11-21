@@ -102,7 +102,8 @@ bool circleFit_camModel(const vector<Point2d>& pix2d, const CameraModelPtr cam_m
 }
 
 ///
-/// Compute camera-animal R+t transform from supplied square corners.
+/// Compute animal-camera R+t transform from supplied square corners.
+/// R is animal frame to camera frame transform.
 ///
 bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, const vector<Point2d>& cnrs, Mat& R, Mat& t)
 {
@@ -125,7 +126,7 @@ bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, co
 
     /// Minimise transform from reference corners.
     SquareRT square(cnr_vecs, ref_cnrs);
-    double guess[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+    double guess[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 100.0};
     if (!R.empty() && !t.empty()) {
         // init guess
         if ((R.depth() != CV_64F) || (t.depth() != CV_64F)) {
@@ -153,7 +154,7 @@ bool computeRtFromSquare(const CameraModelPtr cam_model, const Mat& ref_cnrs, co
 }
 
 ///
-/// Wrapper for computing camera-animal R+t transform from XY square.
+/// Wrapper for computing animal-camera R+t transform from XY square.
 /// Square normal = animal Z axis. Corner ordering is TL (+X,-Y), TR (+X,+Y), BR (-X,+Y), BL (-X,-Y).
 ///
 bool computeRtFromSquare_XY(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R, Mat& t)
@@ -162,7 +163,7 @@ bool computeRtFromSquare_XY(const CameraModelPtr cam_model, const vector<Point2d
 }
 
 ///
-/// Wrapper for computing camera-animal R+t transform from YZ square.
+/// Wrapper for computing animal-camera R+t transform from YZ square.
 /// Square normal = animal X axis. Corner ordering is TL (-Y,-Z), TR (+Y,-Z), BR (+Y,+Z), BL (-Y,+Z).
 ///
 bool computeRtFromSquare_YZ(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R, Mat& t)
@@ -171,10 +172,28 @@ bool computeRtFromSquare_YZ(const CameraModelPtr cam_model, const vector<Point2d
 }
 
 ///
-/// Wrapper for computing camera-animal R+t transform from XZ square.
+/// Wrapper for computing animal-camera R+t transform from XZ square.
 /// Square normal = animal Y axis. Corner ordering is TL (+X,-Z), TR (-X,-Z), BR (-X,+Z), BL (+X,+Z).
 ///
 bool computeRtFromSquare_XZ(const CameraModelPtr cam_model, const vector<Point2d>& cnrs, Mat& R, Mat& t)
 {
     return computeRtFromSquare(cam_model, XZ_CNRS, cnrs, R, t);
+}
+
+///
+/// Wrapper for computing animal-camera R+t transform.
+///
+bool computeRtFromSquare(const CameraModelPtr cam_model, const string ref_str, const vector<Point2d>& cnrs, Mat& R, Mat& t)
+{
+    bool ret = false;
+    if (ref_str == "xy") {
+        ret = computeRtFromSquare_XY(cam_model, cnrs, R, t);
+    }
+    else if (ref_str == "yz") {
+        ret = computeRtFromSquare_YZ(cam_model, cnrs, R, t);
+    }
+    else if (ref_str == "xz") {
+        ret = computeRtFromSquare_XZ(cam_model, cnrs, R, t);
+    }
+    return ret;
 }

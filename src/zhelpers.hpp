@@ -24,6 +24,7 @@
 
 //  Bring Windows MSVC up to C99 scratch
 #if (defined (WIN32))
+#	include <windows.h>
     typedef unsigned long ulong;
     typedef unsigned int  uint;
     typedef __int64 int64_t;

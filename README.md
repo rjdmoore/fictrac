@@ -2,7 +2,7 @@
   <img src="http://rjdmoore.net/fictrac/header_text.jpg"><br><br>
 </div>
 
-**FicTrac** is an open source software library and set of executables for reconstructing the fictive path of an animal walking on a patterned sphere. The software is fast, flexible, and easy to use and simplifies the setup of closed-loop tracking experiments.
+**FicTrac** is an open-source software library for reconstructing the fictive path of an animal walking on a patterned sphere. The software is fast, flexible, easy to use, and simplifies the setup of closed-loop tracking experiments.
 
 FicTrac was originally developed by researchers at the [Queensland Brain Institute](http://qbi.uq.edu.au/) at the University of Queensland, Australia for tracking honeybees and fruit flies during closed-loop tethered walking experiments, but it has since proved useful for tracking a wide range of animals with different movement speeds, track ball diameters and patterns, and stimuli.
 
@@ -14,18 +14,18 @@ On this page you'll find information for:
 
 You might also be interested in the following links:
 * [Demo video](http://youtu.be/BeGYOEOdWjw) - Quick (30s) overview of what FicTrac does and how it works.
-* [FicTrac manual](http://link) - Detailed instructions, description of output data, parameters, recommendations, etc.
+* [FicTrac manual](doc/requirements.md) - Detailed instructions, description of output data, parameters, recommendations, etc.
 * [Homepage](http://fictrac.rjdmoore.net) - Contact details for the main author/developer, links, and further info.
-* [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for FicTrac users to share issues and advice.
+* [Forum](http://www.reddit.com/r/fictrac/) - Subreddit for faqs, support, advice, discussions, etc.
 * [Mailing list](http://fictrac.rjdmoore.net/mail.html) - Subscribe to receive important announcements and updates.
 
 Happy tracking!
 
 ## Getting started
 
-If you're just setting up your lab, or wondering whether FicTrac is suitable for your setup (spoiler: yes, probably), check the [section below](#hardware-requirements) for the basic requirements.
+If you're just setting up your lab, or wondering whether FicTrac is suitable for your setup (spoiler: yes, probably), check the [hardware requirements section below](#hardware-requirements) for the basic requirements.
 
-If you already have an experimental enclosure with a camera, you can use FicTrac to either process those videos offline or to run live from the camera. Just follow the sections below to [install](#installation), [configure](#configuration), and [run FicTrac](#running-fictrac).
+If you already have an experimental enclosure with a camera, you can use FicTrac to either process recorded videos offline or to run live from the camera. Skip ahead to [install](#installation), [configure](#configuration), and [run FicTrac](#running-fictrac).
 
 ### Hardware requirements
 
@@ -44,130 +44,103 @@ FicTrac imposes no requirements on the *italicised* items; how you design these 
 
 ### Installation
 
-The FicTrac source code can be built for both Windows and Ubuntu (Linux) operating systems. You can even build and run FicTrac from within a [virtual machine](https://www.virtualbox.org/) on any operating system.
+The FicTrac source code can be built for both Windows and Linux (e.g. Ubuntu) operating systems, or you can build and run FicTrac from within a [virtual machine](https://www.virtualbox.org/) on any operating system. The following instructions are for a 64-bit machine, if you are using a 32-bit machine you will need to replace x64 with x86 in the instructions below.
 
-**Note:** If you plan on using a USB3 camera, FicTrac may have issues using the OpenCV capture interface. The work around is to tell FicTrac to use the SDK provided with your camera instead of OpenCV to do the frame grabbing. See [USB3 camera installation](#usb3-camera-installation).
+1. Download and install required build tools and dependencies:
+    1. Windows only: 
+        1. [Cmake build system](https://cmake.org/download/) (Windows win64-x64 Installer)
+        2. If you don't already have Visual Studio (C++ workflow) installed, you will need to install the [Build Tools for Visual Studio](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
+    2. Linux (Ubuntu) only:
+        1. Run the following from terminal to install necessary build tools and dependencies: ```[Linux] sudo apt-get install gcc git cmake curl unzip tar yasm pkg-config libgtk2.0-dev libavformat-dev libavcodec-dev libavresample-dev libswscale-dev```
+    3. (Windows and Linux) Clone or download the [Vcpkg](https://github.com/Microsoft/vcpkg) repository and then follow the guide to install (make sure to perform the bootstrap and integration steps).
+    4. Using Vcpkg, install OpenCV, NLopt, and Boost::asio software packages (this may take 10-30 mins):
 
-#### Windows installation
+```
+[Windows] .\vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows ffmpeg[*]:x64-windows cppzmq:x64-windows
+[Linux] ./vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux boost-asio:x64-linux ffmpeg[*]:x64-linux cppzmq:x64-linux
+```
 
-1. Download and install required dependencies:
-    1. [Cmake build system](https://cmake.org/download/) (binary distribution)
-    2. [OpenCV computer vision library](https://opencv.org/releases.html) (latest release Win pack)
-    3. [NLopt optimisation library](https://nlopt.readthedocs.io/en/latest/NLopt_on_Windows/) (precompiled DLL)
 2. Clone or download the FicTrac repository, then navigate to that folder, open a terminal, and create a build directory:
 ```
 mkdir build
 cd build
 ```
-3. Next, we will configure and build the FicTrac project. FicTrac is written in C++, so you'll need a suitable compiler. In this example we will use MSVS Build Tools. If you don't already have Visual Studio, you will need to install the [build tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
-4. Run Cmake to prepare the necessary build files for FicTrac. Here we also need to provide the paths to where we installed OpenCV and NLopt (I have given example paths here, you will need to modify them for your installation):
+3. Run Cmake to prepare the necessary build files for FicTrac. Here, we will need to provide the path to the Cmake toolchain file that was installed by Vcpkg (this path is printed to terminal when you run the Vcpkg system-wide integration step).
 ```
-cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\build" -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" ..
+[Windows] cmake -G "Visual Studio 15 2017 Win64" -D CMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake ..
+[Linux] cmake -D CMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake ..
 ```
 5. Finally, build and install FicTrac:
 ```
-cmake --build . --config Release --target ALL_BUILD
+[Windows] cmake --build . --config Release -j 4
+[Linux] cmake --build . --config Release -- -j 4
 ```
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
 
-**Note:** To save video on Windows, you must also have the [H264 library](https://github.com/cisco/openh264/releases) in the system path. OpenCV 3.4.2 requires `openh264-1.7.0-win64.dll`, which should be downloaded and placed in the same directory as the generated `fictrac.exe`. If you have installed another version of OpenCV, and it requires another version of the H264 library, an error message should be printed to the terminal when you run FicTrac. You can obtain other H264 versions from the above link.
+Remember to update and re-build FicTrac occasionally, as the program is still under development and fixes and improvements are being made continuously.
 
-#### Ubuntu (Linux) installation
+| | | | | |
+| --- | --- | --- | --- | --- |
+| Build status | Windows | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Windows)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) | Linux | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Linux)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) |
 
-1. Install the required dependencies:
-```
-sudo apt-get install gcc cmake libavcodec-dev libavformat-dev libswscale-dev libv4l-dev libgtk-3-dev libdc1394-22-dev libopencv-dev libnlopt-dev
-```
-2. Clone or download the FicTrac repository, then navigate to that folder and create a build directory:
-```
-mkdir build
-cd build
-```
-3. Run Cmake to prepare the necessary build files for FicTrac (if OpenCV and NLopt are not installed in the default location, you can help Cmake find them by defining OPENCV_DIR and NLOPT_DIR - see [Windows installation](#windows-installation) for an example):
-```
-cmake ..
-```
-4. Finally, build and install FicTrac:
-```
-make -j4
-```
+#### USB2/3 camera installation
 
-If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
+If you are using an industrial USB2/3 camera and are receiving error messages when FicTrac tries to connect to your camera, you may need to tell FicTrac to use the SDK provided with your camera, rather than the generic OpenCV interface. The instructions for switching to the camera's SDK are different for each manufacturer. Currently there is support for PGR (FLIR) USB2/3 cameras via the Flycapture/Spinnaker SDK.
 
-#### USB3 camera installation
+##### PGR (FLIR) Flycapture SDK
 
-If you are using a USB3 camera and are receiving error messages when FicTrac tries to connect to your camera, you may need to tell FicTrac to use the SDK provided with your camera, rather than the generic OpenCV interface. The instructions for switching to the camera's SDK are different for each manufacturer. Currently there is support for PGR (FLIR) USB3 cameras via the Spinnaker SDK.
+1. Download and install the latest [Flycapture SDK](https://www.flir.com/products/flycapture-sdk/).
+2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Flycapture using the switch `-D PGR_USB2=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a Windows installation you would replace step 3 above with:
+```
+cmake -G "Visual Studio 15 2017 Win64" -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB2=ON -D PGR_DIR="C:\path\to\Flycapture" ..
+```
+3. Follow the other build steps as normal.
+
+Before running FicTrac, you may configure your camera (frame rate, resolution, etc) as desired using the SDK utilities.
 
 ##### PGR (FLIR) Spinnaker SDK
 
-1. Download and install the Spinnaker SDK from [PGR downloads page](https://www.ptgrey.com/support/downloads). First select your camera model and operating system, and then download and install the latest Spinnaker SDK release.
-2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a [Windows installation](#windows-installation) you would replace step 4 with:
+1. Download and install the latest [Spinnaker SDK](https://www.flir.com/products/spinnaker-sdk/).
+2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a Windows installation you would replace step 3 above with:
 ```
-cmake -G "Visual Studio 15 2017 Win64" -D OPENCV_DIR="C:\path\to\opencv-3.4.2\build" -D NLOPT_DIR="C:\path\to\nlopt-2.4.2\" -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
+cmake -G "Visual Studio 15 2017 Win64" -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
 ```
-3. Follow the other build steps for either [Windows](#windows-installation) or [Ubuntu (Linux)](#ubuntu-linux-installation) as normal.
+3. Follow the other build steps as normal.
 
 Before running FicTrac, you may configure your camera (frame rate, resolution, etc) as desired using the SDK utilities.
 
 ### Configuration
 
-There are two neccessary steps to configure FicTrac prior to running the program:
-1. You must provide a configuration text file that contains important parameters for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which are the path to the image source (video file or camera) and vertical field of view (in degrees) of your camera/lens respectively. If you are running live from the camera, then `src_fn`is the camera index (e.g. 0). **The vertical field of view for your camera/lens must be specified accurately.** If `vfov` is incorrect, the surface map created by FicTrac will not wrap around the sphere correctly, and tracking will fail. An example config file is provided in the `sample` directory under the FicTrac project folder; you can use this file as a template to write your own config file.
-2. You must run the interactive configuration program (configGui), passing the path to your config file (above) as an argument. This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference. **It is important that the camera is not moved after running the configuration utility. If the camera is moved, you must reconfigure.** After running the configuration utility, your config file will have some additional default parameters added automatically.
+There are two necessary steps to configure FicTrac prior to running the program:
+1. You must provide a text file that contains important [configuration parameters](doc/params.md) for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which define the image source (path to video file or camera index) and vertical field of view (in degrees) of your camera respectively. You will find an example config file in the `sample` directory.
+2. You must run the interactive configuration program (configGui). This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference.
 
-A more detailed guide for configuring FicTrac for your setup, as well as a complete list and explanation of parameters that can be specified, can be found in the [FicTrac manual]().
-
-The commands for running the configuration utility under Windows and Ubuntu (Linux) are almost identical. Simply open a terminal in the FicTrac project folder and type:
-
-#### Windows
-```
-.\bin\Release\configGui.exe path\to\config.txt
-```
-
-#### Ubuntu (Linux)
-```
-./bin/configGui path/to/config.txt
-```
+A more [detailed guide](doc/requirements.md) on how to configure FicTrac for your setup and an explanation of all the [configuration parameters](doc/params.md) can be found in the `doc` directory.
 
 ### Running FicTrac
 
-Once you have configured FicTrac for your setup, you may run FicTrac simply by opening a terminal in the FicTrac project folder and typing:
-
-#### Windows
-```
-.\bin\Release\fictrac.exe path\to\config.txt
-```
-
-#### Ubuntu (Linux)
-We execute as super user so that we can set the FicTrac process to higher priority than other system processes.
-```
-sudo ./bin/fictrac path/to/config.txt
-```
-
-### Process sample data
-
-After you have build FicTrac, you can process the sample data set to make sure everything is running fine. Simply open a terminal in the FicTrac project folder and type:
-
-#### Windows
+To configure FicTrac for the provided sample data, simply open a terminal in the FicTrac project folder and type:
 ```
 cd sample
-..\bin\Release\configGui.exe config.txt
+[Windows] ..\bin\Release\configGui.exe config.txt
+[Linux] ../bin/configGui config.txt
 ```
-The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok. Then, in the same terminal window, type:
+The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok.
+
+Then, to run FicTrac, type:
 ```
-..\bin\Release\fictrac.exe config.txt
+[Windows] ..\bin\Release\fictrac.exe config.txt
+[Linux] sudo ../bin/fictrac config.txt
 ```
 
-#### Ubuntu (Linux)
-```
-cd sample
-../bin/configGui config.txt
-```
-The sample config file `config.txt` is already configured for the sample data, but you can step through the configuration process to check that everything looks ok. Then, in the same terminal window, type:
-```
-sudo ../bin/Release/fictrac.exe config.txt
-```
+FicTrac will usually generate two output files:
+1. Log file (*.log) - containing debugging information about FicTrac's execution.
+2. Data file (*.dat) - containing output data. See [data_header](doc/data_header.txt) for information about output data.
+
+The output data file can be used for offline processing. To use FicTrac within a closed-loop setup (to provide real-time feedback for stimuli), you should configure FicTrac to output data via a socket (IP address/port) in real-time. To do this, just set `out_port` to a valid port number in the config file. There is an example Python script for receiving data via sockets in the `scripts` directory.
+
+**Note:** If you encounter issues trying to generate output videos (i.e. `save_raw` or `save_debug`), you might try changing the default video codec via `vid_codec` - see [config params](doc/params.md) for details. If you receive an error about a missing [H264 library](https://github.com/cisco/openh264/releases), you can download the necessary library (i.e. OpenCV 3.4.3 requires `openh264-1.7.0-win64.dll`) from the above link and place it in the `dll` folder under the FicTrac main directory. You will then need to re-run the appropriate `cmake ..` and `cmake --build` commands for your installation.
 
 ## Research
 

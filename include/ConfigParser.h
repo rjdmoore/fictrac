@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <sstream>
 
 ///
 /// Config file parser.
@@ -26,10 +27,15 @@ public:
     int write() { return write(_fn); }
 
     /// Quick accessor functions
-    std::string operator()(std::string key);
+    std::string operator()(std::string key) const;
 
     template<typename T>
-    T get(std::string key);
+    T get(std::string key) const {
+        std::stringstream ss(operator()(key));
+        T val;
+        ss >> val;
+        return val;
+    };
 
     /// Accessor functions
     bool getStr(std::string key, std::string& val);
@@ -41,15 +47,19 @@ public:
     bool getVVecInt(std::string key, std::vector<std::vector<int>>& val);
 
     /// Write access
-    template<typename T>
-    void add(std::string key, T& val) { _data[key] = std::to_string(val); }
+    template<
+        typename T,
+        typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+    > void add(std::string key, T& val) { _data[key] = std::to_string(val); }
 
     // special case: string
     void add(std::string key, std::string val) { _data[key] = val; }
     
     // special case: vector
-    template<typename T>
-    void add(std::string key, std::vector<T>& val) {
+    template<
+        typename T,
+        typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+    > void add(std::string key, std::vector<T>& val) {
         std::string str = "{ ";
         for (auto v : val) {
             str += std::to_string(v) + ", ";
@@ -59,8 +69,10 @@ public:
     }
     
     // super special case: vector of vectors
-    template<typename T>
-    void add(std::string key, std::vector<std::vector<T>>& val) {
+    template<
+        typename T,
+        typename = typename std::enable_if<std::is_arithmetic<T>::value, T>::type
+    > void add(std::string key, std::vector<std::vector<T>>& val) {
         std::string str = "{ ";
         for (auto v : val) {
             str += "{ ";
@@ -71,6 +83,11 @@ public:
         }
         str = str.substr(0, std::max(static_cast<int>(str.size()-2),2)) + " }";   // drop last comma
         _data[key] = str;
+    }
+
+    // erase element/s
+    void erase(std::string key) {
+        _data.erase(key);
     }
     
     /// Debugging

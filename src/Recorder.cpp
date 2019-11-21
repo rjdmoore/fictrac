@@ -9,6 +9,7 @@
 #include "TermRecorder.h"
 #include "FileRecorder.h"
 #include "SocketRecorder.h"
+#include "SerialRecorder.h"
 #include "misc.h"   // thread priority
 
 #include <iostream> // cout/cerr
@@ -21,13 +22,17 @@ Recorder::Recorder(RecorderInterface::RecordType type, string fn)
     /// Set record type.
     switch (type) {
     case RecorderInterface::RecordType::TERM:
-        _record = unique_ptr<TermRecorder>(new TermRecorder());
+        _record = make_unique<TermRecorder>();
         break;
     case RecorderInterface::RecordType::FILE:
-        _record = unique_ptr<FileRecorder>(new FileRecorder());
+        _record = make_unique<FileRecorder>();
         break;
     case RecorderInterface::RecordType::SOCK:
-        _record = unique_ptr<SocketRecorder>(new SocketRecorder());
+        _record = make_unique<SocketRecorder>();
+        break;
+    case RecorderInterface::RecordType::COM:
+        _record = make_unique<SerialRecorder>();
+        break;
     default:
         break;
     }
@@ -35,7 +40,7 @@ Recorder::Recorder(RecorderInterface::RecordType type, string fn)
     /// Open record and start async recording.
     if (_record && _record->openRecord(fn)) {
         _active = true;
-        _thread = unique_ptr<thread>(new thread(&Recorder::processMsgQ, this));
+        _thread = make_unique<thread>(&Recorder::processMsgQ, this);
     }
     else {
         cerr << "Error initialising recorder!" << endl;

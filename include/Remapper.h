@@ -35,7 +35,6 @@ public:
 	int getDstH() { return _dstH; }
 
 	virtual void apply(const cv::Mat& src, cv::Mat& dst);
-	void apply(const IplImage *src, IplImage *dst);
 
 	void applyC1(const unsigned char *src, unsigned char *dst,
 			int srcStep=0, int dstStep=0);

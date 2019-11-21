@@ -22,9 +22,9 @@ public:
 
 	CmPointT() : x(0), y(0), z(0) {}
 	CmPointT(T x_, T y_, T z_) : x(x_), y(y_), z(z_) {}
-	CmPointT(const CvPoint& p) : x(p.x), y(p.y), z(0) {}
-	CmPointT(const CvPoint2D32f& p) : x(p.x), y(p.y), z(0) {}
-	CmPointT(const CvPoint3D32f& p) : x(p.x), y(p.y), z(p.z) {}
+	CmPointT(const cv::Point& p) : x(p.x), y(p.y), z(0) {}
+	CmPointT(const cv::Point2f& p) : x(p.x), y(p.y), z(0) {}
+	CmPointT(const cv::Point3f& p) : x(p.x), y(p.y), z(p.z) {}
 	CmPointT(const CmPoint32f& p) : x(p.x), y(p.y), z(p.z) {}
 	CmPointT(const CmPoint64f& p) : x(p.x), y(p.y), z(p.z) {}
     CmPointT(T az, T el);
@@ -32,7 +32,6 @@ public:
 	/// Allow implicit conversion of scalar to CmPointT for scaling
 	CmPointT(T scale) : x(scale), y(scale), z(scale) {}
 
-	void copyTo(CvPoint3D32f& p) const { p = cvPoint3D32f(x,y,z); }
 	void copyTo(cv::Point3f& p) const { p = cv::Point3f(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)); }
 	void copyTo(cv::Point3d& p) const { p = cv::Point3d(static_cast<double>(x), static_cast<double>(y), static_cast<double>(z)); }
 	void copyTo(float *p) const { p[0] = static_cast<float>(x); p[1] = static_cast<float>(y); p[2] = static_cast<float>(z); }

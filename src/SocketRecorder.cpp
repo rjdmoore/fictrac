@@ -6,12 +6,7 @@
 
 #include "SocketRecorder.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-#if (defined (WIN32))
 #include "zhelpers.hpp"
-#endif
 
 #include <string>
 #include <iostream>
