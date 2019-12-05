@@ -150,124 +150,52 @@ void createZoomROI(Mat& zoom_roi, const Mat& frame, const Point2d& pt, int orig_
 /// Constructor.
 ///
 ConfigGui::ConfigGui(string config_fn)
-: _open(false), _config_fn(config_fn)
+: _config_fn(config_fn)
 {
     /// Load and parse config file.
-    _open = (_cfg.read(_config_fn) > 0);
-
-    /// Read source file name and load image.
-    string input_fn;
-    if (_open) {
-        input_fn = _cfg("src_fn");
-        if (input_fn.empty()) {
-            _open = false;
-        }
+    if (_cfg.read(_config_fn) <= 0) {
+        LOG_ERR("Error! Could not read from config file (%s).", _config_fn.c_str());
+        return;
     }
 
-    /// Load an image to use for annotation.
-    Mat input_frame;
-    std::shared_ptr<FrameSource> source;
-    if (_open) {
+    /// Read source file name.
+    string input_fn = _cfg("src_fn");
+    if (input_fn.empty()) {
+        LOG_ERR("Error! No src_fn defined in config file.");
+        return;
+    }
+
+    /// Open the image source.
 #if defined(PGR_USB2) || defined(PGR_USB3)
-        try {
-            if (input_fn.size() > 2) { throw std::exception(); }
-            // first try reading input as camera id
-            int id = std::stoi(input_fn);
-            source = std::make_shared<PGRSource>(id);
-        }
-        catch (...) {
-            // then try loading as video file
-            source = std::make_shared<CVSource>(input_fn);
-        }
+    try {
+        if (input_fn.size() > 2) { throw std::exception(); }
+        // first try reading input as camera id
+        int id = std::stoi(input_fn);
+        _source = std::make_shared<PGRSource>(id);
+    }
+    catch (...) {
+        // then try loading as video file
+        _source = std::make_shared<CVSource>(input_fn);
+    }
 #else // !PGR_USB2/3
-        source = std::make_shared<CVSource>(input_fn);
+    _source = std::make_shared<CVSource>(input_fn);
 #endif // PGR_USB2/3
-        if (!source->isOpen()) {
-            LOG_ERR("Error! Could not open input frame source (%s)!", input_fn.c_str());
-            _open = false;
-        } else if (!source->grab(input_frame)) {
-            LOG_ERR("Could not read frame from input (%s)!", input_fn.c_str());
-            _open = false;
-        } else if (input_frame.empty()) {
-            _open = false;
-        }
+    if (!_source || !_source->isOpen()) {
+        LOG_ERR("Error! Could not open input frame source (%s)!", input_fn.c_str());
+        return;
     }
 
-    /// Optionally enhance frame for config
-    bool do_enhance = false;
-    _cfg.getBool("enh_cfg_disp", do_enhance);
-    if (_open && do_enhance) {
-        LOG("Enhancing config image ..");
-        Mat maximg = input_frame.clone();
-        Mat minimg = input_frame.clone();
-        while (source->grab(input_frame)) {
-            for (int i = 0; i < input_frame.rows; i++) {
-                uint8_t* pmin = minimg.ptr(i);
-                uint8_t* pmax = maximg.ptr(i);
-                const uint8_t* pimg = input_frame.ptr(i);
-                for (int j = 0; j < input_frame.cols * input_frame.channels(); j++) {
-                    uint8_t p = pimg[j];
-                    if (p > pmax[j]) { pmax[j] = p; }
-                    if (p < pmin[j]) { pmin[j] = p; }
-                }
-            }
-        }
-        input_frame = maximg - minimg;
-    }
+    /// Load the source camera model.
+    _w = _source->getWidth();
+    _h = _source->getHeight();
 
-    /// Create base file name for output files.
-    _base_fn = _cfg("output_fn");
-    if (_base_fn.empty()) {
-        if (_open && !source->isLive()) {
-            _base_fn = input_fn.substr(0, input_fn.length() - 4);
-        } else {
-            _base_fn = "fictrac";
-        }
-    }
-
-    /// Setup.
-    if (_open) {
-        _open = setFrame(input_frame);
-    }
-}
-
-///
-/// Destructor.
-///
-ConfigGui::~ConfigGui()
-{}
-
-///
-/// Prepare input image for user input.
-///
-bool ConfigGui::setFrame(Mat& frame)
-{
-    /// Copy input frame.
-    if (frame.channels() == 3) {
-        //cv::cvtColor(frame, _frame, CV_BGR2GRAY);
-        _frame = frame.clone();
-    } else if (frame.channels() == 1) {
-        //_frame = frame.clone();
-        cv::cvtColor(frame, _frame, cv::COLOR_GRAY2BGR);
-    } else {
-        // uh oh, shouldn't get here
-        LOG_ERR("Unexpected number of image channels (%d)!", frame.channels());
-        return false;
-    }
-    
-    /// Stretch contrast for display
-    //histStretch(_frame);
-    _w = _frame.cols;
-    _h = _frame.rows;
-    
-    /// Load camera model.
     double vfov = 0;
     _cfg.getDbl("vfov", vfov);
 
-	if (vfov <= 0) {
-		LOG_ERR("vfov parameter must be > 0 (%f)!", vfov);
-		return false;
-	}
+    if (vfov <= 0) {
+        LOG_ERR("Error! vfov parameter must be > 0 (%f)", vfov);
+        return;
+    }
 
     LOG("Using vfov: %f deg", vfov);
 
@@ -279,9 +207,23 @@ bool ConfigGui::setFrame(Mat& frame)
         // default to rectilinear
         _cam_model = CameraModel::createRectilinear(_w, _h, vfov * CM_D2R);
     }
-    
-    return true;
+
+    /// Create base file name for output files.
+    _base_fn = _cfg("output_fn");
+    if (_base_fn.empty()) {
+        if (_source->isLive()) {
+            _base_fn = "fictrac";
+        } else {
+            _base_fn = input_fn.substr(0, input_fn.length() - 4);
+        }
+    }
 }
+
+///
+/// Destructor.
+///
+ConfigGui::~ConfigGui()
+{}
 
 ///
 /// Write camera-animal transform to config file.
@@ -430,10 +372,20 @@ void ConfigGui::changeState(INPUT_MODE new_state)
 }
 
 ///
+///
+///
+bool ConfigGui::is_open()
+{
+    return _source && _source->isOpen();
+}
+
+///
 /// Run user input program or configuration.
 ///
 bool ConfigGui::run()
 {
+    if (!is_open()) { return false; }
+
     /// Interactive window.
     cv::namedWindow("configGUI", cv::WINDOW_AUTOSIZE);
     cv::setMouseCallback("configGUI", onMouseEvent, &_input_data);
@@ -441,6 +393,49 @@ bool ConfigGui::run()
     /// If reconfiguring, then delete pre-computed values.
     bool reconfig = false;
     _cfg.getBool("reconfig", reconfig);
+
+    /// Get a frame.
+    Mat frame;
+    if (!_source->grab(frame)) {
+        LOG_ERR("Error! Could not grab input frame.");
+        return false;
+    }
+    if ((frame.cols != _w) || (frame.rows != _h)) {
+        LOG_ERR("Error! Unexpected image size (%dx%d).", frame.cols, frame.rows);
+        return false;
+    }
+
+    // convert to RGB
+    if (frame.channels() == 1) {
+        cv::cvtColor(frame, frame, cv::COLOR_GRAY2BGR);
+    }
+
+    /// Optionally enhance frame for config
+    bool do_enhance = false;
+    _cfg.getBool("enh_cfg_disp", do_enhance);
+    if (do_enhance) {
+        LOG("Enhancing config image ..");
+        Mat maximg = frame.clone();
+        Mat minimg = frame.clone();
+        auto t0 = elapsed_secs();
+        while (_source->grab(frame)) {
+            for (int i = 0; i < _h; i++) {
+                uint8_t* pmin = minimg.ptr(i);
+                uint8_t* pmax = maximg.ptr(i);
+                const uint8_t* pimg = frame.ptr(i);
+                for (int j = 0; j < _w * 3; j++) {
+                    uint8_t p = pimg[j];
+                    if (p > pmax[j]) { pmax[j] = p; }
+                    if (p < pmin[j]) { pmin[j] = p; }
+                }
+            }
+
+            // Drop out after max 30s (avoid infinite loop when running live)
+            auto t1 = elapsed_secs();
+            if ((t1 - t0) > 30) { break; }
+        }
+        frame = maximg - minimg;
+    }
     
     /// Display/input loop.
 	Mat R, t;
@@ -456,10 +451,11 @@ bool ConfigGui::run()
     const int click_rad = std::max(int(_w/150+0.5), 5);
     Mat disp_frame, zoom_frame(ZOOM_DIM, ZOOM_DIM, CV_8UC3);
     const int scaled_zoom_dim = static_cast<int>(ZOOM_DIM * ZOOM_SCL + 0.5);
-    while (_open && (key != 0x1b)) {    // esc
+    bool open = true;
+    while (open && (key != 0x1b)) {    // esc
         /// Create frame for drawing.
         //cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
-        disp_frame = _frame.clone();
+        disp_frame = frame.clone();
 
         // normalise zoom window
         {
@@ -508,7 +504,7 @@ bool ConfigGui::run()
                             _cfg.add("roi_r", r);
                             if (_cfg.write() <= 0) {
                                 LOG_ERR("Error writing to config file (%s)!", _config_fn.c_str());
-                                _open = false;  // will cause exit
+                                open = false;  // will cause exit
                             }
                         }
                     }
@@ -617,7 +613,7 @@ bool ConfigGui::run()
                         _cfg.add("roi_r", r);
                         if (_cfg.write() <= 0) {
                             LOG_ERR("Error writing to config file (%s)!", _config_fn.c_str());
-                            _open = false;  // will cause exit
+                            open = false;  // will cause exit
                         }
                         
                         //// test read
@@ -749,7 +745,7 @@ bool ConfigGui::run()
                         _cfg.add("roi_ignr", cfg_polys);
                         if (_cfg.write() <= 0) {
                             LOG_ERR("Error writing to config file (%s)!", _config_fn.c_str());
-                            _open = false;      // will cause exit
+                            open = false;      // will cause exit
                         }
                         
                         //// test read
@@ -981,7 +977,7 @@ bool ConfigGui::run()
                         // dump corner points to config file
 						if (!saveC2ATransform(c2a_src, R, t)) {
 							LOG_ERR("Error writing coordinate transform to config file!");
-                            _open = false;      // will cause exit
+                            open = false;      // will cause exit
 						}
                         
                         // advance state
@@ -1034,7 +1030,7 @@ bool ConfigGui::run()
                         // dump corner points to config file
 						if (!saveC2ATransform(c2a_src, R, t)) {
 							LOG_ERR("Error writing coordinate transform to config file!");
-                            _open = false;      // will cause exit
+                            open = false;      // will cause exit
 						}
                         
                         // advance state
@@ -1087,7 +1083,7 @@ bool ConfigGui::run()
                         // dump corner points to config file
 						if (!saveC2ATransform(c2a_src, R, t)) {
 							LOG_ERR("Error writing coordinate transform to config file!");
-                            _open = false;      // will cause exit
+                            open = false;      // will cause exit
 						}
                         
                         // advance state
@@ -1139,7 +1135,7 @@ bool ConfigGui::run()
 
                 if (_cfg.write() <= 0) {
                     LOG_ERR("Error writing to config file (%s)!", _config_fn.c_str());
-                    _open = false;      // will cause exit
+                    open = false;      // will cause exit
                 }
             
                 // advance state
@@ -1162,7 +1158,7 @@ bool ConfigGui::run()
 
 	/// Save config image
 	//cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
-    disp_frame = _frame.clone();
+    disp_frame = frame.clone();
 
 	// draw fitted circumference
 	if (r > 0) {
@@ -1192,12 +1188,47 @@ bool ConfigGui::run()
 		LOG_ERR("Error writing config image to disk!");
 	}
 
-    if (_open) {
+    //// compute thresholding priors
+    //auto thr_mode = static_cast<THR_MODE>(_cfg.get<int>("thr_mode"));   // 0 = default (adapt); 1 = norm w/ priors
+    //if (thr_mode == NORM_PRIORS) {
+
+    //    LOG("Computing ROI thresholding priors ..");
+
+        //// rewind source
+        //_source->rewind();
+
+        //vector<vector<uint16_t>> hist;
+
+        //Mat maximg = frame.clone();
+        //Mat minimg = frame.clone();
+        //auto t0 = elapsed_secs();
+        //while (_source->grab(frame)) {
+        //    for (int i = 0; i < _h; i++) {
+        //        uint8_t* pmin = minimg.ptr(i);
+        //        uint8_t* pmax = maximg.ptr(i);
+        //        const uint8_t* pimg = frame.ptr(i);
+        //        for (int j = 0; j < _w * 3; j++) {
+        //            uint8_t p = pimg[j];
+        //            if (p > pmax[j]) { pmax[j] = p; }
+        //            if (p < pmin[j]) { pmin[j] = p; }
+        //        }
+        //    }
+        
+    //        // Drop out after max 30s (avoid infinite loop when running live)
+    //        auto t1 = elapsed_secs();
+    //        if ((t1 - t0) > 30) { break; }
+    //    }
+    //    frame = maximg - minimg;
+    //}
+
+
+
+    if (open) {
         LOG("Configuration complete!");
     } else {
         LOG_WRN("\n\nWarning! There were errors and the configuration file may not have been properly updated. Please run configuration again.");
     }
     
     LOG("Exiting configuration!");
-    return _open;
+    return open;
 }
