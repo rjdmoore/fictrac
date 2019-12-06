@@ -821,15 +821,12 @@ void Trackball::updateSphere()
             uint8_t& map = _sphere_map.data[py * _sphere_map.step + px];
 
             // update map tile
-            if ((map == 0) || (map == 255)) {
-                // map tile frozen
-                good++;
-            } else if (map == 128) {
+            if (map == 128) {
                 // map tile previously unseen
                 map = (proi[j] == 255) ? (128 + SPHERE_MAP_FIRST_HIT_BONUS) : (128 - SPHERE_MAP_FIRST_HIT_BONUS);
             } else {
                 good++;
-                map = (proi[j] == 255) ? (map + 1) : (map - 1);
+                map = min(max((proi[j] == 255) ? (int(map) + 1) : (int(map) - 1), 0), 255);
             }
 
             // display
