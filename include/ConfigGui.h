@@ -8,6 +8,7 @@
 
 #include "typesvars.h"
 #include "ConfigParser.h"
+#include "FrameSource.h"
 
 #include "SharedPointers.h"
 SHARED_PTR(CameraModel);
@@ -23,9 +24,8 @@ public:
     ConfigGui(std::string config_fn);
     ~ConfigGui();
     
+    bool is_open();
     bool run();
-    
-    bool is_open() { return _open; }
     
     enum INPUT_MODE {
         CIRC_INIT,
@@ -89,11 +89,11 @@ private:
     void changeState(INPUT_MODE new_state);
     
 private:
-    bool _open;
     std::string _config_fn, _base_fn;
     ConfigParser _cfg;
-    cv::Mat _frame;
-    size_t _w, _h;
+    int _w, _h;
     CameraModelPtr _cam_model;
     INPUT_DATA _input_data;
+
+    std::shared_ptr<FrameSource> _source;
 };

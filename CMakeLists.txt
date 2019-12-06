@@ -103,10 +103,10 @@ endif()
 
 # add compile options
 if(MSVC)
-    target_compile_options(fictrac_core PUBLIC $<$<CONFIG:Release>:/MP /GS /GL /W3 /WX- /Gy /Zc:wchar_t /O2 /Oi /Zc:inline /fp:precise /MD /EHsc /std:c++17>)
+    target_compile_options(fictrac_core PUBLIC $<$<CONFIG:Release>:/MP /GS /GL /w /WX- /Gy /Zc:wchar_t /O2 /Oi /Zc:inline /fp:precise /MD /EHsc /std:c++17>)
     # set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG")
 else()  # gcc
-    target_compile_options(fictrac_core PUBLIC -Ofast -Wall -c -fmessage-length=0 -std=c++17 -Wno-unused-function -march=native -MMD)
+    target_compile_options(fictrac_core PUBLIC -Ofast -w -c -fmessage-length=0 -std=c++17 -Wno-unused-function -march=native -MMD)
 endif()
 
 # linking
@@ -118,40 +118,6 @@ else()  # gcc
 endif()
 if(PGR_USB2 OR PGR_USB3)
     target_link_libraries(fictrac_core PUBLIC ${PGR_LIB})
-endif()
-
-# post-build
-if(MSVC)
-    # copy all opencv dlls
-    set(OPENCV_VER_STRING ${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH})
-    foreach(lib ${OpenCV_LIBS})
-        if(EXISTS "${OpenCV_INSTALL_PATH}/bin/${lib}${OPENCV_VER_STRING}.dll")
-            list(APPEND TO_COPY "${OpenCV_INSTALL_PATH}/bin/${lib}${OPENCV_VER_STRING}.dll")
-        endif()
-    endforeach()
-    
-    set(FFMPEG_LIB_BASE opencv_ffmpeg${OPENCV_VER_STRING})
-    if("${OpenCV_ARCH}" STREQUAL x86)
-        set(FFMPEG_LIB ${FFMPEG_LIB_BASE}.dll)
-    else()
-        # default to 64-bit
-        set(FFMPEG_LIB ${FFMPEG_LIB_BASE}_64.dll)
-    endif()
-    list(APPEND TO_COPY "${OpenCV_INSTALL_PATH}/bin/${FFMPEG_LIB}")
-    
-    # copy nlopt dll
-    list(APPEND TO_COPY "${NLOPT_LIBRARY_DIRS}/bin/nlopt.dll")
-    
-    # copy h264 dll
-    file(GLOB DLLS ${PROJECT_SOURCE_DIR}/dll/*.dll)
-    list(APPEND TO_COPY "${DLLS}")
-    
-    add_custom_command( TARGET fictrac POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        ${TO_COPY}
-                        "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/")
-else()  # gcc
-    # nothing here...
 endif()
 
 target_link_libraries(configGui fictrac_core)

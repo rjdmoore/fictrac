@@ -34,8 +34,8 @@ SquareRT::SquareRT(const vector<CmPoint>& cnrs, const Mat& ref_cnrs)
 :	_corners(cnrs), _ref_corners(ref_cnrs)
 {
     // tx ty tz r_az r_el r_mag
-    double lb[6] = {-CM_PI, -CM_PI, -CM_PI, -1e3, -1e3, 0};
-    double ub[6] = {CM_PI, CM_PI, CM_PI, 1e3, 1e3, 1e3};
+    double lb[6] = {-CM_PI, -CM_PI, -CM_PI, -1e4, -1e4, 0};
+    double ub[6] = {CM_PI, CM_PI, CM_PI, 1e4, 1e4, 1e4};
     init(NLOPT_GN_CRS2_LM, 6);
     setLowerBounds(lb);
     setUpperBounds(ub);
