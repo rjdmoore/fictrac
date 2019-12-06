@@ -34,8 +34,10 @@
                                             sphere in laboratory coordinates neglecting
                                             heading. Equivalent to the output from two
                                             optic mice.
-    22      timestamp                       Either position in video file (ms) or real
-                                            capture time for image frame.
+    22      timestamp                       Either position in video file (ms) or frame
+                                            capture time (ms since epoch).
     23      sequence counter                Position in current frame sequence. Usually
                                             corresponds directly to frame counter, but
                                             can reset to 1 if tracking is reset.
+    24      delta timestamp                 Time (ms) since last frame.
+    25      alt. timestamp                  Frame capture time (ms since midnight).

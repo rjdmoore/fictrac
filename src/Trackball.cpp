@@ -994,8 +994,8 @@ bool Trackball::logData()
     ss << _data.step_dir << ", " << _data.step_mag << ", ";
     // integrated x movement | integrated y movement (mouse output equivalent)
     ss << _data.intx << ", " << _data.inty << ", ";
-    // timestamp (ms since midnight) | sequence number | delta ts (ms since last frame)
-    ss << _data.ms << ", " << _data.seq << ", " << (_data.ts - prev_ts) << std::endl;
+    // timestamp (ms since epoch) | sequence number | delta ts (ms since last frame) | timestamp (ms since midnight)
+    ss << _data.ts << ", " << _data.seq << ", " << (_data.ts - prev_ts) << ", " << _data.ms << std::endl;
 
     prev_ts = _data.ts;     // caution - be sure that this time delta corresponds to deltas for step size, rotation rate, etc!!
 
