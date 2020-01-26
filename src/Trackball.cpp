@@ -1444,7 +1444,7 @@ shared_ptr<Trackball::DATA> Trackball::getState()
 ///
 ///
 ///
-void Trackball::dumpState()
+void Trackball::dumpStats()
 {
     PRINT("\n----------------------------------------------------------------------");
     PRINT("Trackball state");

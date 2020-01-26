@@ -4,8 +4,6 @@
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
-//TODO: check config.is_open()
-//TODO: Add support for fisheye camera model.
 //TODO: Add support for edge clicks rather than square corner clicks.
 
 #include "ConfigGui.h"
@@ -43,6 +41,7 @@ using std::string;
 ///
 const int       ZOOM_DIM    = 600;
 const double    ZOOM_SCL    = 1.0 / 10.0;
+const int       MAX_DISP_DIM    = -1;
 
 const int NCOLOURS = 6;
 cv::Scalar COLOURS[NCOLOURS] = {
@@ -60,6 +59,10 @@ cv::Scalar COLOURS[NCOLOURS] = {
 void onMouseEvent(int event, int x, int y, int f, void* ptr)
 {
     ConfigGui::INPUT_DATA* pdata = static_cast<ConfigGui::INPUT_DATA*>(ptr);
+    if (pdata->ptScl > 0) {
+        x = round(x * pdata->ptScl);
+        y = round(y * pdata->ptScl);
+    }
     switch(event)
     {
         case cv::EVENT_LBUTTONDOWN:
@@ -188,6 +191,11 @@ ConfigGui::ConfigGui(string config_fn)
     /// Load the source camera model.
     _w = _source->getWidth();
     _h = _source->getHeight();
+    _disp_scl = -1;
+    if ((MAX_DISP_DIM > 0) && (std::max(_w,_h) > MAX_DISP_DIM)) {
+        _disp_scl = MAX_DISP_DIM / static_cast<float>(std::max(_w,_h));
+        _input_data.ptScl = 1.0 / _disp_scl;
+    }
 
     double vfov = 0;
     _cfg.getDbl("vfov", vfov);
@@ -457,7 +465,7 @@ bool ConfigGui::run()
         //cv::cvtColor(_frame, disp_frame, CV_GRAY2RGB);
         disp_frame = frame.clone();
 
-        // normalise zoom window
+        // normalise displayed image
         {
             double min, max;
             cv::minMaxLoc(disp_frame, &min, &max);
@@ -519,6 +527,9 @@ bool ConfigGui::run()
                     drawCircle_camModel(disp_frame, _cam_model, c, r, Scalar(255,0,0), false);
         
                     /// Display.
+                    if (_disp_scl > 0) {
+                        cv::resize(disp_frame, disp_frame, cv::Size(), _disp_scl, _disp_scl);
+                    }
                     cv::imshow("configGUI", disp_frame);
                     cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
                             
@@ -588,6 +599,9 @@ bool ConfigGui::run()
                 
                 /// Display.
                 cv::imshow("zoomROI", zoom_frame);
+                if (_disp_scl > 0) {
+                    cv::resize(disp_frame, disp_frame, cv::Size(), _disp_scl, _disp_scl);
+                }
                 cv::imshow("configGUI", disp_frame);
                 key = cv::waitKey(5);
                 
@@ -658,6 +672,9 @@ bool ConfigGui::run()
                     }
                     
                     /// Display.
+                    if (_disp_scl > 0) {
+                        cv::resize(disp_frame, disp_frame, cv::Size(), _disp_scl, _disp_scl);
+                    }
                     cv::imshow("configGUI", disp_frame);
                     cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
                     
@@ -721,6 +738,9 @@ bool ConfigGui::run()
                 
                 /// Display.
                 cv::imshow("zoomROI", zoom_frame);
+                if (_disp_scl > 0) {
+                    cv::resize(disp_frame, disp_frame, cv::Size(), _disp_scl, _disp_scl);
+                }
                 cv::imshow("configGUI", disp_frame);
                 key = cv::waitKey(5);
                 
@@ -835,6 +855,9 @@ bool ConfigGui::run()
                 drawC2AAxes(disp_frame, R, t, r, c);
 
 				/// Display.
+                if (_disp_scl > 0) {
+                    cv::resize(disp_frame, disp_frame, cv::Size(), _disp_scl, _disp_scl);
+                }
 				cv::imshow("configGUI", disp_frame);
 				cv::waitKey(100);   //FIXME: why do we have to wait so long to make sure the frame is drawn?
 
@@ -968,6 +991,9 @@ bool ConfigGui::run()
                 
                 /// Display.
                 cv::imshow("zoomROI", zoom_frame);
+                if (_disp_scl > 0) {
+                    cv::resize(disp_frame, disp_frame, cv::Size(), _disp_scl, _disp_scl);
+                }
                 cv::imshow("configGUI", disp_frame);
                 key = cv::waitKey(5);
                 
@@ -1021,6 +1047,9 @@ bool ConfigGui::run()
                 
                 /// Display.
                 cv::imshow("zoomROI", zoom_frame);
+                if (_disp_scl > 0) {
+                    cv::resize(disp_frame, disp_frame, cv::Size(), _disp_scl, _disp_scl);
+                }
                 cv::imshow("configGUI", disp_frame);
                 key = cv::waitKey(5);
                 
@@ -1074,6 +1103,9 @@ bool ConfigGui::run()
                 
                 /// Display.
                 cv::imshow("zoomROI", zoom_frame);
+                if (_disp_scl > 0) {
+                    cv::resize(disp_frame, disp_frame, cv::Size(), _disp_scl, _disp_scl);
+                }
                 cv::imshow("configGUI", disp_frame);
                 key = cv::waitKey(5);
                 
