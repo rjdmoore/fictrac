@@ -35,7 +35,7 @@ A typical FicTrac experimental setup might include at least the following equipm
 * *Animal tether/harness* - for keeping the animal stationary on the track ball
 * *Stimulus* - sensory feedback for the animal
 * *Track ball support* - structure to hold track ball in place whilst allowing free rotation
-* [Track ball](doc/requirements.md#track-ball) - lightweight sphere that is rotated by the animal's walking/turning motions. Surface pattern should ideally be high-contrast, non-repeating, non-reflective (not glossy), and contain around 10~50 variously sized blobby shapes.
+* [Track ball](doc/requirements.md#track-ball) - lightweight sphere that is rotated by the animal's walking/turning motions. Surface pattern should ideally be high-contrast, non-repeating, non-reflective (not glossy), and contain around 10~50 variously sized shapes with a mixture of texture scales (i.e. some small sharp features, some blobs, etc).
 * [Video camera](doc/requirements.md#video-camera) - for monitoring the track ball (and animal). Resolution is not important, and for vertebrates a USB webcam is likely sufficient. For faster moving insects, the camera should support frame rates >100 Hz. In all cases, the frame rate, exposure, and lens should be chosen to ensure the track ball pattern is well-exposed under all lighting/stimulus conditions and that there is no motion blur during the fastest expected movements. At least one half of one hemisphere of the track ball surface should be visible by the camera.
 * [PC/laptop](doc/requirements.md#pclaptop) - for running FicTrac software (and generating closed-loop stimuli). Processor should be somewhat recent (>2 GHz, multi-core).
 * [Lighting](doc/requirements.md#lighting) - ambient lighting should be diffuse (no specular reflections from track ball surface) and bright enough to give good track ball surface exposure at chosen frame rate.
@@ -48,15 +48,15 @@ The FicTrac source code can be built for both Windows and Linux (e.g. Ubuntu) op
 
 1. Download and install required build tools and dependencies:
     1. Windows only: 
-        1. [Cmake build system](https://cmake.org/download/) (Windows win64-x64 Installer)
-        2. If you don't already have Visual Studio (C++ workflow) installed, you will need to install the [Build Tools for Visual Studio](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2017).
+        1. [Cmake build system (3.16.0)](https://cmake.org/download/) (Windows win64-x64 Installer)
+        2. If you don't already have Visual Studio (C++ workflow) installed, you will need to install the [Build Tools for Visual Studio](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2019).
     2. Linux (Ubuntu) only:
         1. Run the following from terminal to install necessary build tools and dependencies: ```[Linux] sudo apt-get install gcc git cmake curl unzip tar yasm pkg-config libgtk2.0-dev libavformat-dev libavcodec-dev libavresample-dev libswscale-dev```
     3. (Windows and Linux) Clone or download the [Vcpkg](https://github.com/Microsoft/vcpkg) repository and then follow the guide to install (make sure to perform the bootstrap and integration steps).
-    4. Using Vcpkg, install OpenCV, NLopt, and Boost::asio software packages (this may take 10-30 mins):
+    4. Using Vcpkg, install OpenCV, NLopt, Boost::asio, and FFmpeg software packages (this may take more than 30 mins in some cases!):
 
 ```
-[Windows] .\vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows
+[Windows] .\vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows ffmpeg[*]:x64-windows
 [Linux] ./vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux boost-asio:x64-linux
 ```
 
@@ -67,7 +67,7 @@ cd build
 ```
 3. Run Cmake to prepare the necessary build files for FicTrac. Here, we will need to provide the path to the Cmake toolchain file that was installed by Vcpkg (this path is printed to terminal when you run the Vcpkg system-wide integration step).
 ```
-[Windows] cmake -G "Visual Studio 15 2017 Win64" -D CMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake ..
+[Windows] cmake -A x64 -D CMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake ..
 [Linux] cmake -D CMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake ..
 ```
 5. Finally, build and install FicTrac:
@@ -80,9 +80,11 @@ If everything went well, the executables for FicTrac and a configuration utility
 
 Remember to update and re-build FicTrac occasionally, as the program is still under development and fixes and improvements are being made continuously.
 
+<!---
 | | | | | |
 | --- | --- | --- | --- | --- |
 | Build status | Windows | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Windows)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) | Linux | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Linux)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) |
+-->
 
 #### USB2/3 camera installation
 
