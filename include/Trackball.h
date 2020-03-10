@@ -97,7 +97,7 @@ public:
     bool isActive() { return _active; }
     void terminate() { _kill = true; }
     std::shared_ptr<Trackball::DATA> getState();
-    void dumpState();
+    void dumpStats();
     bool writeTemplate(std::string fn = "");
 
 private:

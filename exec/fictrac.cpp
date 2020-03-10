@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 				return -1;
 			}
         }
-        else if ((string(argv[i]) == "--test") || (string(argv[i]) == "-t")) {
+        else if (string(argv[i]) == "--stats") {
             do_test = true;
         }
         else {
