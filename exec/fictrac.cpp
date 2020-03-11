@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	/// Parse args.
 	string log_level = "info";
 	string config_fn = "config.txt";
-    bool do_test = false;
+    bool do_stats = false;
 	for (int i = 1; i < argc; ++i) {
 		if ((string(argv[i]) == "--verbosity") || (string(argv[i]) == "-v")) {
 			if (++i < argc) {
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 			}
         }
         else if (string(argv[i]) == "--stats") {
-            do_test = true;
+            do_stats = true;
         }
         else {
             config_fn = argv[i];
@@ -84,8 +84,8 @@ int main(int argc, char *argv[])
     tracker->writeTemplate();
 
     /// If we're running in test mode, print some stats.
-    if (do_test) {
-        tracker->dumpState();
+    if (do_stats) {
+        tracker->dumpStats();
     }
 
     /// Try to force release of all objects.
