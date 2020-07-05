@@ -6,7 +6,7 @@
 
 #pragma once
 
-#ifdef __linux__ 
+#ifdef __APPLE__ || __linux__ 
 #include "SocketRecorder_linux.h"
 #elif _WIN32
 #include "SocketRecorder_win.h"

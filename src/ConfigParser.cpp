@@ -102,7 +102,7 @@ int ConfigParser::write(string fn)
     /// Open output file
     std::ofstream f(fn);
     if (!f.is_open()) {
-        LOG_ERR("Could not open config file %s for writing!", fn);
+        LOG_ERR("Could not open config file %s for writing!", fn.c_str());
         return -1;
     }
     
@@ -115,7 +115,7 @@ int ConfigParser::write(string fn)
         // warning: super long str vals will cause overwrite error!
         try { sprintf(tmps, "%-16s : %s\n", it.first.c_str(), it.second.c_str()); }
         catch (std::exception& e) {
-			LOG_ERR("Error writing key/value pair (%s : %s)! Error was: %s", it.first, it.second, e.what());
+			LOG_ERR("Error writing key/value pair (%s : %s)! Error was: %s", it.first.c_str(), it.second.c_str(), e.what());
             f.close();
             return -1;
         }
@@ -331,5 +331,5 @@ void ConfigParser::printAll()
     for (auto& it : _data) {
         s << "\t" << it.first << "\t: " << it.second << std::endl;
     }
-    LOG_DBG("%s", s.str());
+    LOG_DBG("%s", s.str().c_str());
 }
