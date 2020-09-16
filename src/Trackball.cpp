@@ -67,7 +67,7 @@ const vector<vector<std::string>> CODECS = {
 ///
 ///
 ///
-bool intersectSphere(const double camVec[3], double sphereVec[3], const double r)
+bool intersectSphere(const double r, const double camVec[3], double sphereVec[3])
 {
     double q = camVec[2] * camVec[2] + r * r - 1;
     if (q < 0) { return false; }
@@ -318,12 +318,12 @@ Trackball::Trackball(string cfg_fn)
         for (int j = 0; j < _roi_w; j++) {
             if (pmask[j] < 255) { continue; }
 
-            double l[3] = { 0 };
+            double l[3] = { 0, 0, 0 };
             _roi_model->pixelIndexToVector(j, i, l);
             vec3normalise(l);
 
             double* s = &(*_p1s_lut)[(i * _roi_w + j) * 3];
-            if (!intersectSphere(l, s, _r_d_ratio)) { pmask[j] = 128; }
+            if (!intersectSphere(_r_d_ratio, l, s)) { pmask[j] = 128; }
         }
     }
 
