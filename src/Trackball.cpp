@@ -50,7 +50,7 @@ const double THRESH_WIN_PC_DEFAULT = 0.25;
 const uint8_t SPHERE_MAP_FIRST_HIT_BONUS = 64;
 
 const string SOCK_HOST_DEFAULT = "127.0.0.1";
-const int SOCK_PORT_DEFAULT = 0;
+const int SOCK_PORT_DEFAULT = -1;
 
 const int COM_BAUD_DEFAULT = 115200;
 
