@@ -140,7 +140,7 @@ FicTrac will usually generate two output files:
 1. Log file (*.log) - containing debugging information about FicTrac's execution.
 2. Data file (*.dat) - containing output data. See [data_header](doc/data_header.txt) for information about output data.
 
-The output data file can be used for offline processing. To use FicTrac within a closed-loop setup (to provide real-time feedback for stimuli), you should configure FicTrac to output data via a socket (IP address/port) in real-time. To do this, just set `out_port` to a valid port number in the config file. There is an example Python script for receiving data via sockets in the `scripts` directory.
+The output data file can be used for offline processing. To use FicTrac within a closed-loop setup (to provide real-time feedback for stimuli), you should configure FicTrac to output data via a socket (IP address/port) in real-time. To do this, just set `sock_port` to a valid port number in the config file. There is an example Python script for receiving data via sockets in the `scripts` directory.
 
 **Note:** If you encounter issues trying to generate output videos (i.e. `save_raw` or `save_debug`), you might try changing the default video codec via `vid_codec` - see [config params](doc/params.md) for details. If you receive an error about a missing [H264 library](https://github.com/cisco/openh264/releases), you can download the necessary library (i.e. OpenCV 3.4.3 requires `openh264-1.7.0-win64.dll`) from the above link and place it in the `dll` folder under the FicTrac main directory. You will then need to re-run the appropriate `cmake ..` and `cmake --build` commands for your installation.
 
