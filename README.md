@@ -56,7 +56,7 @@ The FicTrac source code can be built for both Windows and Linux (e.g. Ubuntu) op
     4. Using Vcpkg, install OpenCV, NLopt, Boost::asio, and FFmpeg software packages (this may take more than 30 mins in some cases!):
 
 ```
-[Windows] .\vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows ffmpeg[*]:x64-windows
+[Windows] .\vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows ffmpeg[x264]:x64-windows
 [Linux] ./vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux boost-asio:x64-linux
 ```
 
