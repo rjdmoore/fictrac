@@ -59,6 +59,78 @@ On a ~3.2 GHz quadcore processor processor, and with default configuration setti
 
 Ambient lighting should ideally be diffuse (no specular reflections from the track ball surface) and bright enough to give good track ball surface exposure at a fast frame rate.
 
+## Installing FicTrac
+
+The install process for FicTrac is a little complicated because FicTrac is released as source code, which you need to build on your local machine in order to generate a program that you can execute. There are two main reasons behind this decision:
+1. As an open source project, users can contribute fixes and improvements - speeding up development.
+2. Building locally allows users to choose software versions that suit their needs - giving more flexibility.
+
+The [main installation guide](../README.md#Installation) list the steps required to build and install FicTrac and its dependencies. To help with issues you may face during the install process, here is a complete step-by-step guide for installing FicTrac in Lubuntu 20.04 running in a virtual machine. There is nothing particularly special about this choice of setup other than Lubuntu is fairly lightweight and running in virtual machine simplifies testing. Other flavours of Debian linux (e.g. Ubuntu, Mint, etc) will be very similar, if not identical. If you are running from boot (rather than in virtual machine) you can ignore the first steps.
+
+### Installing FicTrac in Lubuntu 20.04 in VirtualBox VM
+
+1. Install [Oracle VirtualBox VM](https://www.virtualbox.org/wiki/Downloads)
+2. Install Lubuntu 20.04
+	1. Download [Desktop 64-bit](https://lubuntu.me/downloads/)
+	2. Launch VirtualBox and create new Linux 64-bit VM (make virtual disk at least 15 GB)
+	3. Load Lubuntu iso into optical drive and launch
+	4. Install Lubuntu via shortcut on live desktop
+	5. Restart VM
+3. Prepare Lubuntu
+	1. Launch Lubuntu
+	2. Update/upgrade all packages (in terminal):
+```
+sudo apt-get update
+sudo apt-get upgrade
+```
+	3. Install VirtualBox Guest Additions
+		1. Menu -> Devices -> Insert Guest Additions CD
+		2. Execute in terminal:
+```
+sudo apt-get install gcc make perl
+cd /media/User/VBox_GAs_6.1.12
+sudo ./VBoxLinuxAdditions.run
+```
+		3. Restart
+	4. Make Development folder:
+```
+cd ~
+mkdir Development
+```
+4. Install prerequisites and dependencies
+	1. Install built-in packages:
+```
+sudo apt-get install gcc git cmake curl unzip tar yasm pkg-config libgtk2.0-dev libavformat-dev libavcodec-dev libavresample-dev libswscale-dev
+```
+	2. Install Vcpkg following instructions at https://github.com/Microsoft/vcpkg:
+```
+cd ~/Development
+git clone https://github.com/microsoft/vcpkg
+./vcpkg/bootstrap-vcpkg.sh
+```
+	3. Integrate vcpkg and record the path to the CMAKE_TOOLCHAIN_FILE (we will use it later):
+```
+./vcpkg integrate install
+```
+	4. Install vcpkg packages
+		1. To speed up building, we can ask vcpkg to only build release packages. Edit ./vcpkg/triplets/x64-linux.cmake and add the following line:
+```
+set(VCPKG_BUILD_TYPE release)
+```
+		2. Execute the followinig in terminal to install dependencies (may take 30 min or more!):
+```
+./vcpkg/vcpkg install opencv[ffmpeg]:x64-linux nlopt:x64-linux boost-asio:x64-linux Warning: the above command may take 30 min to complete
+```
+5. Install fictrac
+	1. Open terminal and type the following commands:
+		cd ~/Development
+		git clone https://github.com/rjdmoore/fictrac.git
+		cd fictrac
+		mkdir build
+		cd build
+		cmake -D CMAKE_TOOLCHAIN_FILE=~/Development/vcpkg/scripts/buildsystems/vcpkg.cake
+
+
 ## Configuring FicTrac
 
 ## Input parameters
