@@ -23,7 +23,7 @@ Happy tracking!
 
 ## Getting started
 
-If you're just setting up your lab, or wondering whether FicTrac is suitable for your setup (spoiler: yes, probably), check the [hardware requirements section below](#hardware-requirements) for the basic requirements.
+If you're just setting up your lab, or wondering whether FicTrac is suitable for your setup, check the [hardware requirements](#hardware-requirements) section below for the basic requirements.
 
 If you already have an experimental enclosure with a camera, you can use FicTrac to either process recorded videos offline or to run live from the camera. Skip ahead to [install](#installation), [configure](#configuration), and [run FicTrac](#running-fictrac).
 
@@ -46,6 +46,8 @@ FicTrac imposes no requirements on the *italicised* items; how you design these 
 
 The FicTrac source code can be built for both Windows and Linux (e.g. Ubuntu) operating systems, or you can build and run FicTrac from within a [virtual machine](https://www.virtualbox.org/) on any operating system. The following instructions are for a 64-bit machine, if you are using a 32-bit machine you will need to replace x64 with x86 in the instructions below.
 
+**Note:** If you're looking for some extra hand-holding to get started, check the detailed [step-by-step installation guide](doc/requirements.md#installing-fictrac).
+
 1. Download and install required build tools and dependencies:
     1. Windows only: 
         1. [Cmake build system](https://cmake.org/download/) (Windows win64-x64 Installer)
@@ -63,6 +65,8 @@ The FicTrac source code can be built for both Windows and Linux (e.g. Ubuntu) op
 ```
 2. Clone or download the FicTrac repository, then navigate to that folder, open a terminal, and create a build directory:
 ```
+git clone https://github.com/rjdmoore/fictrac.git
+cd fictrac
 mkdir build
 cd build
 ```
