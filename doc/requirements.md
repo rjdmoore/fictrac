@@ -59,6 +59,14 @@ On a ~3.2 GHz quadcore processor processor, and with default configuration setti
 
 Ambient lighting should ideally be diffuse (no specular reflections from the track ball surface) and bright enough to give good track ball surface exposure at a fast frame rate.
 
+## Installing FicTrac
+
+The install process for FicTrac is a little complicated because FicTrac is released as source code, which you need to build on your local machine in order to generate a program that you can execute. There are two main reasons behind this decision:
+1. As an open source project, users can contribute fixes and improvements - speeding up development.
+2. Building locally allows users to choose software versions that suit their needs - giving more flexibility.
+
+The [main installation guide](../README.md#Installation) list the steps required to build and install FicTrac and its dependencies.
+
 ## Configuring FicTrac
 
 ## Input parameters

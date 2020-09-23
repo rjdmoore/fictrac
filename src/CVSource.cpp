@@ -24,6 +24,7 @@ using cv::Mat;
 /// Constructor.
 ///
 CVSource::CVSource(std::string input)
+    : _is_image(false)
 {
     LOG_DBG("Source is: %s", input.c_str());
     Mat test_frame;
@@ -53,21 +54,41 @@ CVSource::CVSource(std::string input)
             _live = false;
         }
         catch (...) {
-            LOG_ERR("Could not interpret source type (%s)!", input.c_str());
-            _open = false;
+            try {
+                // then try loading as an image file
+                LOG_DBG("Trying source as image file...");
+                _frame_cap = cv::imread(input);
+                if (_frame_cap.empty()) { throw 0; }
+                LOG("Using source type: image file.");
+                _open = true;
+                _live = false;
+                _is_image = true;
+            }
+            catch (...) {
+                LOG_ERR("Could not interpret source type (%s)!", input.c_str());
+                _open = false;
+            }
         }
     }
 
 	if( _open ) {
-		_width = static_cast<int>(_cap->get(cv::CAP_PROP_FRAME_WIDTH));
-		_height = static_cast<int>(_cap->get(cv::CAP_PROP_FRAME_HEIGHT));
+        if (_is_image) {
+            _width = _frame_cap.cols;
+            _height = _frame_cap.rows;
+        }
+        else {
+            _width = static_cast<int>(_cap->get(cv::CAP_PROP_FRAME_WIDTH));
+            _height = static_cast<int>(_cap->get(cv::CAP_PROP_FRAME_HEIGHT));
+        }
         if (_live) {
             _fps = getFPS();    // don't init fps for video files - we might want to play them back as fast as possible
 
-            LOG("OpenCV camera initialised (%dx%d @ %.3f fps)!", _width, _height, _fps);
+            LOG("OpenCV camera source initialised (%dx%d @ %.3f fps)!", _width, _height, _fps);
         }
-        else {
-            LOG("OpenCV video initialised (%dx%d)!", _width, _height);
+        else if (_is_image) {
+            LOG("OpenCV image source initialised (%dx%d)!", _width, _height);
+        } else {
+            LOG("OpenCV video source initialised (%dx%d)!", _width, _height);
         }
 	}
 }
@@ -84,7 +105,7 @@ CVSource::~CVSource()
 double CVSource::getFPS()
 {
     double fps = _fps;
-    if (_open) {
+    if (_open && _cap) {
         fps = _cap->get(cv::CAP_PROP_FPS);
     }
     return fps;
@@ -96,7 +117,7 @@ double CVSource::getFPS()
 bool CVSource::setFPS(double fps)
 {
     bool ret = false;
-    if (_open && (fps > 0)) {
+    if (_open && _cap && (fps > 0)) {
         if (!_cap->set(cv::CAP_PROP_FPS, fps)) {
             LOG_WRN("Warning! Failed to set device fps (attempted to set fps=%.2f).", fps);
             _fps = fps; // just set fps anyway for playback
@@ -117,7 +138,7 @@ bool CVSource::setFPS(double fps)
 bool CVSource::rewind()
 {
     bool ret = false;
-	if (_open) {
+	if (_open && _cap) {
         if (!_cap->set(cv::CAP_PROP_POS_FRAMES, 0)) {
             LOG_WRN("Warning! Failed to rewind source.");
         } else { ret = true; }
@@ -131,14 +152,15 @@ bool CVSource::rewind()
 bool CVSource::grab(cv::Mat& frame)
 {
 	if( !_open ) { return false; }
-	if( !_cap->read(_frame_cap) ) {
+	if( !_is_image && !_cap->read(_frame_cap) ) {
 		LOG_ERR("Error grabbing image frame!");
 		return false;
 	}
     double ts = ts_ms();    // backup, in case the device timestamp is junk
+    _ms_since_midnight = ms_since_midnight();
 	_timestamp = _cap->get(cv::CAP_PROP_POS_MSEC);
-    LOG_DBG("Frame captured %dx%d%d @ %f (%f)", _frame_cap.cols, _frame_cap.rows, _frame_cap.channels(), _timestamp, ts);
-    if ((_timestamp <= 0) || (!_live)) {    // also use system time when playing back from file
+    LOG_DBG("Frame captured %dx%d%d @ %f (t_sys: %f ms, t_day: %f ms)", _frame_cap.cols, _frame_cap.rows, _frame_cap.channels(), _timestamp, ts, _ms_since_midnight);
+    if (_timestamp <= 0) {
         _timestamp = ts;
     }
 

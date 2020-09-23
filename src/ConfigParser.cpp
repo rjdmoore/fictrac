@@ -11,7 +11,6 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <exception>    // try, catch
 #include <algorithm>    // erase, remove
 
@@ -103,7 +102,7 @@ int ConfigParser::write(string fn)
     /// Open output file
     std::ofstream f(fn);
     if (!f.is_open()) {
-        LOG_ERR("Could not open config file %s for writing!", fn);
+        LOG_ERR("Could not open config file %s for writing!", fn.c_str());
         return -1;
     }
     
@@ -116,7 +115,7 @@ int ConfigParser::write(string fn)
         // warning: super long str vals will cause overwrite error!
         try { sprintf(tmps, "%-16s : %s\n", it.first.c_str(), it.second.c_str()); }
         catch (std::exception& e) {
-			LOG_ERR("Error writing key/value pair (%s : %s)! Error was: %s", it.first, it.second, e.what());
+			LOG_ERR("Error writing key/value pair (%s : %s)! Error was: %s", it.first.c_str(), it.second.c_str(), e.what());
             f.close();
             return -1;
         }
@@ -143,29 +142,15 @@ int ConfigParser::write(string fn)
 ///
 ///
 ///
-string ConfigParser::operator()(string key)
+string ConfigParser::operator()(string key) const
 {
-    string s = "";
-    getStr(key, s);
-    return s;
-}
-
-///
-///
-///
-template<typename T>
-T ConfigParser::get(string key)
-{
-    T val;
-    string s;
-    if (getStr(key, s)) {
-        std::stringstream ss(s);
-        try { ss >> val; }
-        catch (std::exception& e) {
-            LOG_ERR("Error parsing config file value (%s : %s)! Error was: %s", key.c_str(), ss.str().c_str(), e.what());
-        }
+    try {
+        return _data.at(key);
     }
-    return val;
+    catch (...) {
+        LOG_DBG("Key (%s) not found.", key.c_str());
+    }
+    return "";
 }
 
 ///
@@ -346,5 +331,5 @@ void ConfigParser::printAll()
     for (auto& it : _data) {
         s << "\t" << it.first << "\t: " << it.second << std::endl;
     }
-    LOG_DBG("%s", s.str());
+    LOG_DBG("%s", s.str().c_str());
 }

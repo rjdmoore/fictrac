@@ -4,7 +4,7 @@
 /// \author     Richard Moore
 /// \copyright  CC BY-NC-SA 3.0
 
-#ifdef __linux__ 
+#ifdef __APPLE__ || __linux__
 #include "SocketRecorder_linux.src"
 #elif _WIN32
 #include "SocketRecorder_win.src"

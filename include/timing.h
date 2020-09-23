@@ -33,6 +33,25 @@ static double ts_ms() {
 }
 
 ///
+/// Return ms since midnight
+///
+static double ms_since_midnight() {
+
+    static std::chrono::system_clock::time_point tmidnight;
+
+    if (tmidnight.time_since_epoch().count() == 0) {
+        auto texec = std::chrono::system_clock::to_time_t(_tExec);
+        tm* tdate = std::localtime(&texec);
+        tdate->tm_hour = 0;
+        tdate->tm_min = 0;
+        tdate->tm_sec = 0;
+        tmidnight = std::chrono::system_clock::from_time_t(std::mktime(tdate));
+    }
+
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - tmidnight).count() / 1000.;
+}
+
+///
 /// Return formatted date/time string for program launch.
 ///
 static std::string execTime()
@@ -55,29 +74,6 @@ static std::string execTime()
         s = std::string(tmps);
     }
     return s;
-}
-
-///
-/// Return formatted date/time string.
-///
-static std::string dateTimeString()
-{
-    time_t     rawtime;
-    struct tm* timeinfo;
-
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-
-    char tmps[16];
-    sprintf(tmps, "%4d%02d%02d_%02d%02d%02d",
-        timeinfo->tm_year + 1900,
-        timeinfo->tm_mon+1,
-        timeinfo->tm_mday,
-        timeinfo->tm_hour,
-        timeinfo->tm_min,
-        timeinfo->tm_sec);
-
-    return std::string(tmps);
 }
 
 ///

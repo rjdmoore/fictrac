@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <sstream>
 
 ///
 /// Config file parser.
@@ -26,10 +27,15 @@ public:
     int write() { return write(_fn); }
 
     /// Quick accessor functions
-    std::string operator()(std::string key);
+    std::string operator()(std::string key) const;
 
     template<typename T>
-    T get(std::string key);
+    T get(std::string key) const {
+        std::stringstream ss(operator()(key));
+        T val;
+        ss >> val;
+        return val;
+    };
 
     /// Accessor functions
     bool getStr(std::string key, std::string& val);
