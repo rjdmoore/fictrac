@@ -48,18 +48,19 @@ The FicTrac source code can be built for both Windows and Linux (e.g. Ubuntu) op
 
 1. Download and install required build tools and dependencies:
     1. Windows only: 
-        1. [Cmake build system (3.16.0)](https://cmake.org/download/) (Windows win64-x64 Installer)
+        1. [Cmake build system](https://cmake.org/download/) (Windows win64-x64 Installer)
         2. If you don't already have Visual Studio (C++ workflow) installed, you will need to install the [Build Tools for Visual Studio](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2019).
-    2. Linux (Ubuntu) only:
-        1. Run the following from terminal to install necessary build tools and dependencies: ```[Linux] sudo apt-get install gcc g++ git cmake curl unzip tar yasm pkg-config libgtk2.0-dev libavformat-dev libavcodec-dev libavresample-dev libswscale-dev libopencv-dev```
+    2. Linux only:
+        1. Run the following from terminal to install necessary build tools and dependencies:
+        ```
+        [Linux] sudo apt-get install gcc g++ git cmake curl unzip tar yasm pkg-config libgtk2.0-dev libavformat-dev libavcodec-dev libavresample-dev libswscale-dev libopencv-dev
+        ```
     3. (Windows and Linux) Clone or download the [Vcpkg](https://github.com/Microsoft/vcpkg) repository and then follow the guide to install (make sure to perform the bootstrap and integration steps).
-    4. Using Vcpkg, install OpenCV, NLopt, Boost::asio, and FFmpeg software packages (this may take more than 30 mins in some cases!):
-
+    4. Using Vcpkg, install remaining dependencies:
 ```
 [Windows] .\vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows ffmpeg[x264]:x64-windows
 [Linux] ./vcpkg install nlopt:x64-linux boost-asio:x64-linux
 ```
-
 2. Clone or download the FicTrac repository, then navigate to that folder, open a terminal, and create a build directory:
 ```
 mkdir build
@@ -78,6 +79,8 @@ cd build
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
 
+If you encounter issues during the build process, try simply re-executing the step that failed. If you still encounter the same problem, check the [FicTrac forum](http://www.reddit.com/r/fictrac/) to see if anyone else has encountered (and hopefully solved!) the same issue. 
+
 Remember to update and re-build FicTrac occasionally, as the program is still under development and fixes and improvements are being made continuously.
 
 <!---
@@ -93,7 +96,7 @@ If you are using an industrial USB2/3 camera and are receiving error messages wh
 ##### PGR (FLIR) Flycapture SDK
 
 1. Download and install the latest [Flycapture SDK](https://www.flir.com/products/flycapture-sdk/).
-2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Flycapture using the switch `-D PGR_USB2=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a Windows installation you would replace step 3 above with:
+2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Flycapture using the switch `-D PGR_USB2=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a Windows installation you would replace step 3 above with (replacing <vcpkg_root> with the path to your vcpkg root directory):
 ```
 cmake -G "Visual Studio 15 2017 Win64" -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB2=ON -D PGR_DIR="C:\path\to\Flycapture" ..
 ```
@@ -104,7 +107,7 @@ Before running FicTrac, you may configure your camera (frame rate, resolution, e
 ##### PGR (FLIR) Spinnaker SDK
 
 1. Download and install the latest [Spinnaker SDK](https://www.flir.com/products/spinnaker-sdk/).
-2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a Windows installation you would replace step 3 above with:
+2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a Windows installation you would replace step 3 above with (replacing <vcpkg_root> with the path to your vcpkg root directory):
 ```
 cmake -G "Visual Studio 15 2017 Win64" -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
 ```
@@ -115,7 +118,7 @@ Before running FicTrac, you may configure your camera (frame rate, resolution, e
 ### Configuration
 
 There are two necessary steps to configure FicTrac prior to running the program:
-1. You must provide a text file that contains important [configuration parameters](doc/params.md) for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which define the image source (path to video file or camera index) and vertical field of view (in degrees) of your camera respectively. You will find an example config file in the `sample` directory.
+1. You must provide a text file that contains important [configuration parameters](doc/params.md) for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which define the image source (path to video file or camera index) and vertical field of view (in degrees) of your camera respectively. You will find an example config file (`config.txt`) in the `sample` directory.
 2. You must run the interactive configuration program (configGui). This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference.
 
 A more [detailed guide](doc/requirements.md) on how to configure FicTrac for your setup and an explanation of all the [configuration parameters](doc/params.md) can be found in the `doc` directory.
