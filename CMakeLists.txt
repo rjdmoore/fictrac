@@ -65,8 +65,7 @@ else()  # gcc
         find_library(PGR_LIB libflycapture.so)
     elseif(BASLER_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${BASLER_DIR})
-        #find_library(PGR_LIB libflycapture.so)
-        # FIXME!
+        find_library(BASLER_LIB libpylonbase.so)
     endif()
 endif()
 
@@ -82,7 +81,6 @@ if(PGR_USB2 OR PGR_USB3)
         message(FATAL_ERROR "Error! Could not find PGR FlyCapture/Spinnaker lib at ${PGR_DIR}!")
     endif()
 elseif(BASLER_USB3)
-    # FIXME! Linux
     get_filename_component(BASLER_DIR ${BASLER_LIB} DIRECTORY)
     get_filename_component(BASLER_DIR ${BASLER_DIR} DIRECTORY)    # step up 1 level
     if(MSVC)
@@ -108,12 +106,7 @@ if(PGR_USB2 OR PGR_USB3)
         endif()
     endif()
 elseif(BASLER_USB3)
-    if(MSVC)
-        include_directories(${BASLER_DIR}/include)
-    else()
-        # FIXME!
-        #include_directories(${PGR_DIR}/include/spinnaker)   # for ubuntu default install dir
-    endif()
+    include_directories(${BASLER_DIR}/include)
 endif()
 
 # find sources to build
@@ -125,7 +118,7 @@ add_executable(configGui ${PROJECT_SOURCE_DIR}/exec/configGui.cpp)
 add_executable(fictrac ${PROJECT_SOURCE_DIR}/exec/fictrac.cpp)
 
 # add preprocessor definitions
-# 'public' means defs will be inherited by linked executables
+# PUBLIC means defs will be inherited by linked executables
 target_compile_definitions(fictrac_core PUBLIC _CRT_SECURE_NO_WARNINGS NOMINMAX)
 if(PGR_USB2)
     target_compile_definitions(fictrac_core PUBLIC PGR_USB2)
