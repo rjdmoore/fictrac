@@ -37,7 +37,7 @@ A typical FicTrac experimental setup might include at least the following equipm
 * *Track ball support* - structure to hold track ball in place whilst allowing free rotation
 * [Track ball](doc/requirements.md#track-ball) - lightweight sphere that is rotated by the animal's walking/turning motions. Surface pattern should ideally be high-contrast, non-repeating, non-reflective (not glossy), and contain around 10~50 variously sized shapes with a mixture of texture scales (i.e. some small sharp features, some blobs, etc).
 * [Video camera](doc/requirements.md#video-camera) - for monitoring the track ball (and animal). Resolution is not important, and for vertebrates a USB webcam is likely sufficient. For faster moving insects, the camera should support frame rates >100 Hz. In all cases, the frame rate, exposure, and lens should be chosen to ensure the track ball pattern is well-exposed under all lighting/stimulus conditions and that there is no motion blur during the fastest expected movements. At least one half of one hemisphere of the track ball surface should be visible by the camera.
-* [PC/laptop](doc/requirements.md#pclaptop) - for running FicTrac software (and generating closed-loop stimuli). Processor should be somewhat recent (>2 GHz, multi-core).
+* [PC/laptop](doc/requirements.md#pclaptop) - for running FicTrac software (and generating closed-loop stimuli). Processor should be somewhat recent (>2 GHz, multi-core). Operating system can be either Windows or Linux - FicTrac has been tested in Windows 10 and Ubuntu 18.04 & 20.04, although many other linux variants are also probably fine. A supported operating system can also be installed via virtual machine, in which case FicTrac can be run within any host operating system.
 * [Lighting](doc/requirements.md#lighting) - ambient lighting should be diffuse (no specular reflections from track ball surface) and bright enough to give good track ball surface exposure at chosen frame rate.
 
 FicTrac imposes no requirements on the *italicised* items; how you design these is completely dependent on other factors.
@@ -45,8 +45,6 @@ FicTrac imposes no requirements on the *italicised* items; how you design these 
 ### Installation
 
 The FicTrac source code can be built for both Windows and Linux (e.g. Ubuntu) operating systems, or you can build and run FicTrac from within a [virtual machine](https://www.virtualbox.org/) on any operating system. The following instructions are for a 64-bit machine, if you are using a 32-bit machine you will need to replace x64 with x86 in the instructions below.
-
-**Note:** If you're looking for some extra hand-holding to get started, check the detailed [step-by-step installation guide](doc/requirements.md#installing-fictrac).
 
 1. Download and install required build tools and dependencies:
     1. Windows only: 
