@@ -63,12 +63,14 @@ public:
         std::vector<std::vector<cv::Point2d> > ignrPts;
         std::vector<cv::Point2d> sqrPts;
         INPUT_MODE mode;
+        float ptScl;
         
         INPUT_DATA() {
             newEvent = false;
             mode =  CIRC_INIT;
             cursorPt.x = -1;
             cursorPt.y = -1;
+            ptScl = -1;
             addPoly();
         }
         
@@ -92,6 +94,7 @@ private:
     std::string _config_fn, _base_fn;
     ConfigParser _cfg;
     int _w, _h;
+    float _disp_scl;
     CameraModelPtr _cam_model;
     INPUT_DATA _input_data;
 

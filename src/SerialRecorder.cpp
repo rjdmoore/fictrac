@@ -40,7 +40,7 @@ bool SerialRecorder::openRecord(std::string port_baud)
     // extract port no and baud
     size_t pos = port_baud.find_first_of('@');
     if (pos == string::npos) {
-        LOG_ERR("Error! Malformed port:baud string.");
+        LOG_ERR("Error! Malformed port@baud string.");
         return false;
     }
     _port_name = port_baud.substr(0, pos);
@@ -54,6 +54,10 @@ bool SerialRecorder::openRecord(std::string port_baud)
         _port = make_shared<asio::serial_port>(io);
         _port->open(_port_name);
         //_port->set_option(asio::serial_port_base::baud_rate(baud));
+        //_port->set_option(asio::serial_port_base::character_size(8));
+        //_port->set_option(asio::serial_port_base::flow_control(serial_port_base::flow_control::none));
+        //_port->set_option(asio::serial_port_base::parity(serial_port_base::parity::none));
+        //_port->set_option(asio::serial_port_base::stop_bits(serial_port_base::stop_bits::one));
         _open = _port->is_open();
         if (!_open) { throw; }
     }
