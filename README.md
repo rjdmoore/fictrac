@@ -100,7 +100,7 @@ If you are using an industrial USB2/3 camera and are receiving error messages wh
 1. Download and install the latest [Flycapture SDK](https://www.flir.com/products/flycapture-sdk/).
 2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Flycapture using the switch `-D PGR_USB2=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a Windows installation you would replace step 3 above with (replacing <vcpkg_root> with the path to your vcpkg root directory):
 ```
-cmake -G "Visual Studio 15 2017 Win64" -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB2=ON -D PGR_DIR="C:\path\to\Flycapture" ..
+cmake -A x64 -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB2=ON -D PGR_DIR="C:\path\to\Flycapture" ..
 ```
 3. Follow the other build steps as normal.
 
