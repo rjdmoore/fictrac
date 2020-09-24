@@ -6,6 +6,16 @@
 
 #pragma once
 
+#if 0	// TCP sockets
+
+#ifdef __APPLE__ || __linux__ 
+#include "SocketRecorder_linux.h"
+#elif _WIN32
+#include "SocketRecorder_win.h"
+#endif
+
+#else	// UDP sockets
+
 #include "RecorderInterface.h"
 
 #include <boost/asio.hpp>
@@ -29,3 +39,5 @@ private:
     boost::asio::ip::udp::socket _socket;
     boost::asio::ip::udp::endpoint _endpoint;
 };
+
+#endif
