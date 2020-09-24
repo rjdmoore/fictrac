@@ -49,6 +49,9 @@ const double THRESH_WIN_PC_DEFAULT = 0.25;
 
 const uint8_t SPHERE_MAP_FIRST_HIT_BONUS = 64;
 
+const string SOCK_HOST_DEFAULT = "127.0.0.1";
+const int SOCK_PORT_DEFAULT = 0;
+
 const int COM_BAUD_DEFAULT = 115200;
 
 const bool DO_DISPLAY_DEFAULT = true;
@@ -67,7 +70,7 @@ const vector<vector<std::string>> CODECS = {
 ///
 ///
 ///
-bool intersectSphere(const double camVec[3], double sphereVec[3], const double r)
+bool intersectSphere(const double r, const double camVec[3], double sphereVec[3])
 {
     double q = camVec[2] * camVec[2] + r * r - 1;
     if (q < 0) { return false; }
@@ -318,12 +321,12 @@ Trackball::Trackball(string cfg_fn)
         for (int j = 0; j < _roi_w; j++) {
             if (pmask[j] < 255) { continue; }
 
-            double l[3] = { 0 };
+            double l[3] = { 0, 0, 0 };
             _roi_model->pixelIndexToVector(j, i, l);
             vec3normalise(l);
 
             double* s = &(*_p1s_lut)[(i * _roi_w + j) * 3];
-            if (!intersectSphere(l, s, _r_d_ratio)) { pmask[j] = 128; }
+            if (!intersectSphere(_r_d_ratio, l, s)) { pmask[j] = 128; }
         }
     }
 
@@ -389,12 +392,18 @@ Trackball::Trackball(string cfg_fn)
         return;
     }
 
-    int sock_port = 0;
+    int sock_port = SOCK_PORT_DEFAULT;
     _do_sock_output = false;
     if (_cfg.getInt("sock_port", sock_port) && (sock_port > 0)) {
-        _data_sock = make_unique<Recorder>(RecorderInterface::RecordType::SOCK, std::to_string(sock_port));
+        string sock_host = SOCK_HOST_DEFAULT;
+        if (!_cfg.getStr("sock_host", sock_host)) {
+            LOG_WRN("Warning! Using default value for sock_host (%s).", sock_host.c_str());
+            _cfg.add("sock_host", sock_host);
+        }
+
+        _data_sock = make_unique<Recorder>(RecorderInterface::RecordType::SOCK, sock_host + ":" + std::to_string(sock_port));
         if (!_data_sock->is_active()) {
-            LOG_ERR("Error! Unable to open output data socket (%d).", sock_port);
+            LOG_ERR("Error! Unable to open output data socket (%s:%d).", sock_host.c_str() ,sock_port);
             _active = false;
             return;
         }

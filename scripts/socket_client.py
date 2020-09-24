@@ -2,12 +2,12 @@
 
 import socket
 
-HOST = '127.0.0.1'  # The server's hostname or IP address
-PORT = ????         # The port used by the server
+HOST = '127.0.0.1'  # The (receiving) host IP address (sock_host)
+PORT = ????         # The (receiving) host port (sock_port)
 
-# Open the connection (FicTrac must be waiting for socket connection)
-with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-    sock.connect((HOST, PORT))
+# Open the connection (ctrl-c / ctrl-break to quit)
+with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+    sock.bind((HOST, PORT))
     
     data = ""
     
