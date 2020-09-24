@@ -122,6 +122,9 @@ add_executable(fictrac ${PROJECT_SOURCE_DIR}/exec/fictrac.cpp)
 # add preprocessor definitions
 # PUBLIC means defs will be inherited by linked executables
 target_compile_definitions(fictrac_core PUBLIC _CRT_SECURE_NO_WARNINGS NOMINMAX)
+if(MSVC)
+    target_compile_definitions(fictrac_core PUBLIC _WIN32_WINNT=0x0A00)	# Win10
+endif()
 if(PGR_USB2)
     target_compile_definitions(fictrac_core PUBLIC PGR_USB2)
 elseif(PGR_USB3)
