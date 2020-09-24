@@ -53,7 +53,9 @@ if(MSVC)
         find_library(PGR_LIB FlyCapture2_v140.lib)
     elseif(BASLER_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${BASLER_DIR}/Development/lib/x64)
-        find_library(BASLER_LIB PylonBase_MD_VC120_v5_0.lib)
+		find_library(BASLER_LIB PylonBase_MD_VC120_v5_0.lib)
+		
+		file(GLOB BASLER_LIBS ${BASLER_DIR}/Development/lib/x64/*.lib)
     endif()
     
 else()  # gcc
@@ -145,7 +147,7 @@ endif()
 if(PGR_USB2 OR PGR_USB3)
     target_link_libraries(fictrac_core PUBLIC ${PGR_LIB})
 elseif(BASLER_USB3)
-    target_link_libraries(fictrac_core PUBLIC ${BASLER_LIB})
+    target_link_libraries(fictrac_core PUBLIC ${BASLER_LIBS})
 endif()
 
 target_link_libraries(configGui fictrac_core)
