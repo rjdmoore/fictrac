@@ -6,8 +6,10 @@ HOST = '127.0.0.1'  # The (receiving) host IP address (sock_host)
 PORT = ????         # The (receiving) host port (sock_port)
 
 # Open the connection (ctrl-c / ctrl-break to quit)
-with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-    sock.bind((HOST, PORT))
+with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:		# UDP
+#with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:	# TCP
+    sock.bind((HOST, PORT))		# UDP
+#    sock.connect((HOST, PORT))	# TCP
     
     data = ""
     
@@ -29,8 +31,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         # Tokenise
         toks = line.split(", ")
         
-        # Fixme: sometimes we read more than one line at a time,
-        # should handle that rather than just dropping extra data...
+		# Check that we have sensible tokens
         if ((len(toks) < 24) | (toks[0] != "FT")):
             print('Bad read')
             continue
