@@ -93,7 +93,7 @@ Remember to update and re-build FicTrac occasionally, as the program is still un
 
 #### USB2/3 camera installation
 
-If you are using an industrial USB2/3 camera and are receiving error messages when FicTrac tries to connect to your camera, you may need to tell FicTrac to use the SDK provided with your camera, rather than the generic OpenCV interface. The instructions for switching to the camera's SDK are different for each manufacturer. Currently there is support for PGR (FLIR) USB2/3 cameras via the Flycapture/Spinnaker SDK.
+If you are using an industrial USB2/3 camera and are receiving error messages when FicTrac tries to connect to your camera, you may need to tell FicTrac to use the SDK provided with your camera, rather than the generic OpenCV interface. The instructions for switching to the camera's SDK are different for each manufacturer. Currently there is support for PGR (FLIR) USB2/3 cameras via the Flycapture/Spinnaker SDK and Basler USB3 cameras via the Pylon SDK.
 
 ##### PGR (FLIR) Flycapture SDK
 
@@ -111,7 +111,18 @@ Before running FicTrac, you may configure your camera (frame rate, resolution, e
 1. Download and install the latest [Spinnaker SDK](https://www.flir.com/products/spinnaker-sdk/).
 2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Spinnaker using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D PGR_DIR=...`. For example, for a Windows installation you would replace step 3 above with (replacing <vcpkg_root> with the path to your vcpkg root directory):
 ```
-cmake -G "Visual Studio 15 2017 Win64" -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
+cmake -A x64 -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Spinnaker" ..
+```
+3. Follow the other build steps as normal.
+
+Before running FicTrac, you may configure your camera (frame rate, resolution, etc) as desired using the SDK utilities.
+
+##### Basler Pylon SDK
+
+1. Download and install the latest [Pylon SDK](https://www.baslerweb.com/en/products/software/basler-pylon-camera-software-suite/).
+2. When preparing the build files for FicTrac using Cmake, you will need to specify to use Pylon using the switch `-D PGR_USB3=ON` and depending on where you installed the SDK, you may also need to provide the SDK directory path using the switch `-D BASLER_DIR=...`. For example, for a Windows installation you would replace step 3 above with (replacing <vcpkg_root> with the path to your vcpkg root directory):
+```
+cmake -A x64 -D CMAKE_TOOLCHAIN_FILE=<vcpkg root>/scripts/buildsystems/vcpkg.cmake -D PGR_USB3=ON -D PGR_DIR="C:\path\to\Pylon" ..
 ```
 3. Follow the other build steps as normal.
 
