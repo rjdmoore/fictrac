@@ -67,8 +67,10 @@ else()  # gcc
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR})
         find_library(PGR_LIB libflycapture.so)
     elseif(BASLER_USB3)
-        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${BASLER_DIR})
-        find_library(BASLER_LIB libpylonbase.so)
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${BASLER_DIR}/lib64)
+        find_library(BASLER_LIB libpylonbase.so)       
+        
+		file(GLOB BASLER_LIBS ${BASLER_DIR}/lib64/*.so)
     endif()
 endif()
 
@@ -156,8 +158,10 @@ endif()
 
 target_link_libraries(configGui fictrac_core)
 add_dependencies(configGui fictrac_core)
-set_target_properties(configGui PROPERTIES LINK_FLAGS /LTCG)
-
 target_link_libraries(fictrac fictrac_core)
 add_dependencies(fictrac fictrac_core)
-set_target_properties(fictrac PROPERTIES LINK_FLAGS /LTCG)
+
+if(MSVC)
+	set_target_properties(configGui PROPERTIES LINK_FLAGS /LTCG)
+	set_target_properties(fictrac PROPERTIES LINK_FLAGS /LTCG)
+endif()
