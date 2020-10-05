@@ -7,6 +7,7 @@
 #include "ConfigParser.h"
 
 #include "Logger.h"
+#include "fictrac_version.h"
 
 #include <cstdio>
 #include <iostream>
@@ -107,7 +108,7 @@ int ConfigParser::write(string fn)
     }
     
     /// Write header string
-    f << "## FicTrac config file (build " << __DATE__ << ")" << std::endl;
+    f << "## FicTrac v" << FICTRAC_VERSION_MAJOR << "." << FICTRAC_VERSION_MIDDLE << "." << FICTRAC_VERSION_MINOR << " config file (build date " << __DATE__ << ")" << std::endl;
 
     /// Write map
     static char tmps[4096];

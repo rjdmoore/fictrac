@@ -2,8 +2,9 @@ cmake_minimum_required (VERSION 3.0)
 project (FicTrac)
 
 # The version number.
-set (FICTRAC_VERSION_MAJOR 2)
-set (FICTRAC_VERSION_MINOR 3)
+set(FICTRAC_VERSION_MAJOR 2)
+set(FICTRAC_VERSION_MIDDLE 1)
+set(FICTRAC_VERSION_MINOR 1)
  
 # output version info to be included by project
 configure_file (
@@ -66,8 +67,10 @@ else()  # gcc
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR})
         find_library(PGR_LIB libflycapture.so)
     elseif(BASLER_USB3)
-        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${BASLER_DIR})
-        find_library(BASLER_LIB libpylonbase.so)
+        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${BASLER_DIR}/lib64)
+        find_library(BASLER_LIB libpylonbase.so)       
+        
+		file(GLOB BASLER_LIBS ${BASLER_DIR}/lib64/*.so)
     endif()
 endif()
 
@@ -155,8 +158,10 @@ endif()
 
 target_link_libraries(configGui fictrac_core)
 add_dependencies(configGui fictrac_core)
-set_target_properties(configGui PROPERTIES LINK_FLAGS /LTCG)
-
 target_link_libraries(fictrac fictrac_core)
 add_dependencies(fictrac fictrac_core)
-set_target_properties(fictrac PROPERTIES LINK_FLAGS /LTCG)
+
+if(MSVC)
+	set_target_properties(configGui PROPERTIES LINK_FLAGS /LTCG)
+	set_target_properties(fictrac PROPERTIES LINK_FLAGS /LTCG)
+endif()

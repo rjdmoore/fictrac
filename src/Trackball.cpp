@@ -489,7 +489,9 @@ Trackball::Trackball(string cfg_fn)
         if (_save_raw) {
             string vid_fn = _base_fn + "-raw-" + exec_time + "." + fext;
             double fps = source->getFPS();
-            if (fps <= 0) { fps = 25; }
+            if (fps <= 0) {
+                fps = (src_fps > 0) ? src_fps : 25;   // if we can't get fps from source, then use fps from config or - if not specified - default to 25 fps.
+            }
             LOG_DBG("Opening %s for video writing (%s %dx%d @ %f FPS)", vid_fn.c_str(), cstr.c_str(), source->getWidth(), source->getHeight(), fps);
             _raw_vid.open(vid_fn, fourcc, fps, cv::Size(source->getWidth(), source->getHeight()));
             if (!_raw_vid.isOpened()) {
@@ -503,7 +505,9 @@ Trackball::Trackball(string cfg_fn)
         if (_save_debug) {
             string vid_fn = _base_fn + "-dbg-" + exec_time + "." + fext;
             double fps = source->getFPS();
-            if (fps <= 0) { fps = 25; }
+            if (fps <= 0) {
+                fps = (src_fps > 0) ? src_fps : 25;   // if we can't get fps from source, then use fps from config or - if not specified - default to 25 fps.
+            }
             LOG_DBG("Opening %s for video writing (%s %dx%d @ %f FPS)", vid_fn.c_str(), cstr.c_str(), 4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM, fps);
             _debug_vid.open(vid_fn, fourcc, fps, cv::Size(4 * DRAW_CELL_DIM, 3 * DRAW_CELL_DIM));
             if (!_debug_vid.isOpened()) {
