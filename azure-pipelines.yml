@@ -21,7 +21,7 @@ jobs:
     vmImage: 'ubuntu-latest'
   # The steps to run to execute the build.
   steps:
-  - script: apt-get install gcc g++ git cmake curl unzip tar yasm pkg-config libgtk2.0-dev libavformat-dev libavcodec-dev libavresample-dev libswscale-dev libopencv-dev
+  - script: sudo apt-get install gcc g++ git cmake curl unzip tar yasm pkg-config libgtk2.0-dev libavformat-dev libavcodec-dev libavresample-dev libswscale-dev libopencv-dev
     displayName: apt-get install prereqs
   #- script: echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
   #  displayName: vcpkg set build type
