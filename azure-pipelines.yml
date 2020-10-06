@@ -45,7 +45,8 @@ jobs:
     vmImage: 'windows-latest'
   # The steps to run to execute the build.
   steps:
-  - script: git -C "C:/vcpkg" status
+  - script: git -C "C:/vcpkg" pull
+  - script: vcpkg update
   - script: vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows ffmpeg[x264]:x64-windows
     displayName: vcpkg install dependencies
   - task: CMake@1
