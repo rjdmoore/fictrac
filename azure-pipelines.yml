@@ -25,7 +25,7 @@ jobs:
     displayName: apt-get install prereqs
   #- script: echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
   #  displayName: vcpkg set build type
-  - script: vcpkg version
+  - script: pwd
   - script: vcpkg install nlopt:x64-linux boost-asio:x64-linux
     displayName: vcpkg install dependencies
   - task: CMake@1
@@ -46,7 +46,7 @@ jobs:
     vmImage: 'windows-latest'
   # The steps to run to execute the build.
   steps:
-  - script: vcpkg version
+  - script: pwd
   - script: vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows ffmpeg[x264]:x64-windows
     displayName: vcpkg install dependencies
   - task: CMake@1
