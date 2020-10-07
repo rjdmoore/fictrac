@@ -14,6 +14,7 @@ jobs:
 
 # Provide a name for the job
 - job: Linux
+  timeoutInMinutes: 180 # how long to run the job before automatically cancelling
   # The VM image to use for the hosted agent. For a list of possible agents
   # see https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted
   # You can see the software installed on each agent at the same link.
@@ -25,6 +26,14 @@ jobs:
     displayName: apt-get install prereqs
   #- script: echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
   #  displayName: vcpkg set build type
+  - script: git -C "/usr/local/share/vcpkg" status
+  - script: git -C "/usr/local/share/vcpkg" reset --hard
+    displayName: reset vcpkg to master
+  - script: git -C "/usr/local/share/vcpkg" status
+  - script: git -C "/usr/local/share/vcpkg" pull
+    displayName: vcpkg pull latest
+  - script: sudo sh /usr/local/share/vcpkg/bootstrap-vcpkg.sh
+    displayName: rebuild vcpkg
   - script: vcpkg install nlopt:x64-linux boost-asio:x64-linux
     displayName: vcpkg install dependencies
   - task: CMake@1
@@ -38,6 +47,7 @@ jobs:
 
 # Provide a name for the job
 - job: Windows
+  timeoutInMinutes: 180 # how long to run the job before automatically cancelling
   # The VM image to use for the hosted agent. For a list of possible agents
   # see https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted
   # You can see the software installed on each agent at the same link.
@@ -45,6 +55,14 @@ jobs:
     vmImage: 'windows-latest'
   # The steps to run to execute the build.
   steps:
+  - script: git -C "C:/vcpkg" status
+  - script: git -C "C:/vcpkg" reset --hard
+    displayName: reset vcpkg to master
+  - script: git -C "C:/vcpkg" status
+  - script: git -C "C:/vcpkg" pull
+    displayName: vcpkg pull latest
+  - script: C:/vcpkg/bootstrap-vcpkg.bat
+    displayName: rebuild vcpkg
   - script: vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows ffmpeg[x264]:x64-windows
     displayName: vcpkg install dependencies
   - task: CMake@1
