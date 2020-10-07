@@ -25,7 +25,7 @@ jobs:
     displayName: apt-get install prereqs
   #- script: echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
   #  displayName: vcpkg set build type
-  - script: git -C "/usr/local/share/vcpkg" pull
+  - script: sudo git -C "/usr/local/share/vcpkg" pull
     displayName: vcpkg pull latest
   - script: vcpkg install nlopt:x64-linux boost-asio:x64-linux
     displayName: vcpkg install dependencies
