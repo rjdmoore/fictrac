@@ -25,8 +25,12 @@ jobs:
     displayName: apt-get install prereqs
   #- script: echo "set(VCPKG_BUILD_TYPE release)" >> $VCPKG_INSTALLATION_ROOT/triplets/x64-linux.cmake
   #  displayName: vcpkg set build type
-  - script: sudo git -C "/usr/local/share/vcpkg" pull
+  - script: git -C "/usr/local/share/vcpkg" status
+  - script: git -C "/usr/local/share/vcpkg" reset --hard
+  - script: git -C "/usr/local/share/vcpkg" status
+  - script: git -C "/usr/local/share/vcpkg" pull
     displayName: vcpkg pull latest
+  - script: sudo sh /usr/local/share/vcpkg/bootstrap-vcpkg.sh
   - script: vcpkg install nlopt:x64-linux boost-asio:x64-linux
     displayName: vcpkg install dependencies
   - task: CMake@1
@@ -47,8 +51,12 @@ jobs:
     vmImage: 'windows-latest'
   # The steps to run to execute the build.
   steps:
+  - script: git -C "C:/vcpkg" status
+  - script: git -C "C:/vcpkg" reset --hard
+  - script: git -C "C:/vcpkg" status
   - script: git -C "C:/vcpkg" pull
     displayName: vcpkg pull latest
+  - script: C:/vcpkg/bootstrap-vcpkg.bat
   - script: vcpkg install opencv[ffmpeg]:x64-windows nlopt:x64-windows boost-asio:x64-windows ffmpeg[x264]:x64-windows
     displayName: vcpkg install dependencies
   - task: CMake@1
