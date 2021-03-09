@@ -1,6 +1,4 @@
-<div align="left">
-  <img src="http://rjdmoore.net/fictrac/header_text.jpg"><br><br>
-</div>
+![FicTrac: The webcam-based method for tracking spherical motion and generating fictive animal paths](https://user-images.githubusercontent.com/3844483/110451048-176e9300-80c4-11eb-8e1e-e96545d7d2ed.jpg)
 
 **FicTrac** is an open-source software library for reconstructing the fictive path of an animal walking on a patterned sphere. The software is fast, flexible, easy to use, and simplifies the setup of closed-loop tracking experiments.
 
