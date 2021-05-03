@@ -24,9 +24,12 @@ BaslerSource::BaslerSource(int index)
         // create an instant camera object
         _cam.Attach(CTlFactory::GetInstance().CreateFirstDevice());
 
-        LOG("Opening Basler camera device: %s", _cam.GetDeviceInfo().GetModelName());
+        cout << "Using device " << _cam.GetDeviceInfo().GetModelName() << endl;
+        
+        _cam.Open();
 
         // Allow all the names in the namespace GenApi to be used without qualification.
+  
         using namespace GenApi;
 
         // Get the camera control object.
@@ -70,7 +73,7 @@ BaslerSource::~BaslerSource()
 
 double BaslerSource::getFPS()
 {
-    const GenApi::CFloatPtr camFrameRate = _cam.GetNodeMap().GetNode("ResultingFrameRateAbs");// TODO: test this line
+    const GenApi::CFloatPtr camFrameRate = _cam.GetNodeMap().GetNode("ResultingFrameRate");// TODO: test this line
     return camFrameRate->GetValue();
 }
 
@@ -82,7 +85,7 @@ bool BaslerSource::setFPS(double fps)
     if (_open && (fps > 0)) {
         // Get the camera control object.
         INodeMap &control = _cam.GetNodeMap();
-        const GenApi::CFloatPtr camFrameRate = _cam.GetNodeMap().GetNode("ResultingFrameRateAbs");// TODO: test this line
+        const GenApi::CFloatPtr camFrameRate = _cam.GetNodeMap().GetNode("ResultingFrameRate");// TODO: test this line
         if (IsWritable(camFrameRate))
         {
             camFrameRate->SetValue(fps);
@@ -128,13 +131,15 @@ bool BaslerSource::grab(cv::Mat& frame)
     }
 
     try {
-        // Convert image
+        
         Pylon::CImageFormatConverter formatConverter;
+        formatConverter.OutputPixelFormat = PixelType_BGR8packed;
         formatConverter.Convert(_pylonImg, _ptrGrabResult);
-
-        Mat tmp(_height, _width, CV_8UC3, (uint8_t*)_pylonImg.GetBuffer()); 
+        
+  
+        Mat tmp(_ptrGrabResult->GetHeight(), _ptrGrabResult->GetWidth(), CV_8UC3, (uint8_t*)_pylonImg.GetBuffer()); 
         tmp.copyTo(frame);
-
+       
         // release the original image pointer
         _ptrGrabResult.Release();
     }
