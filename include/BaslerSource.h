@@ -13,7 +13,7 @@
 // Include Basler Pylon libraries
 #include <pylon/PylonIncludes.h>
 #include <pylon/ImageFormatConverter.h>
-#include <pylon/usb/BaslerUsbInstantCameraArray.h>
+#include <pylon/usb/BaslerUsbInstantCamera.h>
 
 class BaslerSource : public FrameSource {
 public:
