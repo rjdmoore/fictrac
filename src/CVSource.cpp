@@ -194,7 +194,7 @@ bool CVSource::grab(cv::Mat& frame)
         static double sleep_ms = 1000/_fps;
         av_fps = 0.15 * av_fps + 0.85 * (1000 / (ts - prev_ts));
         sleep_ms *= 0.25 * (av_fps / _fps) + 0.75;
-        sleep(static_cast<long>(round(sleep_ms)));
+        ficsleep(static_cast<long>(round(sleep_ms)));
         prev_ts = ts;
     }
 
