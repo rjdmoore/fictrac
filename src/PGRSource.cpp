@@ -24,6 +24,7 @@ PGRSource::PGRSource(int index)
 {
     try {
 #if defined(PGR_USB3)
+    #if defined(SPINNAKER3)
         // Retrieve singleton reference to system object
         _system = System::GetInstance();
 
@@ -87,6 +88,75 @@ PGRSource::PGRSource(int index)
         _width = _cam->Width();
         _height = _cam->Height();
         _fps = getFPS();
+
+        // Initialize image processor
+        ImageProcessor _imgprocessor = ImageProcessor();
+        _imgprocessor.SetColorProcessing(ColorProcessingAlgorithm::SPINNAKER_COLOR_PROCESSING_ALGORITHM_NEAREST_NEIGHBOR);
+    #else
+        // Retrieve singleton reference to system object
+        _system = System::GetInstance();
+
+        // Print out current library version
+        const LibraryVersion spinnakerLibraryVersion = _system->GetLibraryVersion();
+        LOG("Opening PGR camera using Spinnaker SDK (version %d.%d.%d.%d)",
+            spinnakerLibraryVersion.major, spinnakerLibraryVersion.minor,
+            spinnakerLibraryVersion.type, spinnakerLibraryVersion.build);
+
+        // Retrieve list of cameras from the system
+        _camList = _system->GetCameras();
+
+        unsigned int numCameras = _camList.GetSize();
+
+        if (numCameras == 0) {
+            LOG_ERR("Error! Could not find any connected PGR cameras!");
+            return;
+        }
+        else {
+            LOG_DBG("Found %d PGR cameras. Connecting to camera %d..", numCameras, index);
+        }
+
+        // Select camera
+        _cam = _camList.GetByIndex(index);
+
+        // Initialize camera
+        _cam->Init();
+
+        // set acquisition mode - needed?
+        {
+            // Retrieve GenICam nodemap
+            Spinnaker::GenApi::INodeMap& nodeMap = _cam->GetNodeMap();
+
+            // Retrieve enumeration node from nodemap
+            Spinnaker::GenApi::CEnumerationPtr ptrAcquisitionMode = nodeMap.GetNode("AcquisitionMode");
+            if (!IsAvailable(ptrAcquisitionMode) || !IsWritable(ptrAcquisitionMode)) {
+                LOG_ERR("Unable to set acquisition mode to continuous (enum retrieval)!");
+                return;
+            }
+
+            // Retrieve entry node from enumeration node
+            Spinnaker::GenApi::CEnumEntryPtr ptrAcquisitionModeContinuous = ptrAcquisitionMode->GetEntryByName("Continuous");
+            if (!IsAvailable(ptrAcquisitionModeContinuous) || !IsReadable(ptrAcquisitionModeContinuous)) {
+                LOG_ERR("Unable to set acquisition mode to continuous (entry retrieval)!");
+                return;
+            }
+
+            // Retrieve integer value from entry node
+            int64_t acquisitionModeContinuous = ptrAcquisitionModeContinuous->GetValue();
+
+            // Set integer value from entry node as new value of enumeration node
+            ptrAcquisitionMode->SetIntValue(acquisitionModeContinuous);
+
+            LOG_DBG("Acquisition mode set to continuous.");
+        }
+
+        // Begin acquiring images
+        _cam->BeginAcquisition();
+
+        // Get some params
+        _width = _cam->Width();
+        _height = _cam->Height();
+        _fps = getFPS();
+    #endif
 #elif defined(PGR_USB2)
         LOG_DBG("Looking for camera at index %d...", index);
 
@@ -269,7 +339,11 @@ bool PGRSource::grab(cv::Mat& frame)
 
     try {
         // Convert image
+        #if defined(SPINNAKER3)
+        ImagePtr bgr_image = _imgprocessor.Convert(pgr_image, PixelFormat_BGR8);
+        #else
         ImagePtr bgr_image = pgr_image->Convert(PixelFormat_BGR8, NEAREST_NEIGHBOR);
+        #endif
 
         Mat tmp(_height, _width, CV_8UC3, bgr_image->GetData(), bgr_image->GetStride());
         tmp.copyTo(frame);
