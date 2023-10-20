@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
         if (!_active) {
             tracker->terminate();
         }
-        sleep(250);
+        ficsleep(250);
     }
 
     /// Save the eventual template to disk.
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
     tracker.reset();
 
     /// Wait a bit before exiting...
-    sleep(250);
+    ficsleep(250);
 
     //PRINT("\n\nHit ENTER to exit..");
     //getchar_clean();

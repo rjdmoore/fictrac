@@ -99,7 +99,7 @@ static std::string dateString()
 ///
 /// Sleep (ms)
 ///
-static void sleep(long ms)
+static void ficsleep(long ms)
 {
 	std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
