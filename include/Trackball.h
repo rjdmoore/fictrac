@@ -91,7 +91,7 @@ public:
     };
 
 public:
-    Trackball(std::string cfg_fn);
+    Trackball(std::string cfg_fn, std::string src_override = "");
     ~Trackball();
 
     bool isActive() { return _active; }

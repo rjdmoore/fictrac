@@ -91,7 +91,7 @@ bool intersectSphere(const double r, const double camVec[3], double sphereVec[3]
 ///
 /// 
 ///
-Trackball::Trackball(string cfg_fn)
+Trackball::Trackball(string cfg_fn, string src_override)
     : _init(false), _reset(true), _clean_map(true), _active(true), _kill(false), _do_reset(false)
 {
     /// Save execTime for outptut file naming.
@@ -106,6 +106,11 @@ Trackball::Trackball(string cfg_fn)
 
     /// Open frame source and set fps.
     string src_fn = _cfg("src_fn");
+    if (!src_override.empty()) {
+        // override src_fn in config file with cli arg
+        src_fn = src_override;
+        LOG("Using src_fn=%s", src_fn.c_str());
+    }
     shared_ptr<FrameSource> source;
     // try specific camera sdk first if available
 #if defined(PGR_USB2) || defined(PGR_USB3) || defined(BASLER_USB3)
