@@ -4,13 +4,19 @@ project (FicTrac)
 # The version number.
 set(FICTRAC_VERSION_MAJOR 2)
 set(FICTRAC_VERSION_MIDDLE 1)
-set(FICTRAC_VERSION_MINOR 1)
+set(FICTRAC_VERSION_MINOR 2)
  
 # output version info to be included by project
 configure_file (
     "${PROJECT_SOURCE_DIR}/include/fictrac_version.h.in"
     "${PROJECT_SOURCE_DIR}/include/fictrac_version.h"
 )
+
+if (WIN32)
+	message(STATUS "Building FicTrac for Windows")
+elseif (UNIX)
+	message(STATUS "Building FicTrac for Linux")
+endif()
 
 # dependency search dirs
 set(OPENCV_DIR "." CACHE PATH "Path to OpenCV folder containing OpenCVConfig.cmake")
@@ -45,7 +51,7 @@ else()
     message(FATAL_ERROR "Error! Could not find NLopt lib at ${NLOPT_LIB}!")
 endif()
 
-if(MSVC)
+if(WIN32)
     if(PGR_USB3)
         set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${PGR_DIR}/lib64/vs2015)
         find_library(PGR_LIB Spinnaker_v140.lib)
@@ -77,7 +83,7 @@ endif()
 if(PGR_USB2 OR PGR_USB3)
     get_filename_component(PGR_DIR ${PGR_LIB} DIRECTORY)
     get_filename_component(PGR_DIR ${PGR_DIR} DIRECTORY)    # step up 1 level
-    if(MSVC)
+    if(WIN32)
         get_filename_component(PGR_DIR ${PGR_DIR} DIRECTORY)    # step up 1 level
     endif()
     if(PGR_LIB)
@@ -88,7 +94,7 @@ if(PGR_USB2 OR PGR_USB3)
 elseif(BASLER_USB3)
     get_filename_component(BASLER_DIR ${BASLER_LIB} DIRECTORY)
     get_filename_component(BASLER_DIR ${BASLER_DIR} DIRECTORY)    # step up 1 level
-    if(MSVC)
+    if(WIN32)
         get_filename_component(BASLER_DIR ${BASLER_DIR} DIRECTORY)    # step up 1 level
     endif()
     if(BASLER_LIB)
@@ -101,7 +107,7 @@ endif()
 # add include dirs
 include_directories(${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${NLopt_INCLUDE_DIRS})
 if(PGR_USB2 OR PGR_USB3)
-    if(MSVC)
+    if(WIN32)
         include_directories(${PGR_DIR}/include)
     else()
         if(PGR_USB2)
@@ -125,7 +131,7 @@ add_executable(fictrac ${PROJECT_SOURCE_DIR}/exec/fictrac.cpp)
 # add preprocessor definitions
 # PUBLIC means defs will be inherited by linked executables
 target_compile_definitions(fictrac_core PUBLIC _CRT_SECURE_NO_WARNINGS NOMINMAX)
-if(MSVC)
+if(WIN32)
     target_compile_definitions(fictrac_core PUBLIC _WIN32_WINNT=0x0A00)	# Win10
 endif()
 if(PGR_USB2)
@@ -137,7 +143,7 @@ elseif(BASLER_USB3)
 endif()
 
 # add compile options
-if(MSVC)
+if(WIN32)
     target_compile_options(fictrac_core PUBLIC $<$<CONFIG:Release>:/MP /GS /GL /w /WX- /Gy /Zc:wchar_t /O2 /Oi /Zc:inline /fp:precise /MD /EHsc /std:c++17>)
 else()  # gcc
     target_compile_options(fictrac_core PUBLIC -Ofast -w -c -fmessage-length=0 -std=c++17 -Wno-unused-function -march=native -MMD)
@@ -145,7 +151,7 @@ endif()
 
 # linking
 target_link_libraries(fictrac_core PUBLIC ${OpenCV_LIBS} ${NLOPT_LIBRARIES})
-if(MSVC)
+if(WIN32)
     target_link_libraries(fictrac_core PUBLIC Ws2_32)
 else()  # gcc
     target_link_libraries(fictrac_core PUBLIC pthread)
@@ -161,7 +167,7 @@ add_dependencies(configGui fictrac_core)
 target_link_libraries(fictrac fictrac_core)
 add_dependencies(fictrac fictrac_core)
 
-if(MSVC)
-	set_target_properties(configGui PROPERTIES LINK_FLAGS /LTCG)
-	set_target_properties(fictrac PROPERTIES LINK_FLAGS /LTCG)
-endif()
+# if(WIN32)
+	# set_target_properties(configGui PROPERTIES LINK_FLAGS /LTCG)
+	# set_target_properties(fictrac PROPERTIES LINK_FLAGS /LTCG)
+# endif()

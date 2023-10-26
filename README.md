@@ -42,7 +42,58 @@ FicTrac imposes no requirements on the *italicised* items; how you design these 
 
 ### Installation
 
-The FicTrac source code can be built for both Windows and Linux (e.g. Ubuntu) operating systems, or you can build and run FicTrac from within a [virtual machine](https://www.virtualbox.org/) on any operating system. The following instructions are for a 64-bit machine, if you are using a 32-bit machine you will need to replace x64 with x86 in the instructions below.
+The FicTrac source code can be built for both Windows and Linux (e.g. Ubuntu) operating systems, or you can build and run FicTrac from within the Windows Subsystem for Linux (WSL) or a virtual machine on any operating system.
+
+<details>
+    <summary>Ubuntu 20.04 & Ubuntu 22.04</summary>
+These instructions have been tested for Ubuntu 20.04 and 22.04 within Windows Subsystem for Linux (WSL2), but should also apply to bootable installs and virtual machines.
+
+1. Clone the FicTrac repository into a new folder named `fictrac` (Git should already be installed - if not, you can install it via ```sudo apt-get install git``` or you can simply manually download and extract the repository)
+```
+git clone https://github.com/rjdmoore/fictrac.git
+```
+2. Navigate to the `fictrac` folder and run the install script to install dependencies and build FicTrac.
+```
+cd fictrac
+./install_ubuntu.sh
+```
+</details>
+
+<details>
+    <summary>Windows (Subsystem for Linux)</summary>
+These instructions will install Ubuntu within the Windows Subsystem for Linux (WSL). You can then simply follow the steps for the relevant version of Ubuntu.
+
+1. Install Ubuntu from the Microsoft Store
+    1. Open the Start menu and search for "Store"
+    2. Open Microsoft Store and search for "Ubuntu 22"
+    3. Click "Get" to install Ubuntu in WSL.
+2. Open a Ubuntu terminal and follow the installation instructions for FicTrac for the relevant version of Ubuntu.
+</details>
+
+<details>
+    <summary>Windows 10</summary>
+These instructions have been tested for Windows 10 (22H2).
+
+1. Download and install [MSYS2](https://www.msys2.org/)
+2. Download and install [Cmake](https://cmake.org/download/) (Windows x64 installer)
+3. Clone the FicTrac repository into a new folder named `fictrac` (if you do not have Git installed, you can download and install for Windows 64-bit from [here](https://git-scm.com/download/win) or you can simply manually download and extract the repository)
+```
+git clone https://github.com/rjdmoore/fictrac.git
+```
+4. In a Powershell terminal, navigate to the `fictrac` folder and run the install script to install dependencies and build FicTrac.
+```
+cd fictrac
+./install_windows.ps1
+```
+During installation, the script will prompt you for the MSYS2 installation path and then launch a MSYS2 terminal. The FicTrac dependencies should be installed here using the `pacman` utility. The install script will display a command which you can copy to the MSYS terminal to install the dependencies. Once the dependencies are installed, you must close the MSYS window to continue the FicTrac installation.
+
+After installation, you may need to close and re-open your Powershell terminal in order to run FicTrac.
+
+</details>
+
+<details>
+    <summary>Alternate (old) installation via Vcpkg for Windows/Linux</summary>
+These instructions have been tested for Windows 10, Ubuntu 18.04, and Ubuntu 20.04.
 
 1. Download and install required build tools and dependencies:
     1. Windows only: 
@@ -76,12 +127,13 @@ cd build
 [Windows] cmake --build . --config Release -j 4
 [Linux] cmake --build . --config Release -- -j 4
 ```
+</details>
 
 If everything went well, the executables for FicTrac and a configuration utility will be placed under the `bin` directory in the FicTrac project folder.
 
 If you encounter issues during the build process, try simply re-executing the step that failed. If you still encounter the same problem, check the [FicTrac forum](http://www.reddit.com/r/fictrac/) to see if anyone else has encountered (and hopefully solved!) the same issue. 
 
-Remember to update and re-build FicTrac occasionally, as the program is still under development and fixes and improvements are being made continuously.
+Remember to update (i.e. clone) and re-build FicTrac occasionally, as the program is still under development and fixes and improvements are being made continuously.
 
 | | | | | |
 | --- | --- | --- | --- | --- |
@@ -162,7 +214,9 @@ FicTrac will usually generate two output files:
 
 The output data file can be used for offline processing. To use FicTrac within a closed-loop setup (to provide real-time feedback for stimuli), you should configure FicTrac to output data via a socket (IP address/port) in real-time. To do this, just set `sock_port` to a valid port number in the config file. There is an example Python script for receiving data via sockets in the `scripts` directory.
 
-**Note:** If you encounter issues trying to generate output videos (i.e. `save_raw` or `save_debug`), you might try changing the default video codec via `vid_codec` - see [config params](doc/params.md) for details. If you receive an error about a missing [H264 library](https://github.com/cisco/openh264/releases), you can download the necessary library (i.e. OpenCV 3.4.3 requires `openh264-1.7.0-win64.dll`) from the above link and place it in the `dll` folder under the FicTrac main directory. You will then need to re-run the appropriate `cmake ..` and `cmake --build` commands for your installation.
+**Note:** For Windows installations, if the `fictrac` command returns immediately without printing anything to the terminal, try closing and reopening the terminal.
+
+**Note:** If you encounter issues trying to generate output videos (i.e. `save_raw` or `save_debug`), you might try changing the default video codec via `vid_codec` - see [config params](doc/params.md) for details. If you receive an error about a missing [H264 library](https://github.com/cisco/openh264/releases), you can download the necessary library (i.e. OpenCV 3.4.3 requires `openh264-1.7.0-win64.dll`) from the above link and place it in the `bin` folder under the FicTrac directory.
 
 ## Research
 

@@ -53,7 +53,7 @@ FicTrac can be built for both Windows and Ubuntu (Linux) operating systems. Ther
 
 For best performance, the processor should be reasonably fast (>2 GHz) and should be multi-core (ideally 4+). FicTrac uses <1 GB RAM.
 
-On a ~3.2 GHz quadcore processor processor, and with default configuration settings (`q_factor : 6`), FicTrac runs at ~220 FPS. At a quality setting `q_factor : 4` on the same machine, FicTrac runs at ~450 FPS.
+On a 4.8 GHz 16-core i7-12800HX processor, and with default configuration settings (`q_factor : 6`, `do_display: 0`), FicTrac runs at ~400 FPS. At a quality setting `q_factor : 4` on the same machine, FicTrac runs at ~800 FPS.
 
 ### Lighting
 
