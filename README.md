@@ -135,9 +135,9 @@ If you encounter issues during the build process, try simply re-executing the st
 
 Remember to update (i.e. clone) and re-build FicTrac occasionally, as the program is still under development and fixes and improvements are being made continuously.
 
-| | | | | |
-| --- | --- | --- | --- | --- |
-| Build status | Windows | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Windows)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) | Linux | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Linux)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) |
+<!---| | | | | |-->
+<!---| --- | --- | --- | --- | --- |-->
+<!---| Build status | Windows | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Windows)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) | Linux | [![Build Status](https://dev.azure.com/rjdmoore/FicTrac/_apis/build/status/rjdmoore.fictrac?branchName=master&jobName=Linux)](https://dev.azure.com/rjdmoore/FicTrac/_build/latest?definitionId=1&branchName=master) |-->
 
 #### USB2/3 camera installation
 
