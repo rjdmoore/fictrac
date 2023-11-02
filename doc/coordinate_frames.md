@@ -1,5 +1,7 @@
 This document explains the various coordinate frames used by the FicTrac system. The coordinate frames are illustrated in the figure below.
-![01-treadmill_diagram-label-fixed](https://github.com/rjdmoore/fictrac/assets/3844483/dc46f8e9-3e34-4d6f-99a8-6b133c972915)
+
+![01-treadmill_diagram-label-fixed](https://github.com/rjdmoore/fictrac/assets/3844483/aa9e08ea-dec9-44bf-9c18-01df0d823ad0)
+
 Note that this illustration is nearly identical to Fig. 1 from [Moore et al, 2014](https://doi.org/10.1016/j.jneumeth.2014.01.010), except here we have flipped the orientation of the "world" axis Wxyz on which the fictive path is drawn, because it was potentially misleading in the original version.
 
 All coordinate frames form valid [right-handed coordinate systems](https://en.wikipedia.org/wiki/Right-hand_rule).
