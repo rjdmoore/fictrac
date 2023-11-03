@@ -198,7 +198,7 @@ There are two necessary steps to configure FicTrac prior to running the program:
 1. You must provide a text file that contains important [configuration parameters](doc/params.md) for your setup. At a minimum, this config file must define the parameters `src_fn` and `vfov`, which define the image source (path to video file or camera index) and vertical field of view (in degrees) of your camera respectively. You will find an example config file (`config.txt`) in the `sample` directory.
 2. You must run the interactive configuration program (configGui). This program will guide you through the configuration of the track ball region of interest within your input images and the transformation between the camera's and animal's frames of reference.
 
-A more [detailed guide](doc/requirements.md) on how to configure FicTrac for your setup and an explanation of all the [configuration parameters](doc/params.md) can be found in the `doc` directory.
+A more [detailed guide](doc/requirements.md) on how to configure FicTrac for your setup and explanations of all the [configuration parameters](doc/params.md) and [coordinate frames](doc/coordinate_frames.md) can be found in the `doc` directory.
 
 ### Running FicTrac
 
