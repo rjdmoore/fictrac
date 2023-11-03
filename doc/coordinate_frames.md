@@ -44,4 +44,4 @@ The animal's fictive position is output in columns 15-16 and the animal's integr
 Plotting the fictive path (cols 15-16 in the output data) directly on a normal cartesian plane will result in the animal's initial heading direction being aligned with the right (+X) axis and initial animal-right being aligned with the up (+Y) axis.
 This will mean that clockwise turning motion of the animal will appear anti-clockwise on the plot.
 
-To correctly plot the fictive path (cols 15-16) on a cartesian plane, simply switch X and Y during plotting, e.g. plot(Y,X) instead of plot(X,Y). This will make the initial heading direction of the animal aligned with the up (+Y) axis, and initial animal-right aligned with the right (+X) axis.
+To correctly plot the fictive path (cols 15-16) on a cartesian plane, simply switch X and Y during plotting, i.e. plot(Y,X) instead of plot(X,Y). This will make the initial heading direction of the animal aligned with the up (+Y) axis, and initial animal-right aligned with the right (+X) axis.
