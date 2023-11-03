@@ -36,7 +36,7 @@ The world coordinate frame, in which the fictive path is generated, is defined b
 * +Y east (initial animal-right direction)
 * +Z down (animal-down)
 
-Animal forward motion in the absence of any change in heading direction or sidestepping will give fictive motion in the +X direction, and sidestepping motion to animal-right in the absence of other rotations will give fictive motion in the +Y direction.
+Animal forward motion in the absence of any change in heading direction or sidestepping will give fictive motion in the +X direction, and sidestepping motion to animal-right in the absence of other rotations will give fictive motion in the +Y direction. Equivalently, if the animal turns clockwise 90 degrees and walks forwards this will give fictive motion in the +Y direction.
 
 The animal's fictive position is output in columns 15-16 and the animal's integrated heading direction is output in column 17.
 
