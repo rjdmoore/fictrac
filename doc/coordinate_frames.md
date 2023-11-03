@@ -45,3 +45,10 @@ Plotting the fictive path (cols 15-16 in the output data) directly on a normal c
 This will mean that clockwise turning motion of the animal will appear anti-clockwise on the plot.
 
 To correctly plot the fictive path (cols 15-16) on a cartesian plane, simply switch X and Y during plotting, i.e. plot(Y,X) instead of plot(X,Y). This will make the initial heading direction of the animal aligned with the up (+Y) axis, and initial animal-right aligned with the right (+X) axis.
+
+### Interpreting the configImg
+The configured animal/lab axes are displayed in the config image (cropped example below). It is important to check that these axes appear correct w.r.t. the position/orientation of the animal. If the axes do not look correct, then you must re-run the configuration program.
+
+![image](https://github.com/rjdmoore/fictrac/assets/3844483/a5deb4cd-7a36-4010-a60f-8817eae1df39)
+
+To help with disambiguating the orientation of the axes, they are drawn with "into the page" / "out of the page" notation - i.e. a circle with a dot to denote "out of the page" and a circle with a cross to denote "into the page" (a fun mnemonic is that x marks the spot to dig into the page). In the above sample config image, the directions of the X and Y axes are fairly unambiguous but there are two configurations for the Z axis that appear the same in 2D: a left-handed axes with Z coming out of the page towards the viewer, and a right-handed axes with Z going into the page and aligned with the animal's down axis. All axes should be right-handed axes, and additionally we know that Z should be aligned with animal down, but the circle/cross notation just helps to confirm that the axes have the correct orientation.
