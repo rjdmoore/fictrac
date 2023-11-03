@@ -218,7 +218,7 @@ Then, to run FicTrac, type:
 
 FicTrac will usually generate two output files:
 1. Log file (*.log) - containing debugging information about FicTrac's execution.
-2. Data file (*.dat) - containing output data. See [data_header](doc/data_header.txt) for information about output data.
+2. Data file (*.dat) - containing output data. See [data_header](doc/data_header.txt) for information about output data and [coordinate frames](doc/coordinate_frames.md) for details of how the various output data relate to each other.
 
 The output data file can be used for offline processing. To use FicTrac within a closed-loop setup (to provide real-time feedback for stimuli), you should configure FicTrac to output data via a socket (IP address/port) in real-time. To do this, just set `sock_port` to a valid port number in the config file. There is an example Python script for receiving data via sockets in the `scripts` directory.
 
