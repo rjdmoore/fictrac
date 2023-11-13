@@ -159,7 +159,7 @@ bool CVSource::grab(cv::Mat& frame)
     double ts = ts_ms();    // backup, in case the device timestamp is junk
     _ms_since_midnight = ms_since_midnight();
 	_timestamp = _cap->get(cv::CAP_PROP_POS_MSEC);
-    LOG_DBG("Frame captured %dx%d%d @ %f (t_sys: %f ms, t_day: %f ms)", _frame_cap.cols, _frame_cap.rows, _frame_cap.channels(), _timestamp, ts, _ms_since_midnight);
+    LOG_DBG("Frame captured %dx%dx%d @ %f (t_sys: %f ms, t_day: %f ms)", _frame_cap.cols, _frame_cap.rows, _frame_cap.channels(), _timestamp, ts, _ms_since_midnight);
     if (_timestamp <= 0) {
         _timestamp = ts;
     }
