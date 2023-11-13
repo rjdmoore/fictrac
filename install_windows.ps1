@@ -64,13 +64,14 @@ else {
 Write-Host
 Write-Host "+-- Generating build files ----+"
 Write-Host
-cmake -G "MinGW Makefiles" ..
+cmake -G "MinGW Makefiles" --fresh ..
 
 
 Write-Host
 Write-Host "+-- Building FicTrac ----------+"
 Write-Host
-cmake --build . --config Release --parallel 4 --clean-first
+$NPROC = [Environment]::GetEnvironmentVariable("NUMBER_OF_PROCESSORS") 
+cmake --build . --config Release --parallel $NPROC --clean-first
 
 
 cd ..
