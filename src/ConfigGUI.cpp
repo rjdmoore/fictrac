@@ -152,7 +152,7 @@ void createZoomROI(Mat& zoom_roi, const Mat& frame, const Point2d& pt, int orig_
 ///
 /// Constructor.
 ///
-ConfigGui::ConfigGui(string config_fn)
+ConfigGui::ConfigGui(string config_fn, string src_override)
 : _config_fn(config_fn)
 {
     /// Load and parse config file.
@@ -163,7 +163,11 @@ ConfigGui::ConfigGui(string config_fn)
 
     /// Read source file name.
     string input_fn = _cfg("src_fn");
-    if (input_fn.empty()) {
+    if (!src_override.empty()) {
+        // override src_fn in config file with cli arg
+        input_fn = src_override;
+        LOG("Using input_fn=%s", input_fn.c_str());
+    } else if (input_fn.empty()) {
         LOG_ERR("Error! No src_fn defined in config file.");
         return;
     }
