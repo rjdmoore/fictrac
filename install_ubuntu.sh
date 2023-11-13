@@ -43,7 +43,7 @@ if [ "$ver" = "22.04" ] || [ "$ver" = "20.04" ]; then
 	echo
 	echo "+-- Building FicTrac ----------+"
 	echo
-	cmake --build . --config Release --parallel 4 --clean-first
+	cmake --build . --config Release --parallel $(nproc) --clean-first
 	
 	cd ..
 	if [ -f ./bin/fictrac ]; then
