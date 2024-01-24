@@ -34,6 +34,9 @@ private:
     Spinnaker::SystemPtr _system;
     Spinnaker::CameraList _camList;
     Spinnaker::CameraPtr _cam;
+    #if defined(SPINNAKER3)
+        Spinnaker::ImageProcessor _imgprocessor;
+    #endif // SPINNAKER3
 #elif defined(PGR_USB2)
     std::shared_ptr<FlyCapture2::Camera> _cam;
 #endif // PGR_USB2/3

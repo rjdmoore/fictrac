@@ -29,6 +29,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
 # optional build config
 option(PGR_USB3 "Use Spinnaker SDK to capture from PGR USB3 cameras" OFF) # Disabled by default
+option(SPINNAKER3 "Use Spinnaker SDK version 3" OFF) # Disabled by default
 option(PGR_USB2 "Use FlyCapture SDK to capture from PGR USB2 cameras" OFF) # Disabled by default
 option(BASLER_USB3 "Use Pylon SDK to capture from Basler USB3 cameras" OFF) # Disabled by default
 if(PGR_USB3)
@@ -113,7 +114,7 @@ if(PGR_USB2 OR PGR_USB3)
         if(PGR_USB2)
             include_directories(${PGR_DIR}/include/flycapture)   # for ubuntu default install dir
         elseif(PGR_USB3)
-            include_directories(${PGR_DIR}/include/spinnaker)   # for ubuntu default install dir
+            include_directories(${PGR_DIR}/include)   # for ubuntu default install dir
         endif()
     endif()
 elseif(BASLER_USB3)
@@ -138,6 +139,9 @@ if(PGR_USB2)
     target_compile_definitions(fictrac_core PUBLIC PGR_USB2)
 elseif(PGR_USB3)
     target_compile_definitions(fictrac_core PUBLIC PGR_USB3)
+    if(SPINNAKER3)
+        target_compile_definitions(fictrac_core PUBLIC SPINNAKER3)
+    endif()
 elseif(BASLER_USB3)
     target_compile_definitions(fictrac_core PUBLIC BASLER_USB3)
 endif()
